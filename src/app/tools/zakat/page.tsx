@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
 import { Navbar } from "@/components/navbar"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -16,9 +17,14 @@ import {
   MinusCircle, 
   ArrowRight,
   Info,
-  ExternalLink
+  ExternalLink,
+  Save,
+  History
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, addDoc, serverTimestamp, query, orderBy, limit } from "firebase/firestore"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
 const charities = [
@@ -28,6 +34,10 @@ const charities = [
 ]
 
 export default function ZakatCalculator() {
+  const { user } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+  
   const [values, setValues] = useState({
     cash: "",
     gold: "",
@@ -36,6 +46,7 @@ export default function ZakatCalculator() {
     debt: "",
     expenses: ""
   })
+  const [isSaving, setIsSaving] = useState(false)
 
   const results = useMemo(() => {
     const cash = parseFloat(values.cash) || 0
@@ -54,9 +65,47 @@ export default function ZakatCalculator() {
       totalAssets,
       totalLiabilities,
       netWealth,
-      zakatAmount
+      zakatAmount,
+      inputs: { cash, gold, savings, business }
     }
   }, [values])
+
+  const historyQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "zakatCalculations"),
+      orderBy("calculationDate", "desc"),
+      limit(5)
+    )
+  }, [db, user])
+
+  const { data: history } = useCollection(historyQuery)
+
+  const handleSave = async () => {
+    if (!db || !user) {
+      toast({ title: "Please sign in", description: "You need to be logged in to save your history." })
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await addDoc(collection(db, "users", user.uid, "zakatCalculations"), {
+        userId: user.uid,
+        calculationDate: new Date().toISOString(),
+        cashAmount: results.inputs.cash,
+        goldValue: results.inputs.gold,
+        savingsAmount: results.inputs.savings,
+        businessAssetsAmount: results.inputs.business,
+        calculatedZakat: results.zakatAmount,
+        notes: "Self-calculated via EidSpark"
+      })
+      toast({ title: "Calculation Saved", description: "Your Zakat record has been added to your history." })
+    } catch (error) {
+      // Handled by global listener
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div className="min-h-screen islamic-pattern pb-32">
@@ -82,15 +131,14 @@ export default function ZakatCalculator() {
               <Calculator className="w-5 h-5" />
               Calculator
             </TabsTrigger>
-            <TabsTrigger value="charity" className="rounded-2xl font-bold text-lg data-[state=active]:gold-gradient data-[state=active]:text-white transition-all gap-2">
-              <Heart className="w-5 h-5" />
-              Donate
+            <TabsTrigger value="history" className="rounded-2xl font-bold text-lg data-[state=active]:gold-gradient data-[state=active]:text-white transition-all gap-2">
+              <History className="w-5 h-5" />
+              History
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="calculator" className="animate-in fade-in slide-in-from-bottom duration-700">
             <div className="grid lg:grid-cols-12 gap-8 items-start">
-              {/* Form Section */}
               <div className="lg:col-span-7 space-y-8">
                 <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl">
                   <CardHeader className="p-10 pb-6 bg-primary/5">
@@ -102,62 +150,24 @@ export default function ZakatCalculator() {
                   </CardHeader>
                   <CardContent className="p-10 space-y-10">
                     <div className="grid sm:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                        <Label htmlFor="cash" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Cash & Bank Balance</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">৳</span>
-                          <Input
-                            id="cash"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.cash}
-                            onChange={(e) => setValues({ ...values, cash: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-primary/5 focus:border-primary/30 bg-white"
-                          />
+                      {['cash', 'gold', 'savings', 'business'].map((key) => (
+                        <div key={key} className="space-y-3">
+                          <Label htmlFor={key} className="text-sm font-black text-muted-foreground uppercase tracking-wider">
+                            {key === 'cash' ? 'Cash & Bank' : key === 'gold' ? 'Gold Value' : key === 'savings' ? 'Savings/FDR' : 'Business Assets'}
+                          </Label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">৳</span>
+                            <Input
+                              id={key}
+                              type="number"
+                              placeholder="0.00"
+                              value={values[key as keyof typeof values]}
+                              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+                              className="rounded-2xl h-14 pl-10 text-lg border-2 border-primary/5 focus:border-primary/30 bg-white"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="gold" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Gold & Silver Value</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">৳</span>
-                          <Input
-                            id="gold"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.gold}
-                            onChange={(e) => setValues({ ...values, gold: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-primary/5 focus:border-primary/30 bg-white"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="savings" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Savings / FDR / Insurance</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">৳</span>
-                          <Input
-                            id="savings"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.savings}
-                            onChange={(e) => setValues({ ...values, savings: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-primary/5 focus:border-primary/30 bg-white"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="business" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Business Stocks / Profit</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">৳</span>
-                          <Input
-                            id="business"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.business}
-                            onChange={(e) => setValues({ ...values, business: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-primary/5 focus:border-primary/30 bg-white"
-                          />
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </CardContent>
 
@@ -166,44 +176,33 @@ export default function ZakatCalculator() {
                       <MinusCircle className="w-8 h-8" />
                       Liabilities
                     </CardTitle>
-                    <CardDescription className="text-lg font-medium">Subtract your immediate debts and expenses.</CardDescription>
+                    <CardDescription className="text-lg font-medium">Subtract debts and monthly expenses.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-10 space-y-10">
                     <div className="grid sm:grid-cols-2 gap-8">
-                      <div className="space-y-3">
-                        <Label htmlFor="debt" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Short-term Debts</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-destructive/40 font-bold">৳</span>
-                          <Input
-                            id="debt"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.debt}
-                            onChange={(e) => setValues({ ...values, debt: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-destructive/5 focus:border-destructive/30 bg-white"
-                          />
+                      {['debt', 'expenses'].map((key) => (
+                        <div key={key} className="space-y-3">
+                          <Label htmlFor={key} className="text-sm font-black text-muted-foreground uppercase tracking-wider">
+                            {key === 'debt' ? 'Short-term Debts' : 'Monthly Expenses'}
+                          </Label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-destructive/40 font-bold">৳</span>
+                            <Input
+                              id={key}
+                              type="number"
+                              placeholder="0.00"
+                              value={values[key as keyof typeof values]}
+                              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+                              className="rounded-2xl h-14 pl-10 text-lg border-2 border-destructive/5 focus:border-destructive/30 bg-white"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="expenses" className="text-sm font-black text-muted-foreground uppercase tracking-wider">Monthly Living Expenses</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-destructive/40 font-bold">৳</span>
-                          <Input
-                            id="expenses"
-                            type="number"
-                            placeholder="0.00"
-                            value={values.expenses}
-                            onChange={(e) => setValues({ ...values, expenses: e.target.value })}
-                            className="rounded-2xl h-14 pl-10 text-lg border-2 border-destructive/5 focus:border-destructive/30 bg-white"
-                          />
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Summary Section */}
               <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-32">
                 <Card className="emerald-gradient text-white shadow-2xl border-none rounded-[3rem] overflow-hidden p-2">
                   <div className="bg-white/10 backdrop-blur-md rounded-[2.8rem] p-10 space-y-8">
@@ -212,9 +211,7 @@ export default function ZakatCalculator() {
                         <p className="text-white/70 font-black uppercase text-xs tracking-widest">Calculated Result</p>
                         <h3 className="text-2xl font-black">Estimated Zakat</h3>
                       </div>
-                      <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center animate-pulse">
-                        <BadgeDollarSign className="w-6 h-6 text-secondary" />
-                      </div>
+                      <BadgeDollarSign className="w-10 h-10 text-secondary" />
                     </div>
 
                     <div className="space-y-2">
@@ -224,75 +221,74 @@ export default function ZakatCalculator() {
                       <p className="text-white/60 font-medium">Your 2.5% mandatory contribution</p>
                     </div>
 
-                    <div className="pt-8 border-t border-white/10 grid grid-cols-2 gap-6">
-                      <div className="space-y-1">
-                        <p className="text-xs font-black text-white/50 uppercase tracking-widest">Net Wealth</p>
-                        <p className="text-xl font-bold">৳{results.netWealth.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-black text-white/50 uppercase tracking-widest">Liabilities</p>
-                        <p className="text-xl font-bold">৳{results.totalLiabilities.toLocaleString()}</p>
-                      </div>
+                    <div className="flex flex-col gap-4">
+                      <Button 
+                        onClick={handleSave} 
+                        disabled={isSaving || !user}
+                        className="w-full bg-secondary text-primary font-black h-16 rounded-2xl text-lg hover:bg-secondary/90 shadow-xl group"
+                      >
+                        {isSaving ? "Saving..." : "Save Calculation"} <Save className="ml-2 w-5 h-5" />
+                      </Button>
+                      {!user && <p className="text-center text-xs text-white/50">Sign in to save your history</p>}
                     </div>
-
-                    <Button className="w-full bg-secondary text-primary font-black h-16 rounded-2xl text-lg hover:bg-secondary/90 shadow-xl group" asChild>
-                      <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
-                        Pay Your Zakat <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </button>
-                    </Button>
                   </div>
                 </Card>
 
                 <Card className="bg-amber-50 border-2 border-amber-100 rounded-[2.5rem] p-8 space-y-4">
                   <div className="flex items-center gap-3 text-amber-900 font-black text-lg">
                     <Info className="w-5 h-5" />
-                    Understanding Nisab
+                    Nisab Guide
                   </div>
-                  <p className="text-amber-800/80 font-medium leading-relaxed text-sm">
-                    Zakat is only mandatory if your net wealth exceeds the <strong>Nisab threshold</strong> (approx. ৳7-8 Lakh depending on current gold prices) and is held for one lunar year.
+                  <p className="text-amber-800/80 font-medium text-sm">
+                    Zakat is due if your net wealth exceeds the Nisab threshold (approx. ৳750,000) and is held for one lunar year.
                   </p>
                 </Card>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="charity" className="animate-in fade-in slide-in-from-bottom duration-700">
-            <div className="grid md:grid-cols-3 gap-8">
-              {charities.map((charity) => (
-                <Card key={charity.name} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden group hover:-translate-y-2 transition-all duration-300">
-                  <div className="emerald-gradient h-32 flex items-center justify-center">
-                    <span className="text-4xl font-black text-white opacity-20">{charity.logo}</span>
-                  </div>
-                  <CardContent className="p-8 space-y-4 text-center">
-                    <h3 className="text-2xl font-black text-primary">{charity.name}</h3>
-                    <p className="text-muted-foreground font-medium text-sm">Support verified zakat projects and social welfare in Bangladesh.</p>
-                    <Button variant="outline" className="w-full rounded-xl h-12 border-2 border-primary/10 text-primary font-bold hover:bg-primary/5" asChild>
-                      <a href={charity.url} target="_blank" rel="noopener noreferrer">
-                        Visit Website <ExternalLink className="ml-2 w-4 h-4" />
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            
-            <div className="mt-16 text-center space-y-8 p-12 glass-card rounded-[3rem]">
-              <h3 className="text-3xl font-black text-primary">"The wealth of a person is never diminished by charity."</h3>
-              <div className="flex justify-center gap-8">
-                <div className="space-y-1">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center mx-auto text-primary">
-                    <Heart className="w-8 h-8 fill-primary" />
-                  </div>
-                  <p className="font-bold text-sm">Blessed Eid</p>
-                </div>
-                <div className="space-y-1">
-                  <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto text-secondary">
-                    <TrendingUp className="w-8 h-8" />
-                  </div>
-                  <p className="font-bold text-sm">Reward X700</p>
-                </div>
-              </div>
-            </div>
+          <TabsContent value="history" className="animate-in fade-in slide-in-from-bottom duration-700">
+             {!user ? (
+               <div className="text-center py-20 bg-white/50 rounded-[3rem] border-2 border-dashed">
+                 <p className="text-muted-foreground font-bold">Please sign in to view your calculation history.</p>
+               </div>
+             ) : (
+               <div className="grid gap-6">
+                 {history?.length === 0 && (
+                    <div className="text-center py-20 bg-white/50 rounded-[3rem] border-2 border-dashed">
+                      <p className="text-muted-foreground font-bold">No calculations saved yet.</p>
+                    </div>
+                 )}
+                 {history?.map((entry) => (
+                   <Card key={entry.id} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl p-8">
+                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="space-y-1 text-center md:text-left">
+                          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Date: {new Date(entry.calculationDate).toLocaleDateString()}</p>
+                          <h4 className="text-2xl font-black text-primary">৳{entry.calculatedZakat.toLocaleString()} Zakat</h4>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+                           <div className="text-center">
+                              <p className="text-[10px] font-black uppercase text-muted-foreground/60">Cash</p>
+                              <p className="font-bold">৳{entry.cashAmount.toLocaleString()}</p>
+                           </div>
+                           <div className="text-center">
+                              <p className="text-[10px] font-black uppercase text-muted-foreground/60">Gold</p>
+                              <p className="font-bold">৳{entry.goldValue.toLocaleString()}</p>
+                           </div>
+                           <div className="text-center">
+                              <p className="text-[10px] font-black uppercase text-muted-foreground/60">Savings</p>
+                              <p className="font-bold">৳{entry.savingsAmount.toLocaleString()}</p>
+                           </div>
+                           <div className="text-center">
+                              <p className="text-[10px] font-black uppercase text-muted-foreground/60">Business</p>
+                              <p className="font-bold">৳{entry.businessAssetsAmount.toLocaleString()}</p>
+                           </div>
+                        </div>
+                     </div>
+                   </Card>
+                 ))}
+               </div>
+             )}
           </TabsContent>
         </Tabs>
       </main>

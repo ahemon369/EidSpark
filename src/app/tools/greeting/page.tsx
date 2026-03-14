@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -8,9 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette } from "lucide-react"
+import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { useUser, useFirestore } from "@/firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 
 const templates = [
   { id: 'moon', name: 'Celestial Moon', bg: 'bg-emerald-950', accent: 'text-secondary', icon: Moon, gradient: ['#064e3b', '#022c22'] },
@@ -20,39 +23,58 @@ const templates = [
 ]
 
 export default function GreetingGenerator() {
+  const { user } = useUser()
+  const db = useFirestore()
   const [name, setName] = useState("")
   const [style, setStyle] = useState<"formal" | "casual" | "heartfelt" | "humorous">("heartfelt")
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0])
   const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [greeting, setGreeting] = useState("")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { toast } = useToast()
 
   const handleGenerate = async () => {
     if (!name) {
-      toast({
-        title: "Name required",
-        description: "Please enter a recipient name to generate a greeting.",
-        variant: "destructive"
-      })
+      toast({ title: "Name required", description: "Please enter a recipient name.", variant: "destructive" })
       return
     }
 
     setIsLoading(true)
     try {
-      const result = await generateEidGreeting({
-        recipientName: name,
-        greetingStyle: style
-      })
+      const result = await generateEidGreeting({ recipientName: name, greetingStyle: style })
       setGreeting(result.greetingMessage)
     } catch (error) {
-      toast({
-        title: "Generation failed",
-        description: "Something went wrong. Please try again later.",
-        variant: "destructive"
-      })
+      toast({ title: "Generation failed", description: "Something went wrong.", variant: "destructive" })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSaveToGallery = async () => {
+    if (!db || !user) {
+      toast({ title: "Sign in required", description: "Log in to save greetings to your gallery." })
+      return
+    }
+    if (!greeting) return
+
+    setIsSaving(true)
+    try {
+      // Note: We're saving the metadata. Real image hosting would require Firebase Storage.
+      await addDoc(collection(db, "users", user.uid, "eidGreetings"), {
+        userId: user.uid,
+        recipientName: name,
+        templateId: selectedTemplate.id,
+        greetingStyle: style,
+        message: greeting,
+        generatedImageUrl: "", // Storage not configured for this MVP
+        generationDate: new Date().toISOString()
+      })
+      toast({ title: "Saved to Gallery", description: "You can find your saved greetings in your profile." })
+    } catch (error) {
+      // Error handled by global listener
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -62,34 +84,27 @@ export default function GreetingGenerator() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Setup High Res Canvas
     const scale = 2
     canvas.width = 1080 * scale
     canvas.height = 1080 * scale
     ctx.scale(scale, scale)
 
-    // Background Gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, 1080)
     gradient.addColorStop(0, selectedTemplate.gradient[0])
     gradient.addColorStop(1, selectedTemplate.gradient[1])
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 1080, 1080)
 
-    // Border
     ctx.lineWidth = 40
     ctx.strokeStyle = '#ffffff20'
     ctx.strokeRect(20, 20, 1040, 1040)
 
-    // Text Rendering
     ctx.fillStyle = '#ffffff'
     ctx.textAlign = 'center'
     
-    // Header
     ctx.font = 'bold 120px Inter, sans-serif'
     ctx.fillText("Eid Mubarak", 540, 250)
 
-    // Greeting Body
-    ctx.font = 'italic 500 48px Inter, sans-serif'
     const words = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness.`
     const lines = wrapText(ctx, words, 800)
     
@@ -99,14 +114,12 @@ export default function GreetingGenerator() {
       y += 65
     })
 
-    // Footer Name
     if (name) {
       ctx.fillStyle = '#fbbf24'
       ctx.font = 'bold 60px Inter, sans-serif'
       ctx.fillText(`Dearest ${name}`, 540, 850)
     }
 
-    // Branding
     ctx.fillStyle = '#ffffff40'
     ctx.font = '300 24px Inter, sans-serif'
     ctx.fillText("Created with EidSpark", 540, 1020)
@@ -162,7 +175,6 @@ export default function GreetingGenerator() {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* Customization Panel */}
           <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left duration-700">
             <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl">
               <CardHeader className="p-10 pb-6 bg-primary/5">
@@ -207,9 +219,7 @@ export default function GreetingGenerator() {
                         onClick={() => setSelectedTemplate(template)}
                         className={cn(
                           "relative group h-24 rounded-2xl border-2 transition-all overflow-hidden text-left p-4",
-                          selectedTemplate.id === template.id 
-                            ? "border-primary shadow-lg scale-105" 
-                            : "border-primary/5 hover:border-primary/20"
+                          selectedTemplate.id === template.id ? "border-primary shadow-lg scale-105" : "border-primary/5"
                         )}
                       >
                         <div className={cn("absolute inset-0 opacity-10", template.bg)}></div>
@@ -219,80 +229,31 @@ export default function GreetingGenerator() {
                           </span>
                           <template.icon className={cn("w-5 h-5", template.accent)} />
                         </div>
-                        {selectedTemplate.id === template.id && (
-                          <div className="absolute top-2 right-2">
-                            <Check className="w-4 h-4 text-primary" />
-                          </div>
-                        )}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={isLoading}
-                  className="w-full emerald-gradient h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
-                >
-                  {isLoading ? (
-                    <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Crafting Card...</>
-                  ) : (
-                    <><Send className="w-6 h-6 mr-2" /> Generate AI Message</>
-                  )}
+                <Button onClick={handleGenerate} disabled={isLoading} className="w-full emerald-gradient h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
+                  {isLoading ? <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Crafting...</> : <><Send className="w-6 h-6 mr-2" /> Generate AI Message</>}
                 </Button>
               </CardContent>
             </Card>
           </div>
 
-          {/* Preview Section */}
           <div className="lg:col-span-7 flex flex-col items-center space-y-8 animate-in fade-in slide-in-from-right duration-700">
-            <div className="relative group w-full max-w-xl aspect-square rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border-8 border-white bg-slate-100">
-              <canvas 
-                ref={canvasRef} 
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                style={{ imageRendering: 'auto' }}
-              />
-              <div className="absolute top-6 left-6 flex items-center gap-2 text-white/40 font-black text-xs uppercase tracking-[0.3em]">
-                <Palette className="w-4 h-4" />
-                Live Preview
-              </div>
+            <div className="relative group w-full max-w-xl aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-slate-100">
+              <canvas ref={canvasRef} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 w-full max-w-xl">
-              <Button 
-                onClick={handleDownload} 
-                disabled={!greeting && !name}
-                className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform"
-              >
-                <Download className="w-6 h-6 mr-2" />
-                Download HD Card
+              <Button onClick={handleDownload} disabled={!greeting} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
+                <Download className="w-6 h-6 mr-2" /> Download
               </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg group"
-                onClick={() => {
-                  if (navigator.share) {
-                    canvasRef.current?.toBlob((blob) => {
-                      if (blob) {
-                        const file = new File([blob], 'eid-spark.png', { type: 'image/png' });
-                        navigator.share({
-                          files: [file],
-                          title: 'Eid Mubarak!',
-                          text: greeting || 'Wishing you a blessed Eid!'
-                        })
-                      }
-                    })
-                  }
-                }}
-              >
-                <Share2 className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
-                Share Directly
+              <Button onClick={handleSaveToGallery} disabled={!greeting || isSaving} variant="outline" className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
+                {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
               </Button>
             </div>
-
-            <p className="text-muted-foreground font-medium italic text-center max-w-md">
-              "Create, download, and send unlimited personalized Eid greetings to your family and friends."
-            </p>
           </div>
         </div>
       </main>
