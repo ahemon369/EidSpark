@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -9,17 +8,53 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save, Facebook, MessageCircle } from "lucide-react"
+import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save, Facebook, MessageCircle, RefreshCcw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore } from "@/firebase"
 import { collection, addDoc } from "firebase/firestore"
 
 const templates = [
-  { id: 'moon', name: 'Celestial Moon', bg: 'bg-emerald-950', accent: 'text-secondary', icon: Moon, gradient: ['#064e3b', '#022c22'], textColor: '#ffffff', secondaryColor: '#fbbf24' },
-  { id: 'lantern', name: 'Glowing Lantern', bg: 'bg-amber-900', accent: 'text-amber-400', icon: Sparkles, gradient: ['#78350f', '#451a03'], textColor: '#ffffff', secondaryColor: '#fbbf24' },
-  { id: 'mosque', name: 'Twilight Mosque', bg: 'bg-indigo-950', accent: 'text-indigo-300', icon: Layout, gradient: ['#1e1b4b', '#0f172a'], textColor: '#ffffff', secondaryColor: '#a5b4fc' },
-  { id: 'gold', name: 'Royal Golden', bg: 'bg-amber-50', accent: 'text-amber-900', icon: Star, gradient: ['#fffbeb', '#fef3c7'], textColor: '#451a03', secondaryColor: '#92400e' },
+  { 
+    id: 'moon', 
+    name: 'Crescent Moon', 
+    bg: 'bg-emerald-950', 
+    accent: 'text-secondary', 
+    icon: Moon, 
+    gradient: ['#064e3b', '#022c22'], 
+    textColor: '#ffffff', 
+    secondaryColor: '#fbbf24' 
+  },
+  { 
+    id: 'lantern', 
+    name: 'Lantern Glow', 
+    bg: 'bg-amber-900', 
+    accent: 'text-amber-400', 
+    icon: Sparkles, 
+    gradient: ['#78350f', '#451a03'], 
+    textColor: '#ffffff', 
+    secondaryColor: '#fbbf24' 
+  },
+  { 
+    id: 'mosque', 
+    name: 'Mosque Silhouette', 
+    bg: 'bg-indigo-950', 
+    accent: 'text-indigo-300', 
+    icon: Layout, 
+    gradient: ['#1e1b4b', '#0f172a'], 
+    textColor: '#ffffff', 
+    secondaryColor: '#a5b4fc' 
+  },
+  { 
+    id: 'gold', 
+    name: 'Golden Pattern', 
+    bg: 'bg-amber-50', 
+    accent: 'text-amber-900', 
+    icon: Star, 
+    gradient: ['#fffbeb', '#fef3c7'], 
+    textColor: '#451a03', 
+    secondaryColor: '#92400e' 
+  },
 ]
 
 export default function GreetingGenerator() {
@@ -107,55 +142,71 @@ export default function GreetingGenerator() {
     canvas.height = 1080 * scale
     ctx.scale(scale, scale)
 
-    // Background Gradient
+    // 1. Background Gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, 1080)
     gradient.addColorStop(0, selectedTemplate.gradient[0])
     gradient.addColorStop(1, selectedTemplate.gradient[1])
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 1080, 1080)
 
-    // Border
+    // 2. Decorative Border
     ctx.lineWidth = 40
     ctx.strokeStyle = `${selectedTemplate.secondaryColor}20`
     ctx.strokeRect(20, 20, 1040, 1040)
+    
+    // Inner border
+    ctx.lineWidth = 4
+    ctx.strokeStyle = selectedTemplate.secondaryColor
+    ctx.strokeRect(60, 60, 960, 960)
 
     ctx.textAlign = 'center'
     
-    // Title Section
+    // 3. TOP SECTION: Title
     ctx.fillStyle = selectedTemplate.secondaryColor
-    ctx.font = 'bold 120px "Hind Siliguri", "Inter", sans-serif'
-    ctx.fillText("Eid Mubarak", 540, 250)
+    ctx.font = 'bold 100px "Hind Siliguri", "Inter", sans-serif'
+    ctx.shadowBlur = 10
+    ctx.shadowColor = 'rgba(0,0,0,0.3)'
+    ctx.fillText("Eid Mubarak", 540, 200)
+    ctx.shadowBlur = 0
 
-    // Message Section
-    const messageText = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness.`
+    // 4. CENTER SECTION: AI Greeting Message
+    const messageText = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness. May this festive season bring you closer to your loved ones.`
     
     // Dynamic Font Sizing for Message
-    let fontSize = 54
-    if (messageText.length > 200) fontSize = 42
-    if (messageText.length > 400) fontSize = 32
+    let fontSize = 48
+    if (messageText.length > 150) fontSize = 42
+    if (messageText.length > 300) fontSize = 36
+    if (messageText.length > 500) fontSize = 30
 
     ctx.font = `500 ${fontSize}px "Hind Siliguri", "Inter", sans-serif`
     ctx.fillStyle = selectedTemplate.textColor
     
-    const lines = wrapText(ctx, messageText, 850)
-    const lineHeight = fontSize * 1.4
+    const lines = wrapText(ctx, messageText, 800)
+    const lineHeight = fontSize * 1.5
     const totalHeight = lines.length * lineHeight
     
+    // Vertical centering logic within the center area
     let y = 540 - (totalHeight / 2)
-    lines.forEach(line => {
-      ctx.fillText(line, 540, y)
-      y += lineHeight
+    
+    // Ensure we don't start too high and overlap title
+    if (y < 300) y = 300
+
+    lines.forEach((line, index) => {
+      // Prevent overflow into footer
+      if (y + (index * lineHeight) < 850) {
+        ctx.fillText(line, 540, y + (index * lineHeight))
+      }
     })
 
-    // Recipient Section
+    // 5. BOTTOM SECTION: Recipient Name
     if (name) {
       ctx.fillStyle = selectedTemplate.secondaryColor
-      ctx.font = 'bold 70px "Hind Siliguri", "Inter", sans-serif'
-      ctx.fillText(`Dear ${name}`, 540, 880)
+      ctx.font = 'bold 64px "Hind Siliguri", "Inter", sans-serif'
+      ctx.fillText(`Dear ${name}`, 540, 920)
     }
 
-    // Branding
-    ctx.fillStyle = `${selectedTemplate.textColor}40`
+    // 6. Branding / Footer
+    ctx.fillStyle = `${selectedTemplate.textColor}60`
     ctx.font = '300 24px "Inter", sans-serif'
     ctx.fillText("Created with EidSpark", 540, 1020)
   }
@@ -192,6 +243,13 @@ export default function GreetingGenerator() {
     window.open(shareUrl, '_blank')
   }
 
+  const handleReset = () => {
+    setName("")
+    setGreeting("")
+    setGreeting("")
+    toast({ title: "Editor Reset", description: "Start creating a new card." })
+  }
+
   return (
     <div className="min-h-screen islamic-pattern pb-20">
       <Navbar />
@@ -200,11 +258,11 @@ export default function GreetingGenerator() {
         <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest border border-secondary/20">
             <Sparkles className="w-4 h-4" />
-            <span>AI Greeting Engine</span>
+            <span>Premium Greeting Engine</span>
           </div>
-          <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Eid Mubarak Cards</h1>
+          <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">AI Greeting Cards</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
-            Generate personalized, high-quality Eid greetings in Bengali or English instantly with beautiful themes.
+            Design beautiful, professional Eid cards with AI-powered messages that automatically adapt to your chosen theme.
           </p>
         </div>
 
@@ -214,15 +272,16 @@ export default function GreetingGenerator() {
               <CardHeader className="p-10 pb-6 bg-primary/5">
                 <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
                   <Wand2 className="w-6 h-6 text-secondary" />
-                  Customize Card
+                  Card Designer
                 </CardTitle>
+                <CardDescription>Customize your festive message</CardDescription>
               </CardHeader>
               <CardContent className="p-10 space-y-8">
                 <div className="space-y-3">
-                  <Label htmlFor="name" className="text-sm font-black text-muted-foreground uppercase tracking-widest">Recipient's Name</Label>
+                  <Label htmlFor="name" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Recipient Name</Label>
                   <Input
                     id="name"
-                    placeholder="e.g. নিরা, Sarah, ভাইয়া"
+                    placeholder="e.g. Nira, Abdullah, Family"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="rounded-2xl h-14 text-lg border-2 border-primary/5 focus:border-primary/30"
@@ -230,7 +289,7 @@ export default function GreetingGenerator() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="style" className="text-sm font-black text-muted-foreground uppercase tracking-widest">Message Style</Label>
+                  <Label htmlFor="style" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Greeting Style</Label>
                   <Select value={style} onValueChange={(val: any) => setStyle(val)}>
                     <SelectTrigger className="h-14 rounded-2xl text-lg border-2 border-primary/5">
                       <SelectValue placeholder="Select style" />
@@ -245,7 +304,7 @@ export default function GreetingGenerator() {
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">Pick a Theme</Label>
+                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">Select Theme</Label>
                   <div className="grid grid-cols-2 gap-4">
                     {templates.map((template) => (
                       <button
@@ -258,7 +317,7 @@ export default function GreetingGenerator() {
                       >
                         <div className={cn("absolute inset-0 opacity-10", template.bg)}></div>
                         <div className="relative z-10 h-full flex flex-col justify-between">
-                          <span className={cn("text-xs font-black uppercase tracking-widest", template.accent)}>
+                          <span className={cn("text-[10px] font-black uppercase tracking-widest", template.accent)}>
                             {template.name}
                           </span>
                           <template.icon className={cn("w-5 h-5", template.accent)} />
@@ -268,18 +327,33 @@ export default function GreetingGenerator() {
                   </div>
                 </div>
 
-                <Button onClick={handleGenerate} disabled={isLoading} className="w-full emerald-gradient h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
-                  {isLoading ? <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Crafting...</> : <><Send className="w-6 h-6 mr-2" /> Generate AI Message</>}
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button onClick={handleGenerate} disabled={isLoading} className="w-full emerald-gradient h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
+                    {isLoading ? <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Crafting...</> : <><Send className="w-6 h-6 mr-2" /> Generate AI Message</>}
+                  </Button>
+                  <Button onClick={handleReset} variant="ghost" className="h-12 rounded-xl text-primary font-bold">
+                    <RefreshCcw className="w-4 h-4 mr-2" /> Start Over
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           <div className="lg:col-span-7 flex flex-col items-center space-y-8 animate-in fade-in slide-in-from-right duration-700">
-            <div className="relative group w-full max-w-xl aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-slate-100">
-              <canvas ref={canvasRef} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+            {/* Live Preview Card */}
+            <div className="relative w-full max-w-xl aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-slate-50">
+              <canvas ref={canvasRef} className="w-full h-full object-cover transition-all duration-500" />
+              {!greeting && (
+                <div className="absolute inset-0 flex items-center justify-center p-12 text-center bg-white/40 backdrop-blur-sm pointer-events-none">
+                  <div className="space-y-4">
+                    <Sparkles className="w-12 h-12 text-primary/20 mx-auto animate-pulse" />
+                    <p className="font-black text-primary/40 uppercase tracking-widest">Enter a name and generate <br /> your AI message</p>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Actions Panel */}
             <div className="flex flex-col gap-4 w-full max-w-xl">
                <div className="flex flex-wrap justify-center gap-4 w-full">
                 <Button onClick={handleDownload} disabled={!greeting} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
@@ -292,10 +366,10 @@ export default function GreetingGenerator() {
               
               <div className="grid grid-cols-2 gap-4">
                 <Button onClick={() => handleSocialShare('facebook')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
-                  <Facebook className="w-5 h-5 mr-2" /> Facebook
+                  <Facebook className="w-5 h-5 mr-2" /> Share Facebook
                 </Button>
                 <Button onClick={() => handleSocialShare('whatsapp')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
-                  <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
+                  <MessageCircle className="w-5 h-5 mr-2" /> Share WhatsApp
                 </Button>
               </div>
             </div>
