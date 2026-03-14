@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useCallback } from "react"
@@ -5,7 +6,7 @@ import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Globe, Navigation, ChevronRight } from "lucide-react"
+import { MapPin, Globe, Navigation, ChevronRight, List, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Dynamically import the map to avoid SSR issues with Leaflet
@@ -26,6 +27,8 @@ const cities = [
   { name: "Sylhet", coords: [24.8949, 91.8687] as [number, number] },
   { name: "Rajshahi", coords: [24.3745, 88.6042] as [number, number] },
   { name: "Khulna", coords: [22.8456, 89.5403] as [number, number] },
+  { name: "Barisal", coords: [22.7010, 90.3535] as [number, number] },
+  { name: "Rangpur", coords: [25.7439, 89.2752] as [number, number] },
 ]
 
 export default function MosqueFinder() {
@@ -34,13 +37,13 @@ export default function MosqueFinder() {
     zoom: 13,
   })
   const [selectedCity, setSelectedCity] = useState("Dhaka")
+  const [mosques, setMosques] = useState<any[]>([])
 
   const handleCitySelect = (city: typeof cities[0]) => {
     setSelectedCity(city.name)
     if (city.coords) {
       setMapConfig({ center: city.coords, zoom: 14 })
     } else {
-      // Re-trigger geolocation if possible
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
           setMapConfig({ center: [pos.coords.latitude, pos.coords.longitude], zoom: 15 })
@@ -52,6 +55,10 @@ export default function MosqueFinder() {
   const handleLocationFound = useCallback((location: [number, number]) => {
     setMapConfig({ center: location, zoom: 15 })
     setSelectedCity("Current Location")
+  }, [])
+
+  const handleMosquesUpdate = useCallback((newMosques: any[]) => {
+    setMosques(newMosques)
   }, [])
 
   return (
@@ -66,7 +73,7 @@ export default function MosqueFinder() {
             </div>
             <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Mosque Finder</h1>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl">
-              Locate mosques near you across Bangladesh using open-source community mapping data.
+              Locate mosques for prayer and Eid congregations near you across Bangladesh.
             </p>
           </div>
           
@@ -74,79 +81,90 @@ export default function MosqueFinder() {
             <p className="text-sm font-black text-muted-foreground uppercase tracking-widest ml-1">Navigate to city</p>
             <div className="flex flex-wrap gap-2">
               {cities.map((city) => (
-                <Button
+                <button
                   key={city.name}
-                  variant={selectedCity === city.name ? "default" : "outline"}
                   onClick={() => handleCitySelect(city)}
                   className={cn(
-                    "rounded-2xl h-12 px-6 font-bold transition-all",
+                    "rounded-2xl h-12 px-6 font-bold transition-all text-sm border-2",
                     selectedCity === city.name 
-                      ? "emerald-gradient text-white border-none shadow-lg scale-105" 
-                      : "border-primary/10 text-primary hover:bg-primary/5"
+                      ? "emerald-gradient text-white border-transparent shadow-lg scale-105" 
+                      : "border-primary/10 text-primary hover:bg-primary/5 bg-white"
                   )}
                 >
-                  <MapPin className="w-4 h-4 mr-2" />
                   {city.name}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-10">
-          {/* Info Section */}
+          {/* List and Info Panel */}
           <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left duration-700">
-            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl">
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl flex flex-col max-h-[800px]">
               <CardHeader className="p-10 pb-6 bg-primary/5">
                 <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
-                  <Navigation className="w-6 h-6 text-secondary" />
-                  How it works
+                  <List className="w-6 h-6 text-secondary" />
+                  Nearby Mosques
                 </CardTitle>
+                <CardDescription className="text-sm font-bold">{mosques.length} results found in this area</CardDescription>
               </CardHeader>
-              <CardContent className="p-10 space-y-8">
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl emerald-gradient flex items-center justify-center text-white shrink-0 shadow-md">1</div>
-                    <div>
-                      <h4 className="font-black text-primary text-lg">Grant Access</h4>
-                      <p className="text-muted-foreground font-medium text-sm leading-relaxed">Enable browser location to see mosques immediately around you.</p>
-                    </div>
+              <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-grow">
+                {mosques.length > 0 ? (
+                  <div className="divide-y divide-primary/5">
+                    {mosques.map((mosque) => (
+                      <div key={mosque.id} className="p-6 hover:bg-primary/5 transition-colors group">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1">
+                            <h4 className="font-black text-primary leading-tight group-hover:text-secondary transition-colors">
+                              {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
+                            </h4>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location details unavailable"}
+                            </p>
+                            {mosque.distance && (
+                              <p className="text-[10px] font-black uppercase text-secondary tracking-widest pt-1">
+                                {mosque.distance < 1000 
+                                  ? `${Math.round(mosque.distance)}m away` 
+                                  : `${(mosque.distance / 1000).toFixed(1)}km away`}
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="rounded-xl h-10 w-10 p-0 text-primary hover:bg-primary hover:text-white"
+                            onClick={() => {
+                              const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
+                              window.open(url, "_blank")
+                            }}
+                          >
+                            <Navigation className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl emerald-gradient flex items-center justify-center text-white shrink-0 shadow-md">2</div>
-                    <div>
-                      <h4 className="font-black text-primary text-lg">Explore the Map</h4>
-                      <p className="text-muted-foreground font-medium text-sm leading-relaxed">Drag the map or choose a city. The database refreshes automatically.</p>
+                ) : (
+                  <div className="p-20 text-center space-y-4">
+                    <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto">
+                      <MapPin className="w-8 h-8 text-primary/20" />
                     </div>
+                    <p className="text-sm font-bold text-muted-foreground">Move the map or search to find mosques nearby.</p>
                   </div>
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl emerald-gradient flex items-center justify-center text-white shrink-0 shadow-md">3</div>
-                    <div>
-                      <h4 className="font-black text-primary text-lg">Find Directions</h4>
-                      <p className="text-muted-foreground font-medium text-sm leading-relaxed">Click any mosque icon to view details and navigate via Google Maps.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-primary/5">
-                  <div className="glass-card p-6 rounded-3xl border-secondary/20 bg-secondary/5">
-                    <div className="flex items-center gap-3 text-secondary font-black mb-2">
-                      <Globe className="w-5 h-5" />
-                      Open Data
-                    </div>
-                    <p className="text-xs text-primary/60 font-bold leading-relaxed">
-                      Powered by OpenStreetMap and Overpass API. Data is community-maintained and reflects verified Islamic places of worship in Bangladesh.
-                    </p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
-            <Button className="w-full h-16 rounded-[2rem] gold-gradient text-white font-black text-xl shadow-xl hover:scale-[1.02] transition-transform" asChild>
-              <a href="https://www.openstreetmap.org/edit#map=15" target="_blank">
-                Contribute a Mosque <ChevronRight className="ml-2 w-6 h-6" />
-              </a>
-            </Button>
+            <div className="bg-secondary/10 p-8 rounded-[2.5rem] border-2 border-secondary/20 space-y-4">
+              <div className="flex items-center gap-3 text-primary font-black">
+                <Info className="w-5 h-5 text-secondary" />
+                Pro-tip
+              </div>
+              <p className="text-xs text-primary/70 font-bold leading-relaxed">
+                Click any mosque on the map or in the list to get instant turn-by-turn directions in Google Maps.
+              </p>
+            </div>
           </div>
 
           {/* Map Container */}
@@ -156,12 +174,12 @@ export default function MosqueFinder() {
                 center={mapConfig.center} 
                 zoom={mapConfig.zoom} 
                 onLocationFound={handleLocationFound} 
+                onMosquesUpdate={handleMosquesUpdate}
               />
             </div>
             
-            {/* Map Overlay Details */}
             <div className="absolute bottom-10 left-10 glass-card p-6 rounded-[2rem] border-white/40 shadow-2xl pointer-events-none hidden md:block">
-              <h3 className="font-black text-2xl text-primary">Interactive Map</h3>
+              <h3 className="font-black text-2xl text-primary">Live Explorer</h3>
               <p className="text-sm text-muted-foreground font-bold mt-2">Discovering mosques in <span className="text-secondary">{selectedCity}</span></p>
             </div>
           </div>
