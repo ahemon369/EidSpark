@@ -1,136 +1,236 @@
-
 "use client"
 
+import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Search, Navigation, Clock, Users } from "lucide-react"
+import { MapPin, Search, Navigation, Clock, Users, Globe } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
-const mosques = [
+const famousMosques = [
   {
     id: 1,
-    name: "Grand Al-Haram Mosque",
-    address: "123 Islamic Center Dr, New York",
-    distance: "0.8 miles",
-    eidPrayers: ["7:00 AM", "8:30 AM", "10:00 AM"],
-    capacity: "High"
+    name: "Baitul Mukarram National Mosque",
+    city: "Dhaka",
+    address: "Topkhana Road, Dhaka 1000",
+    distance: "Current Location",
+    eidPrayers: ["7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM"],
+    capacity: "Huge",
+    famous: true,
+    coordinates: { lat: 23.7291, lng: 90.4127 }
   },
   {
     id: 2,
-    name: "Masjid Al-Noor",
-    address: "456 Crescent Way, Brooklyn",
-    distance: "1.2 miles",
-    eidPrayers: ["7:30 AM", "9:00 AM"],
-    capacity: "Medium"
+    name: "Tara Masjid (Star Mosque)",
+    city: "Dhaka",
+    address: "Abul Khairat Rd, Dhaka",
+    distance: "1.2 km",
+    eidPrayers: ["7:30 AM", "8:30 AM"],
+    capacity: "Medium",
+    famous: true,
+    coordinates: { lat: 23.7153, lng: 90.4012 }
   },
   {
     id: 3,
-    name: "Community Prayer Hall",
-    address: "789 Unity Ave, Queens",
-    distance: "2.5 miles",
+    name: "Baytul Aman Jame Masjid",
+    city: "Barisal",
+    address: "Guthia, Barisal",
+    distance: "240 km",
     eidPrayers: ["8:00 AM"],
-    capacity: "Small"
+    capacity: "Large",
+    famous: true,
+    coordinates: { lat: 22.7844, lng: 90.2241 }
+  },
+  {
+    id: 4,
+    name: "Amanat Shah Jame Masjid",
+    city: "Chittagong",
+    address: "Andarkilla, Chittagong",
+    distance: "250 km",
+    eidPrayers: ["7:30 AM", "8:30 AM"],
+    capacity: "Large",
+    famous: false,
+    coordinates: { lat: 22.3375, lng: 91.8388 }
+  },
+  {
+    id: 5,
+    name: "Hazrat Shah Jalal Dargah Mosque",
+    city: "Sylhet",
+    address: "Dargah Gate, Sylhet",
+    distance: "245 km",
+    eidPrayers: ["8:30 AM"],
+    capacity: "Large",
+    famous: true,
+    coordinates: { lat: 24.9015, lng: 91.8679 }
   }
 ]
 
 export default function MosqueFinder() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCity, setSelectedCity] = useState("All")
+
+  const filteredMosques = famousMosques.filter(m => {
+    const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          m.city.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCity = selectedCity === "All" || m.city === selectedCity
+    return matchesSearch && matchesCity
+  })
+
+  const cities = ["All", "Dhaka", "Chittagong", "Sylhet", "Barisal", "Rajshahi", "Khulna"]
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold font-headline text-primary">Mosque Finder</h1>
-            <p className="text-muted-foreground">Find nearby mosques for Eid prayers and community events.</p>
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <div className="relative flex-grow md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search location..." className="pl-10 rounded-xl h-12" />
+      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+              <Globe className="w-3 h-3" />
+              <span>Bangladesh Only</span>
             </div>
-            <Button size="icon" className="h-12 w-12 rounded-xl emerald-gradient">
-              <Navigation className="w-5 h-5" />
-            </Button>
+            <h1 className="text-5xl font-black text-primary tracking-tight">Mosque Finder</h1>
+            <p className="text-xl text-muted-foreground font-medium">Find Eid prayers in Dhaka, Chittagong, Sylhet and across Bangladesh.</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+            <div className="relative flex-grow lg:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input 
+                placeholder="Search mosque or city..." 
+                className="pl-12 rounded-2xl h-14 text-lg border-2 border-primary/10 focus:border-primary/30 transition-all" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button size="icon" className="h-14 w-14 rounded-2xl emerald-gradient shadow-lg">
+                <Navigation className="w-6 h-6" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* City Filter Tabs */}
+        <div className="flex flex-wrap gap-2 mb-10">
+          {cities.map(city => (
+            <Button
+              key={city}
+              variant={selectedCity === city ? "default" : "outline"}
+              onClick={() => setSelectedCity(city)}
+              className={cn(
+                "rounded-full px-6 font-bold transition-all",
+                selectedCity === city ? "emerald-gradient text-white border-none" : "border-primary/10 text-primary hover:bg-primary/5"
+              )}
+            >
+              {city}
+            </Button>
+          ))}
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-10">
           {/* List Section */}
-          <div className="lg:col-span-1 space-y-4 overflow-y-auto max-h-[700px] pr-2 custom-scrollbar">
-            {mosques.map((mosque) => (
-              <Card key={mosque.id} className="hover:shadow-md transition-shadow cursor-pointer group border-primary/10">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg text-primary group-hover:text-primary-foreground transition-colors group-hover:bg-primary px-2 py-1 rounded-md -mx-2">
-                      {mosque.name}
-                    </CardTitle>
-                    <span className="text-xs font-bold text-muted-foreground bg-accent/30 px-2 py-1 rounded-full">{mosque.distance}</span>
+          <div className="lg:col-span-5 space-y-6 overflow-y-auto max-h-[800px] pr-4 custom-scrollbar">
+            {filteredMosques.map((mosque) => (
+              <Card key={mosque.id} className="group border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(6,95,70,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden cursor-pointer">
+                <CardHeader className="p-8 pb-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-1">
+                      {mosque.famous && (
+                        <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground font-bold rounded-full text-[10px] mb-2 border-none">
+                          FAMOUS LANDMARK
+                        </Badge>
+                      )}
+                      <CardTitle className="text-2xl font-black text-primary group-hover:text-primary transition-colors">
+                        {mosque.name}
+                      </CardTitle>
+                    </div>
+                    <span className="text-sm font-black text-primary bg-primary/5 px-3 py-1.5 rounded-xl">{mosque.distance}</span>
                   </div>
-                  <CardDescription className="flex items-center gap-1 mt-1">
-                    <MapPin className="w-3 h-3" />
+                  <CardDescription className="flex items-center gap-2 text-base font-medium">
+                    <MapPin className="w-5 h-5 text-primary" />
                     {mosque.address}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider">
-                      <Clock className="w-3 h-3" />
-                      <span>Eid Prayer Times</span>
+                <CardContent className="p-8 pt-4 space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-xs font-black text-primary uppercase tracking-widest">
+                      <Clock className="w-4 h-4" />
+                      <span>Eid-ul-Fitr Prayer Times</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {mosque.eidPrayers.map((time) => (
-                        <span key={time} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md font-medium border border-emerald-100">
+                        <span key={time} className="bg-emerald-50 text-primary text-sm px-4 py-2 rounded-xl font-bold border border-primary/10 shadow-sm">
                           {time}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span>Capacity: <span className="text-primary font-bold">{mosque.capacity}</span></span>
+                  <div className="flex items-center justify-between pt-6 border-t border-primary/5">
+                    <div className="flex items-center gap-3 text-muted-foreground font-bold text-sm">
+                      <Users className="w-5 h-5 text-primary/40" />
+                      <span>Capacity: <span className="text-primary">{mosque.capacity}</span></span>
                     </div>
-                    <Button variant="link" className="text-primary font-bold h-auto p-0">View Details</Button>
+                    <Button variant="link" className="text-primary font-black h-auto p-0 flex items-center gap-1 group/btn">
+                      Get Directions <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            {filteredMosques.length === 0 && (
+              <div className="py-20 text-center space-y-4 glass-card rounded-[2rem]">
+                <Search className="w-12 h-12 text-primary/20 mx-auto" />
+                <p className="text-muted-foreground font-bold">No mosques found in your search area.</p>
+              </div>
+            )}
           </div>
 
-          {/* Map Visual (Mock) */}
-          <div className="lg:col-span-2 relative min-h-[500px] lg:min-h-full rounded-3xl overflow-hidden shadow-inner border bg-slate-100">
-            {/* Background "Map" - Using a subtle grid pattern for effect */}
-            <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/map-grid/1200/800')] opacity-20 grayscale brightness-150"></div>
+          {/* Map Mock Section */}
+          <div className="lg:col-span-7 relative min-h-[600px] lg:min-h-full rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-100">
+            {/* Mock Map Background */}
+            <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/bd-map/1600/1200')] opacity-30 grayscale contrast-125"></div>
             
-            {/* Map Markers */}
-            <div className="absolute top-1/4 left-1/3 animate-bounce">
-              <div className="relative">
-                <MapPin className="w-10 h-10 text-primary fill-primary/20" />
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 glass px-3 py-1 rounded-lg shadow-sm whitespace-nowrap font-bold text-xs text-primary border-primary/20">
-                  Grand Al-Haram
-                </div>
-              </div>
-            </div>
+            {/* Map UI Overlay */}
+            <div className="absolute inset-0 bg-emerald-900/5 pointer-events-none"></div>
 
-            <div className="absolute bottom-1/3 right-1/4 animate-bounce delay-300">
-              <div className="relative">
-                <MapPin className="w-10 h-10 text-secondary fill-secondary/20" />
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 glass px-3 py-1 rounded-lg shadow-sm whitespace-nowrap font-bold text-xs text-primary border-primary/20">
-                  Masjid Al-Noor
+            {/* Simulated Markers */}
+            {filteredMosques.map((mosque, idx) => (
+              <div 
+                key={mosque.id}
+                className="absolute animate-bounce"
+                style={{ 
+                  top: `${20 + (idx * 15)}%`, 
+                  left: `${30 + (idx * 10)}%` 
+                }}
+              >
+                <div className="relative group/marker">
+                  <MapPin className={cn(
+                    "w-12 h-12 transition-transform duration-300 group-hover/marker:scale-125",
+                    mosque.famous ? "text-secondary fill-secondary/20" : "text-primary fill-primary/20"
+                  )} />
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 glass-card px-4 py-2 rounded-2xl shadow-xl whitespace-nowrap font-black text-sm text-primary border-primary/20 opacity-0 group-hover/marker:opacity-100 transition-opacity">
+                    {mosque.name}
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
 
             {/* Map Controls */}
-            <div className="absolute bottom-6 right-6 flex flex-col gap-2">
-              <Button size="icon" variant="secondary" className="glass shadow-md">+</Button>
-              <Button size="icon" variant="secondary" className="glass shadow-md">-</Button>
+            <div className="absolute bottom-10 right-10 flex flex-col gap-3">
+              <Button size="icon" variant="secondary" className="glass-card w-14 h-14 rounded-2xl shadow-xl text-primary font-black text-2xl">+</Button>
+              <Button size="icon" variant="secondary" className="glass-card w-14 h-14 rounded-2xl shadow-xl text-primary font-black text-2xl">-</Button>
             </div>
 
-            <div className="absolute top-6 left-6 glass p-4 rounded-2xl max-w-xs shadow-lg animate-in fade-in slide-in-from-left duration-700">
-              <h3 className="font-bold text-primary">Map View</h3>
-              <p className="text-xs text-muted-foreground mt-1">Showing 3 results near your current location.</p>
+            <div className="absolute top-10 left-10 glass-card p-6 rounded-[2rem] max-w-xs shadow-2xl animate-in fade-in slide-in-from-left duration-700 border-white/40">
+              <h3 className="font-black text-2xl text-primary">Interactive Map</h3>
+              <p className="text-sm text-muted-foreground font-bold mt-2">Discover and navigate to {filteredMosques.length} major mosques across Bangladesh.</p>
+              <div className="mt-6 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                <div className="flex items-center gap-2 text-primary font-black text-xs">
+                   <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                   FAMOUS MOSQUES
+                </div>
+              </div>
             </div>
           </div>
         </div>

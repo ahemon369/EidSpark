@@ -2,27 +2,27 @@
   "placeholderImages": [
     {
       "id": "hero-mosque",
-      "description": "Elegant mosque illustration with crescent moon",
-      "imageUrl": "https://picsum.photos/seed/eid-spark-hero/1200/800",
-      "imageHint": "mosque crescent"
-    },
-    {
-      "id": "lanterns",
-      "description": "Festive Islamic lanterns",
-      "imageUrl": "https://picsum.photos/seed/eid-lanterns/600/400",
-      "imageHint": "islamic lanterns"
-    },
-    {
-      "id": "greeting-bg",
-      "description": "Ornate Islamic pattern background",
-      "imageUrl": "https://picsum.photos/seed/eid-pattern/800/800",
-      "imageHint": "islamic pattern"
+      "description": "Baitul Mukarram National Mosque at twilight",
+      "imageUrl": "https://picsum.photos/seed/baitul-mukarram/1200/800",
+      "imageHint": "mosque twilight"
     },
     {
       "id": "app-logo",
-      "description": "EidSpark Logo - Crescent moon with mosque and stars",
-      "imageUrl": "https://picsum.photos/seed/eid-spark-logo/200/200",
-      "imageHint": "eid moon mosque"
+      "description": "EidSpark Logo with crescent moon and star",
+      "imageUrl": "https://picsum.photos/seed/eidspark-logo/200/200",
+      "imageHint": "islamic crescent"
+    },
+    {
+      "id": "greeting-bg",
+      "description": "Intricate Bangladeshi traditional pattern",
+      "imageUrl": "https://picsum.photos/seed/bd-pattern/800/800",
+      "imageHint": "traditional pattern"
+    },
+    {
+      "id": "tara-masjid",
+      "description": "Tara Masjid (Star Mosque) in Dhaka",
+      "imageUrl": "https://picsum.photos/seed/tara-masjid/600/400",
+      "imageHint": "star mosque"
     }
   ]
 }
