@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useAuth, useUser } from "@/firebase"
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth"
-import { LogIn, Star, Sparkles, ArrowRight, AlertCircle } from "lucide-react"
+import { LogIn, Star, Sparkles, ArrowRight, AlertCircle, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
@@ -13,7 +13,7 @@ import Link from "next/link"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function LoginPage() {
-  const { user, loading } = useUser()
+  const { user, isUserLoading: loading } = useUser()
   const auth = useAuth()
   const router = useRouter()
   const { toast } = useToast()
@@ -27,7 +27,6 @@ export default function LoginPage() {
   }, [user, loading, router])
 
   useEffect(() => {
-    // Detect if auth instance is missing due to config issues
     if (!loading && !auth) {
       setConfigError(true)
     }
@@ -38,7 +37,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Configuration Error",
-        description: "Firebase is not configured correctly. Please check your environment variables.",
+        description: "Firebase is not configured correctly. Please check your setup.",
       })
       return
     }
@@ -54,16 +53,14 @@ export default function LoginPage() {
       })
     } catch (error: any) {
       console.error("Login Error:", error)
-      let message = "An unexpected error occurred. Please check your connection."
+      let message = "An unexpected error occurred."
       
       if (error.code === 'auth/popup-blocked') {
-        message = "The sign-in popup was blocked. Please allow popups for this site."
-      } else if (error.code === 'auth/network-request-failed') {
-        message = "Network request failed. Please check your internet connection."
-      } else if (error.code === 'auth/invalid-api-key') {
-        message = "The Firebase API key is invalid. Please check your setup."
+        message = "The sign-in popup was blocked. Please allow popups."
       } else if (error.code === 'auth/operation-not-allowed') {
-        message = "Google Sign-In is not enabled in your Firebase console."
+        message = "Google Sign-In is not enabled. Go to Firebase Console > Authentication > Sign-in method."
+      } else if (error.code === 'auth/configuration-not-found') {
+        message = "Check your Firebase project configuration."
       }
       
       toast({
@@ -90,7 +87,6 @@ export default function LoginPage() {
       
       <main className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
         <div className="relative w-full max-w-md">
-          {/* Decorative Elements */}
           <div className="absolute -top-12 -left-12 w-24 h-24 bg-secondary/20 rounded-full blur-2xl animate-pulse"></div>
           <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl animate-pulse delay-700"></div>
 
@@ -111,11 +107,18 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="p-10 space-y-8">
               {configError && (
-                <Alert variant="destructive" className="rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                <Alert variant="destructive" className="rounded-2xl border-2">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Configuration Required</AlertTitle>
-                  <AlertDescription>
-                    Firebase API keys are missing or invalid. Please add them to your environment variables to enable Google Sign-In.
+                  <AlertDescription className="space-y-4">
+                    <p>Google Sign-In needs to be enabled in your Firebase Console.</p>
+                    <Link 
+                      href="https://console.firebase.google.com/" 
+                      target="_blank"
+                      className="inline-flex items-center text-xs font-bold underline gap-1"
+                    >
+                      Open Firebase Console <ExternalLink className="w-3 h-3" />
+                    </Link>
                   </AlertDescription>
                 </Alert>
               )}
