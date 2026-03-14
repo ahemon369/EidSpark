@@ -1,15 +1,18 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Wallet, Plus, Trophy, Trash2, TrendingUp } from "lucide-react"
+import { Wallet, Plus, Trophy, Trash2, TrendingUp, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useUser, useFirestore, useCollection } from "@/firebase"
+import { collection, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore"
+import { useToast } from "@/hooks/use-toast"
 
 type SalamiEntry = {
   id: string
@@ -18,35 +21,81 @@ type SalamiEntry = {
 }
 
 export default function SalamiTracker() {
-  const [entries, setEntries] = useState<SalamiEntry[]>([
-    { id: "1", name: "Uncle Ahmed", amount: 50 },
-    { id: "2", name: "Grandpa", amount: 100 },
-    { id: "3", name: "Aunt Sarah", amount: 30 }
-  ])
+  const { user } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+  
   const [name, setName] = useState("")
   const [amount, setAmount] = useState("")
 
-  const handleAdd = (e: React.FormEvent) => {
+  // Fetch user's gifts from Firestore
+  const giftsQuery = useMemo(() => {
+    if (!db || !user) return null
+    return collection(db, "users", user.uid, "gifts")
+  }, [db, user])
+
+  const { data: gifts = [], loading } = useCollection(giftsQuery)
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !amount) return
+    if (!name || !amount || !user || !db) return
     
-    const newEntry: SalamiEntry = {
-      id: Date.now().toString(),
-      name,
-      amount: parseFloat(amount)
+    const giftAmount = parseFloat(amount)
+    
+    try {
+      // Add to user's gifts
+      await addDoc(collection(db, "users", user.uid, "gifts"), {
+        giverName: name,
+        amount: giftAmount,
+        recipientUid: user.uid,
+        createdAt: serverTimestamp()
+      })
+
+      // Update leaderboard profile
+      const total = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0) + giftAmount
+      await setDoc(doc(db, "leaderboard", user.uid), {
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        totalSalami: total
+      }, { merge: true })
+
+      setName("")
+      setAmount("")
+      toast({
+        title: "Salami Added!",
+        description: `Successfully recorded $${giftAmount} from ${name}.`
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not save entry. Please try again.",
+        variant: "destructive"
+      })
     }
+  }
+
+  const handleDelete = async (giftId: string, giftAmount: number) => {
+    if (!db || !user) return
     
-    setEntries([newEntry, ...entries])
-    setName("")
-    setAmount("")
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "gifts", giftId))
+      
+      // Update leaderboard
+      const total = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0) - giftAmount
+      await setDoc(doc(db, "leaderboard", user.uid), {
+        totalSalami: Math.max(0, total)
+      }, { merge: true })
+
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Delete failed"
+      })
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setEntries(entries.filter(e => e.id !== id))
-  }
-
-  const total = entries.reduce((acc, curr) => acc + curr.amount, 0)
-  const sortedEntries = [...entries].sort((a, b) => b.amount - a.amount)
+  const total = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+  const sortedEntries = [...gifts].sort((a, b) => (b.amount || 0) - (a.amount || 0))
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,123 +106,134 @@ export default function SalamiTracker() {
           <p className="text-muted-foreground mt-4">Keep track of your Eid gifts and see who's the top contributor!</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="shadow-lg border-primary/10 overflow-hidden">
-              <div className="emerald-gradient p-8 text-white text-center">
-                <Wallet className="w-10 h-10 mx-auto mb-4 opacity-80" />
-                <p className="text-white/80 font-medium mb-1">Total Salami Collected</p>
-                <p className="text-4xl font-bold">${total.toLocaleString()}</p>
-              </div>
-              <CardContent className="p-6">
-                <form onSubmit={handleAdd} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">From Person</Label>
-                    <Input 
-                      id="name" 
-                      placeholder="e.g. Uncle Omar" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount ($)</Label>
-                    <Input 
-                      id="amount" 
-                      type="number" 
-                      placeholder="0" 
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <Button type="submit" className="w-full emerald-gradient rounded-xl py-6">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Add Entry
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-accent/30 border-none shadow-none p-6 flex items-center gap-4">
-              <div className="p-3 bg-white rounded-2xl shadow-sm">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-primary">Average Gift</p>
-                <p className="text-2xl font-bold text-primary">
-                  ${entries.length > 0 ? (total / entries.length).toFixed(1) : 0}
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg border-primary/10">
-              <CardHeader className="flex flex-row items-center justify-between border-b">
-                <div>
-                  <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-                    <Trophy className="w-6 h-6 text-secondary" />
-                    Gift Leaderboard
-                  </CardTitle>
-                  <CardDescription>Ranked by highest contribution</CardDescription>
+        {!user ? (
+          <Card className="max-w-md mx-auto p-12 text-center space-y-6 bg-accent/20 border-dashed border-2">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-8 h-8 text-primary/40" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-primary">Sign in to start tracking</h3>
+              <p className="text-muted-foreground">Log in with your account to save your Salami history and join the leaderboard.</p>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
+            <div className="lg:col-span-1 space-y-6">
+              <Card className="shadow-lg border-primary/10 overflow-hidden">
+                <div className="emerald-gradient p-8 text-white text-center">
+                  <Wallet className="w-10 h-10 mx-auto mb-4 opacity-80" />
+                  <p className="text-white/80 font-medium mb-1">Total Salami Collected</p>
+                  <p className="text-4xl font-bold">${total.toLocaleString()}</p>
                 </div>
-                <div className="text-sm font-bold text-primary bg-accent/50 px-3 py-1 rounded-full">
-                  {entries.length} Entries
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {sortedEntries.length > 0 ? (
-                    sortedEntries.map((entry, index) => (
-                      <div 
-                        key={entry.id} 
-                        className={cn(
-                          "flex items-center justify-between p-6 hover:bg-accent/20 transition-colors",
-                          index === 0 && "bg-secondary/5"
-                        )}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                            index === 0 ? "bg-secondary text-primary" : "bg-muted text-muted-foreground"
-                          )}>
-                            {index + 1}
-                          </div>
-                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                            <AvatarFallback className="bg-primary text-white font-bold">
-                              {entry.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-bold text-lg text-primary">{entry.name}</p>
-                            <p className="text-xs text-muted-foreground">Contributor #{index + 1}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <p className="text-2xl font-bold text-primary">${entry.amount}</p>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
-                            onClick={() => handleDelete(entry.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-20 text-center text-muted-foreground">
-                      No entries yet. Start by adding your first gift!
+                <CardContent className="p-6">
+                  <form onSubmit={handleAdd} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">From Person</Label>
+                      <Input 
+                        id="name" 
+                        placeholder="e.g. Uncle Omar" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="rounded-xl"
+                        required
+                      />
                     </div>
-                  )}
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">Amount ($)</Label>
+                      <Input 
+                        id="amount" 
+                        type="number" 
+                        placeholder="0" 
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="rounded-xl"
+                        required
+                        min="0"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full emerald-gradient rounded-xl py-6">
+                      <Plus className="w-5 h-5 mr-2" />
+                      Add Entry
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-accent/30 border-none shadow-none p-6 flex items-center gap-4">
+                <div className="p-3 bg-white rounded-2xl shadow-sm">
+                  <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="text-sm font-medium text-primary">Average Gift</p>
+                  <p className="text-2xl font-bold text-primary">
+                    ${gifts.length > 0 ? (total / gifts.length).toFixed(1) : 0}
+                  </p>
+                </div>
+              </Card>
+            </div>
+
+            <div className="lg:col-span-2">
+              <Card className="shadow-lg border-primary/10">
+                <CardHeader className="flex flex-row items-center justify-between border-b">
+                  <div>
+                    <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-secondary" />
+                      Your Gift History
+                    </CardTitle>
+                    <CardDescription>All your Eidi records in one place</CardDescription>
+                  </div>
+                  <div className="text-sm font-bold text-primary bg-accent/50 px-3 py-1 rounded-full">
+                    {gifts.length} Entries
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y max-h-[500px] overflow-y-auto custom-scrollbar">
+                    {loading ? (
+                      <div className="p-12 text-center text-muted-foreground">Loading your gifts...</div>
+                    ) : sortedEntries.length > 0 ? (
+                      sortedEntries.map((entry, index) => (
+                        <div 
+                          key={entry.id} 
+                          className={cn(
+                            "flex items-center justify-between p-6 hover:bg-accent/20 transition-colors",
+                            index === 0 && "bg-secondary/5"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                              <AvatarFallback className="bg-primary text-white font-bold">
+                                {entry.giverName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-bold text-lg text-primary">{entry.giverName}</p>
+                              <p className="text-xs text-muted-foreground">Received on {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString() : 'Just now'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <p className="text-2xl font-bold text-primary">${entry.amount}</p>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                              onClick={() => handleDelete(entry.id, entry.amount)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-20 text-center text-muted-foreground">
+                        No entries yet. Start by adding your first gift!
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

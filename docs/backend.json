@@ -1,0 +1,40 @@
+
+{
+  "entities": {
+    "SalamiGift": {
+      "title": "Salami Gift",
+      "description": "An Eidi/Salami gift received by a user.",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "giverName": { "type": "string" },
+        "recipientUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["amount", "giverName", "recipientUid", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User statistics and profile information for the leaderboard.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "totalSalami": { "type": "number" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}/gifts/{giftId}": {
+      "schema": "SalamiGift",
+      "description": "Salami gifts received by a specific user."
+    },
+    "/leaderboard/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public profile for global leaderboard ranking."
+    }
+  }
+}

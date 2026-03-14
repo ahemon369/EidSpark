@@ -3,14 +3,24 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Moon, Menu, X, Sparkles } from "lucide-react"
+import { Moon, Menu, X, Sparkles, LogIn, LogOut, User } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useUser, useAuth } from "@/firebase"
+import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const navItems = [
   { name: "Home", href: "/" },
-  { name: "Tools", href: "/#tools" },
   { name: "Zakat", href: "/tools/zakat" },
   { name: "Greeting", href: "/tools/greeting" },
   { name: "Salami", href: "/tools/salami" },
@@ -21,6 +31,23 @@ const navItems = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { user, loading } = useUser()
+  const auth = useAuth()
+
+  const handleLogin = async () => {
+    if (!auth) return
+    const provider = new GoogleAuthProvider()
+    try {
+      await signInWithPopup(auth, provider)
+    } catch (error) {
+      console.error("Login failed:", error)
+    }
+  }
+
+  const handleLogout = async () => {
+    if (!auth) return
+    await signOut(auth)
+  }
 
   return (
     <nav className="sticky top-0 z-50 glass shadow-sm">
@@ -34,7 +61,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -49,9 +76,44 @@ export function Navbar() {
                 {item.name}
               </Link>
             ))}
-            <Button size="sm" className="ml-4 emerald-gradient">
-              Get Started
-            </Button>
+            
+            <div className="ml-4 pl-4 border-l border-border/50">
+              {loading ? (
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+              ) : user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} />
+                        <AvatarFallback>{user.displayName?.[0] || <User className="w-4 h-4" />}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/tools/salami">My Salami Tracker</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button size="sm" onClick={handleLogin} className="emerald-gradient rounded-full">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -85,8 +147,18 @@ export function Navbar() {
                 {item.name}
               </Link>
             ))}
-            <div className="px-3 pt-2">
-              <Button className="w-full emerald-gradient">Get Started</Button>
+            <div className="px-3 pt-4 border-t border-border/50 mt-4">
+              {user ? (
+                <Button onClick={handleLogout} variant="outline" className="w-full justify-start text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log Out
+                </Button>
+              ) : (
+                <Button onClick={handleLogin} className="w-full emerald-gradient">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         </div>
