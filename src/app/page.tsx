@@ -1,3 +1,7 @@
+
+"use client"
+
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -17,7 +21,7 @@ import {
   MessageCircle,
   Layout,
   Map as MapIcon,
-  MousePointer2
+  Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -92,8 +96,64 @@ const highlights = [
 ]
 
 export default function Home() {
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const heroImage = PlaceHolderImages.find(img => img.id === "hero-mosque")
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
+
+  // Auto-cycling Hero Preview
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPreviewIndex((prev) => (prev + 1) % 3)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Live Countdown logic
+  useEffect(() => {
+    const target = new Date()
+    target.setDate(target.getDate() + 18) // Simulated future Eid date
+    
+    const tick = () => {
+      const now = new Date().getTime()
+      const diff = target.getTime() - now
+      if (diff > 0) {
+        setCountdown({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((diff / (1000 * 60)) % 60),
+          seconds: Math.floor((diff / 1000) % 60),
+        })
+      }
+    }
+    const timer = setInterval(tick, 1000)
+    tick()
+    return () => clearInterval(timer)
+  }, [])
+
+  const previews = [
+    {
+      label: "Greeting Designer",
+      title: "Eid Mubarak Card",
+      desc: "AI-generated trilingual blessings.",
+      icon: Send,
+      image: "https://picsum.photos/seed/preview-greeting/600/400"
+    },
+    {
+      label: "Selfie Studio",
+      title: "Royal Arch Frame",
+      desc: "AI background replacement active.",
+      icon: Camera,
+      image: "https://picsum.photos/seed/preview-selfie/600/400"
+    },
+    {
+      label: "Mosque Finder",
+      title: "Nearby Prayer Locations",
+      desc: "Real-time markers in Dhaka.",
+      icon: MapIcon,
+      image: "https://picsum.photos/seed/preview-map/600/400"
+    }
+  ]
 
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white islamic-pattern">
@@ -101,7 +161,7 @@ export default function Home() {
       
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-48 emerald-gradient">
+        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-40 emerald-gradient">
           <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
              <div className="absolute top-20 right-[10%] animate-float">
                <Moon className="w-40 h-40 text-secondary fill-secondary" />
@@ -109,7 +169,6 @@ export default function Home() {
              <div className="absolute bottom-20 left-[5%] animate-float delay-1000">
                <Sparkles className="w-32 h-32 text-secondary/40" />
              </div>
-             {/* Subtle Pattern Overlay */}
              <div className="absolute inset-0 opacity-10 islamic-pattern"></div>
           </div>
           
@@ -140,46 +199,102 @@ export default function Home() {
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-10 pt-6">
-                  <div className="flex -space-x-4">
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <div key={i} className="w-14 h-14 rounded-full border-4 border-white/20 bg-muted overflow-hidden shadow-lg transition-transform hover:scale-110 hover:z-20">
-                        <Image src={`https://picsum.photos/seed/user-${i}/100/100`} alt="User" width={56} height={56} />
+                <div className="space-y-4 pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex -space-x-3">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="w-12 h-12 rounded-full border-4 border-emerald-900 bg-muted overflow-hidden shadow-lg transition-transform hover:scale-110 hover:z-20">
+                          <Image src={`https://picsum.photos/seed/user-${i}/100/100`} alt="User" width={48} height={48} />
+                        </div>
+                      ))}
+                      <div className="w-12 h-12 rounded-full border-4 border-emerald-900 bg-secondary flex items-center justify-center text-primary font-black text-xs shadow-lg">
+                        +10k
                       </div>
-                    ))}
-                  </div>
-                  <div className="text-sm font-bold text-white/70">
-                    <span className="text-white block text-2xl font-black tracking-tight">10,000+</span>
-                    Users across Bangladesh
+                    </div>
+                    <div className="text-sm font-bold text-white/70">
+                      <span className="text-white block text-lg font-black tracking-tight">10,000+ Active Users</span>
+                      In Dhaka, Chittagong, Sylhet & Rajshahi
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Interactive Hero Preview */}
               <div className="relative animate-in fade-in zoom-in duration-1000 delay-200 hidden lg:block">
-                <div className="relative z-10 rounded-[4rem] overflow-hidden shadow-[0_48px_96px_-12px_rgba(0,0,0,0.5)] border-8 border-white/10 animate-float bg-white/5 backdrop-blur-md">
-                  <Image
-                    src={heroImage?.imageUrl || ""}
-                    alt="Baitul Mukarram National Mosque"
-                    width={1200}
-                    height={800}
-                    className="object-cover opacity-95 transition-transform hover:scale-105 duration-1000"
-                    priority
-                    data-ai-hint="mosque twilight"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                  <div className="absolute bottom-12 left-12 right-12 text-white glass-card p-8 rounded-[2.5rem] border-white/20 bg-white/10 backdrop-blur-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Sparkles className="w-6 h-6 text-secondary fill-secondary" />
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-secondary">AI Preview</span>
-                    </div>
-                    <p className="text-3xl font-black italic leading-tight">"Tradition meets technology in every byte."</p>
-                  </div>
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-20">
+                   <div className="bg-secondary text-primary px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl border-2 border-white/20 animate-pulse">
+                     Live Feature Preview
+                   </div>
                 </div>
-                {/* Decorative Blobs */}
+
+                <div className="relative z-10 rounded-[4rem] overflow-hidden shadow-[0_48px_96px_-12px_rgba(0,0,0,0.5)] border-8 border-white/10 bg-white/5 backdrop-blur-md aspect-square max-w-lg mx-auto">
+                  {previews.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      className={cn(
+                        "absolute inset-0 transition-all duration-1000 ease-in-out",
+                        previewIndex === idx ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95 pointer-events-none"
+                      )}
+                    >
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover opacity-90"
+                        priority={idx === 0}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-12 left-10 right-10 text-white glass-card p-8 rounded-[2.5rem] border-white/20 bg-white/10 backdrop-blur-xl">
+                        <div className="flex items-center gap-3 mb-3">
+                          <item.icon className="w-6 h-6 text-secondary" />
+                          <span className="text-xs font-black uppercase tracking-[0.2em] text-secondary">{item.label}</span>
+                        </div>
+                        <h4 className="text-3xl font-black mb-2">{item.title}</h4>
+                        <p className="text-white/70 font-medium">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
                 <div className="absolute -top-20 -right-20 w-96 h-96 bg-secondary/30 rounded-full blur-[120px] -z-10 animate-pulse"></div>
                 <div className="absolute -bottom-20 -left-20 w-[30rem] h-[30rem] bg-primary/30 rounded-full blur-[140px] -z-10 animate-pulse delay-700"></div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Live Countdown Section */}
+        <section className="relative -mt-16 z-20 px-4">
+          <div className="max-w-5xl mx-auto bg-white rounded-[3rem] p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] border border-primary/5">
+             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex items-center gap-4">
+                   <div className="w-16 h-16 rounded-2xl emerald-gradient flex items-center justify-center text-white shadow-lg">
+                      <Timer className="w-8 h-8" />
+                   </div>
+                   <div>
+                      <h3 className="text-2xl font-black text-primary">Eid-ul-Fitr Countdown</h3>
+                      <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Stay Excited • Stay Blessed</p>
+                   </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-4 md:gap-8">
+                   {[
+                     { label: "Days", value: countdown.days },
+                     { label: "Hours", value: countdown.hours },
+                     { label: "Mins", value: countdown.minutes },
+                     { label: "Secs", value: countdown.seconds }
+                   ].map((t) => (
+                     <div key={t.label} className="text-center group">
+                        <div className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums">
+                          {t.value.toString().padStart(2, '0')}
+                        </div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
+                          {t.label}
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </div>
           </div>
         </section>
 
@@ -194,16 +309,16 @@ export default function Home() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
               {tools.map((tool, index) => (
                 <Link key={tool.title} href={tool.href} className="group">
-                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.12)] transition-all duration-500 rounded-[3rem] overflow-hidden group-hover:-translate-y-3 glow-hover border-2 border-transparent hover:border-primary/5">
+                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.12)] transition-all duration-300 rounded-[3rem] overflow-hidden group-hover:-translate-y-3 active:scale-95 border-2 border-transparent hover:border-primary/5">
                     <CardHeader className="p-12 pb-0">
-                      <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.color)}>
+                      <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.color)}>
                         <tool.icon className="w-10 h-10" />
                       </div>
                       <CardTitle className="text-3xl font-black group-hover:text-primary transition-colors">{tool.title}</CardTitle>
                       <CardDescription className="text-lg mt-6 leading-relaxed font-medium">{tool.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-12 pt-8 flex justify-end">
-                      <div className="w-14 h-14 rounded-full border-2 border-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:scale-110 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full border-2 border-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:scale-110 group-hover:translate-x-1 transition-all duration-300">
                         <ArrowRight className="w-7 h-7" />
                       </div>
                     </CardContent>
@@ -211,6 +326,42 @@ export default function Home() {
                 </Link>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Mosque Finder Highlight */}
+        <section className="py-24 px-4">
+          <div className="max-w-7xl mx-auto emerald-gradient rounded-[4rem] p-12 lg:p-24 relative overflow-hidden shadow-2xl">
+            <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+               <div className="space-y-8 text-white">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest">
+                    <MapPin className="w-4 h-4 text-secondary" />
+                    <span>Explore Bangladesh</span>
+                  </div>
+                  <h2 className="text-5xl lg:text-7xl font-black tracking-tight leading-tight">Find Mosques Near You 🕌</h2>
+                  <p className="text-xl text-white/80 font-medium max-w-lg">
+                    Discover nearby mosques across Bangladesh with real-time locations and accurate prayer times. Perfect for Eid prayers or daily congregation.
+                  </p>
+                  <Button size="lg" className="bg-secondary text-primary font-black px-12 h-16 rounded-2xl text-xl hover:scale-105 transition-all shadow-xl" asChild>
+                    <Link href="/tools/mosque">Open Mosque Map</Link>
+                  </Button>
+               </div>
+               
+               <div className="relative hidden lg:block">
+                  <div className="aspect-[4/3] bg-white/10 rounded-[3rem] border-8 border-white/10 backdrop-blur-md relative overflow-hidden group">
+                     <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
+                     <MapIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 text-white/20" />
+                     {/* Floating marker simulations */}
+                     <div className="absolute top-[20%] left-[30%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-bounce">
+                        <MapPin className="w-5 h-5 text-primary" />
+                     </div>
+                     <div className="absolute top-[60%] left-[70%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-bounce delay-700">
+                        <MapPin className="w-5 h-5 text-primary" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
           </div>
         </section>
 
@@ -251,11 +402,11 @@ export default function Home() {
                     Join thousands of Bangladeshi families making their Eid more organized and joyful.
                   </p>
                   <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-                    <Button size="lg" className="bg-secondary text-primary font-black px-12 h-20 rounded-3xl text-2xl hover:scale-105 transition-transform shadow-2xl">
-                      Get Started Free
+                    <Button size="lg" className="bg-secondary text-primary font-black px-12 h-20 rounded-3xl text-2xl hover:scale-105 transition-transform shadow-2xl" asChild>
+                      <Link href="/login">Get Started Free</Link>
                     </Button>
-                    <Button size="lg" variant="outline" className="border-2 border-white/30 text-white font-black px-12 h-20 rounded-3xl text-2xl hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl">
-                      Explore Eid Tools
+                    <Button size="lg" variant="outline" className="border-2 border-white/30 text-white font-black px-12 h-20 rounded-3xl text-2xl hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl" asChild>
+                      <Link href="#tools">Explore Eid Tools</Link>
                     </Button>
                   </div>
                 </div>
@@ -269,13 +420,11 @@ export default function Home() {
                            <Sparkles className="w-24 h-24 text-secondary/40 drop-shadow-[0_0_20px_rgba(233,190,36,0.5)]" />
                         </div>
                      </div>
-                     {/* Lantern glow effect silhoutte */}
                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-secondary/20 rounded-full blur-[80px]"></div>
                    </div>
                 </div>
               </div>
               
-              {/* Patterns */}
               <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
               <div className="absolute bottom-0 left-0 w-[40rem] h-[40rem] bg-secondary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
             </div>
