@@ -1,0 +1,215 @@
+
+"use client"
+
+import { ReactNode, useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import { useUser, useAuth } from "@/firebase"
+import { signOut } from "firebase/auth"
+import { 
+  LayoutDashboard, 
+  Send, 
+  Camera, 
+  Wallet, 
+  MapPin, 
+  History, 
+  Settings, 
+  LogOut, 
+  Bell, 
+  Plus, 
+  Menu,
+  X,
+  ChevronRight,
+  Sparkles
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+const menuItems = [
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "My Greetings", href: "/dashboard/greetings", icon: Send },
+  { name: "Selfie Studio", href: "/tools/selfie", icon: Camera },
+  { name: "Salami History", href: "/dashboard/salami", icon: Wallet },
+  { name: "Saved Mosques", href: "/dashboard/mosques", icon: MapPin },
+  { name: "Zakat History", href: "/dashboard/zakat", icon: History },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+]
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const { user, isUserLoading } = useUser()
+  const auth = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const { toast } = useToast()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login")
+    }
+  }, [user, isUserLoading, router])
+
+  const handleLogout = async () => {
+    if (!auth) return
+    try {
+      await signOut(auth)
+      toast({ title: "Signed Out", description: "See you next Eid!" })
+      router.push("/")
+    } catch (error) {}
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex">
+      {/* Sidebar Mobile Toggle */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="fixed top-4 left-4 z-50 lg:hidden bg-white shadow-md border"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </Button>
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 w-72 bg-white border-r transition-transform lg:relative lg:translate-x-0",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="p-8">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <Sparkles className="w-6 h-6 text-secondary" />
+              </div>
+              <span className="text-xl font-black text-primary">EidSpark</span>
+            </Link>
+          </div>
+
+          {/* Nav Items */}
+          <nav className="flex-grow px-4 space-y-2">
+            {menuItems.map((item) => (
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
+                  pathname === item.href 
+                    ? "bg-primary/5 text-primary shadow-sm ring-1 ring-primary/10" 
+                    : "text-muted-foreground hover:bg-slate-50 hover:text-primary"
+                )}
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <item.icon className={cn("w-5 h-5", pathname === item.href ? "text-primary" : "text-muted-foreground")} />
+                {item.name}
+                {pathname === item.href && <ChevronRight className="ml-auto w-4 h-4 opacity-50" />}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Footer User */}
+          <div className="p-6 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-destructive hover:bg-destructive/5 font-bold rounded-xl h-12"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-grow flex flex-col h-screen overflow-hidden">
+        {/* Header */}
+        <header className="h-20 bg-white border-b flex items-center justify-between px-8 shrink-0">
+          <div className="hidden lg:block">
+            <h1 className="text-xl font-black text-slate-800">
+              {menuItems.find(i => i.href === pathname)?.name || "Dashboard"}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-4 ml-auto lg:ml-0">
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="rounded-xl font-bold gap-2">
+                    <Plus className="w-4 h-4" /> Quick Create
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 rounded-xl p-2" align="end">
+                  <DropdownMenuItem asChild className="rounded-lg">
+                    <Link href="/tools/greeting">New Greeting</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-lg">
+                    <Link href="/tools/selfie">New Selfie</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-lg">
+                    <Link href="/tools/salami">Send Salami</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <Button variant="ghost" size="icon" className="rounded-full relative">
+              <Bell className="w-5 h-5 text-slate-600" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full border-2 border-white"></div>
+            </Button>
+
+            <div className="h-8 w-px bg-slate-200 mx-2"></div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-1 rounded-xl flex items-center gap-3 hover:bg-slate-50">
+                  <Avatar className="h-10 w-10 border-2 border-primary/10">
+                    <AvatarImage src={user?.photoURL || ""} />
+                    <AvatarFallback className="bg-primary text-white font-black">{user?.displayName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-black text-slate-800">{user?.displayName}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Premium User</p>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 rounded-xl p-2" align="end">
+                <DropdownMenuLabel className="font-bold">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link href="/dashboard/settings">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="rounded-lg text-destructive">
+                  Log Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+
+        {/* Content Scroll Area */}
+        <main className="flex-grow overflow-y-auto p-8 custom-scrollbar">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}

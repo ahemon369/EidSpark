@@ -32,7 +32,7 @@
         "generatedImageUrl": { "type": "string", "format": "uri" },
         "generationDate": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "userId", "recipientName", "templateId", "generatedImageUrl", "generationDate"]
+      "required": ["id", "userId", "recipientName", "templateId", "generationDate"]
     },
     "SalamiEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -56,6 +56,7 @@
       "description": "A digital Salami envelope sent from one user to another.",
       "properties": {
         "id": { "type": "string" },
+        "senderId": { "type": "string" },
         "senderName": { "type": "string" },
         "recipientName": { "type": "string" },
         "message": { "type": "string" },
@@ -64,6 +65,23 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "senderName", "recipientName", "createdAt"]
+    },
+    "SavedMosque": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavedMosque",
+      "type": "object",
+      "description": "A mosque saved by a user for quick access.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "mosqueId": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "lat": { "type": "number" },
+        "lon": { "type": "number" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "savedAt"]
     }
   },
   "auth": {
@@ -97,6 +115,13 @@
         "definition": {
           "entityName": "SalamiEntry",
           "description": "Salami tracker entries."
+        }
+      },
+      {
+        "path": "/users/{userId}/savedMosques/{id}",
+        "definition": {
+          "entityName": "SavedMosque",
+          "description": "User's saved mosques."
         }
       },
       {

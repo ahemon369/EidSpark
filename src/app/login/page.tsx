@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Navbar } from "@/components/navbar"
@@ -30,7 +31,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user && !loading) {
-      router.push("/")
+      router.push("/dashboard")
     }
   }, [user, loading, router])
 
