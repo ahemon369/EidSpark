@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
@@ -99,13 +100,6 @@ const templates = [
   },
 ]
 
-const stickers = [
-  { id: 'lantern-1', name: 'Lantern', icon: Sparkles },
-  { id: 'moon-1', name: 'Moon', icon: Moon },
-  { id: 'star-1', name: 'Star', icon: Star },
-  { id: 'mosque-1', name: 'Mosque', icon: Layout },
-]
-
 const fonts = [
   { name: 'Hind Siliguri', value: 'Hind Siliguri' },
   { name: 'Inter', value: 'Inter' },
@@ -160,6 +154,11 @@ export default function CanvaGreetingGenerator() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   
+  // AI Params State
+  const [aiName, setAiName] = useState("")
+  const [aiLang, setAiLang] = useState("bangla")
+  const [aiStyle, setAiStyle] = useState("heartfelt")
+
   // Dragging state
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -200,10 +199,14 @@ export default function CanvaGreetingGenerator() {
   }
 
   // --- AI Integration ---
-  const handleAiGenerate = async (name: string, style: any, lang: any) => {
+  const handleAiGenerate = async () => {
     setIsLoading(true)
     try {
-      const result = await generateEidGreeting({ recipientName: name, greetingStyle: style, language: lang })
+      const result = await generateEidGreeting({ 
+        recipientName: aiName || "Friend", 
+        greetingStyle: aiStyle as any, 
+        language: aiLang as any 
+      })
       
       // Update existing text elements
       setElements(prev => prev.map(el => {
@@ -296,7 +299,6 @@ export default function CanvaGreetingGenerator() {
         ctx.font = `bold ${el.style.fontSize}px "${el.style.fontFamily}", sans-serif`
         ctx.textAlign = el.style.textAlign || 'center'
         
-        // Basic multi-line wrapping
         const words = el.content.split(' ')
         let line = ''
         let lines = []
@@ -321,10 +323,8 @@ export default function CanvaGreetingGenerator() {
       } else if (el.type === 'image') {
         const img = new Image()
         img.src = el.content
-        // Wait for image load logic would be here in a real export
         ctx.drawImage(img, -el.width / 2, -el.height / 2, el.width, el.height)
       } else if (el.type === 'sticker') {
-        // Simple sticker representation (Placeholder for complex SVG)
         ctx.fillStyle = template.secondaryColor
         ctx.beginPath()
         ctx.arc(0, 0, el.width / 2, 0, Math.PI * 2)
@@ -372,7 +372,7 @@ export default function CanvaGreetingGenerator() {
     try {
       await addDoc(collection(db, "users", user.uid, "eidGreetings"), {
         userId: user.uid,
-        recipientName: elements.find(el => el.id === 'recipient')?.content || 'Friend',
+        recipientName: aiName || elements.find(el => el.id === 'recipient')?.content || 'Friend',
         templateId: template.id,
         elements: elements,
         generationDate: new Date().toISOString()
@@ -383,6 +383,46 @@ export default function CanvaGreetingGenerator() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleReset = () => {
+    setElements([
+      {
+        id: 'title',
+        type: 'text',
+        x: 540,
+        y: 200,
+        width: 800,
+        height: 120,
+        rotation: 0,
+        content: 'Eid Mubarak',
+        style: { fontSize: 80, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' }
+      },
+      {
+        id: 'message',
+        type: 'text',
+        x: 540,
+        y: 500,
+        width: 800,
+        height: 400,
+        rotation: 0,
+        content: 'Wishing you a blessed and joyful Eid celebration full of peace and happiness.',
+        style: { fontSize: 40, color: '#ffffff', fontFamily: 'Hind Siliguri', textAlign: 'center' }
+      },
+      {
+        id: 'recipient',
+        type: 'text',
+        x: 540,
+        y: 850,
+        width: 800,
+        height: 100,
+        rotation: 0,
+        content: 'Dear Friend',
+        style: { fontSize: 50, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' }
+      }
+    ])
+    setSelectedId(null)
+    toast({ title: "Card Reset", description: "All manual changes cleared." })
   }
 
   return (
@@ -410,36 +450,38 @@ export default function CanvaGreetingGenerator() {
                 <TabsContent value="ai" className="space-y-4">
                   <div className="space-y-3">
                     <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recipient Name</Label>
-                    <Input id="ai-name" placeholder="Name" className="rounded-xl h-12" />
+                    <Input 
+                      value={aiName}
+                      onChange={(e) => setAiName(e.target.value)}
+                      placeholder="Name" 
+                      className="rounded-xl h-12" 
+                    />
                   </div>
                   <div className="space-y-3">
                     <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Style & Language</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Select defaultValue="bangla" id="ai-lang">
+                      <Select value={aiLang} onValueChange={setAiLang}>
                         <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="bangla">Bengali</SelectItem>
                           <SelectItem value="english">English</SelectItem>
+                          <SelectItem value="arabic">Arabic</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Select defaultValue="heartfelt" id="ai-style">
+                      <Select value={aiStyle} onValueChange={setAiStyle}>
                         <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="heartfelt">Heartfelt</SelectItem>
-                          <SelectItem value="islamic">Blessing</SelectItem>
+                          <SelectItem value="blessing">Blessing</SelectItem>
                           <SelectItem value="formal">Formal</SelectItem>
+                          <SelectItem value="simple">Simple</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <Button 
                     className="w-full emerald-gradient h-12 font-black rounded-xl"
-                    onClick={() => {
-                      const name = (document.getElementById('ai-name') as HTMLInputElement).value
-                      const lang = (document.getElementById('ai-lang') as HTMLInputElement).getAttribute('data-value') || 'bangla'
-                      const style = (document.getElementById('ai-style') as HTMLInputElement).getAttribute('data-value') || 'heartfelt'
-                      handleAiGenerate(name, style, lang)
-                    }}
+                    onClick={handleAiGenerate}
                     disabled={isLoading}
                   >
                     {isLoading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" /> Magic Text</>}
@@ -589,7 +631,6 @@ export default function CanvaGreetingGenerator() {
                   <img src={el.content} alt="Element" className="w-full h-auto" draggable={false} />
                 )}
                 
-                {/* Transform Handles (UI only) */}
                 {selectedId === el.id && (
                   <>
                     <div className="absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
@@ -656,7 +697,7 @@ export default function CanvaGreetingGenerator() {
                    <span className="text-xs font-black text-primary uppercase">Pro Tip</span>
                  </div>
                  <p className="text-xs text-primary/70 font-medium leading-relaxed">
-                   Use the **Magic Text** button in the sidebar to have our AI write a beautiful Bengali or English blessing for you!
+                   Use the **Magic Text** button in the sidebar to have our AI write a beautiful blessing for you!
                  </p>
               </div>
             </CardContent>
@@ -665,44 +706,4 @@ export default function CanvaGreetingGenerator() {
       </main>
     </div>
   )
-
-  function handleReset() {
-    setElements([
-      {
-        id: 'title',
-        type: 'text',
-        x: 540,
-        y: 200,
-        width: 800,
-        height: 120,
-        rotation: 0,
-        content: 'Eid Mubarak',
-        style: { fontSize: 80, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' }
-      },
-      {
-        id: 'message',
-        type: 'text',
-        x: 540,
-        y: 500,
-        width: 800,
-        height: 400,
-        rotation: 0,
-        content: 'Wishing you a blessed and joyful Eid celebration full of peace and happiness.',
-        style: { fontSize: 40, color: '#ffffff', fontFamily: 'Hind Siliguri', textAlign: 'center' }
-      },
-      {
-        id: 'recipient',
-        type: 'text',
-        x: 540,
-        y: 850,
-        width: 800,
-        height: 100,
-        rotation: 0,
-        content: 'Dear Friend',
-        style: { fontSize: 50, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' }
-      }
-    ])
-    setSelectedId(null)
-    toast({ title: "Card Reset", description: "All manual changes cleared." })
-  }
 }
