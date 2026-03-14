@@ -9,7 +9,8 @@ import {
   ArrowRight,
   Star,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -33,6 +34,13 @@ const tools = [
     color: "bg-amber-100 text-amber-700"
   },
   {
+    title: "Selfie Frame",
+    description: "Decorate your Eid selfies with beautiful themed frames and share.",
+    icon: Camera,
+    href: "/tools/selfie",
+    color: "bg-orange-100 text-orange-700"
+  },
+  {
     title: "Salami Tracker",
     description: "Keep track of your Eid Eidi/Salami and join the national leaderboard.",
     icon: Wallet,
@@ -47,7 +55,7 @@ const tools = [
     color: "bg-purple-100 text-purple-700"
   },
   {
-    title: "Bangladesh Mosque Finder",
+    title: "Mosque Finder",
     description: "Locate mosques near you across Dhaka, Chittagong, and beyond.",
     icon: MapPin,
     href: "/tools/mosque",
@@ -220,6 +228,7 @@ export default function Home() {
                 <li><Link href="/tools/zakat" className="hover:text-primary transition-colors">Zakat Calculator</Link></li>
                 <li><Link href="/tools/greeting" className="hover:text-primary transition-colors">Greeting Generator</Link></li>
                 <li><Link href="/tools/salami" className="hover:text-primary transition-colors">Salami Tracker</Link></li>
+                <li><Link href="/tools/selfie" className="hover:text-primary transition-colors">Selfie Frame</Link></li>
               </ul>
             </div>
 

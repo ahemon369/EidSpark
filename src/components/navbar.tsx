@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, Camera } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -25,6 +25,7 @@ const navItems = [
   { name: "Home", href: "/" },
   { name: "Zakat", href: "/tools/zakat" },
   { name: "Greeting", href: "/tools/greeting" },
+  { name: "Selfie", href: "/tools/selfie" },
   { name: "Salami", href: "/tools/salami" },
   { name: "Countdown", href: "/tools/countdown" },
   { name: "Mosques", href: "/tools/mosque" },
@@ -110,6 +111,9 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/tools/salami">My Salami Tracker</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/tools/selfie">Selfie Generator</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
