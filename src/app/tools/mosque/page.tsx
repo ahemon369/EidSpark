@@ -4,9 +4,10 @@ import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Search, Navigation, Clock, Users, Globe } from "lucide-react"
+import { MapPin, Search, Navigation, Clock, Users, Globe, ArrowRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const famousMosques = [
   {
