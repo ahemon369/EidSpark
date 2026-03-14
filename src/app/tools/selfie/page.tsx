@@ -58,17 +58,14 @@ export default function SelfieFrameGenerator() {
     img.src = image
 
     img.onload = () => {
-      // Set canvas size (HD)
       canvas.width = 1080
       canvas.height = 1080
 
-      // Draw original image (cropped to square)
       const size = Math.min(img.width, img.height)
       const x = (img.width - size) / 2
       const y = (img.height - size) / 2
       ctx.drawImage(img, x, y, size, size, 0, 0, 1080, 1080)
 
-      // Draw Frame Overlay (using drawing operations instead of external SVG for speed/reliability)
       ctx.lineWidth = 40
       const gradient = ctx.createLinearGradient(0, 0, 1080, 1080)
       if (selectedFrame.id === 'frame-1') {
@@ -88,24 +85,20 @@ export default function SelfieFrameGenerator() {
       ctx.strokeStyle = gradient
       ctx.strokeRect(20, 20, 1040, 1040)
 
-      // Background for text
       ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
       ctx.fillRect(0, 850, 1080, 230)
 
-      // "Eid Mubarak" text
       ctx.fillStyle = '#ffffff'
       ctx.font = 'bold 80px Inter, sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText("Eid Mubarak", 540, 930)
 
-      // Name text
       if (name) {
-        ctx.fillStyle = '#fbbf24' // Gold color for name
+        ctx.fillStyle = '#fbbf24'
         ctx.font = '500 50px Inter, sans-serif'
         ctx.fillText(name, 540, 990)
       }
 
-      // Watermark
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
       ctx.font = 'italic 24px Inter, sans-serif'
       ctx.textAlign = 'right'
@@ -134,6 +127,31 @@ export default function SelfieFrameGenerator() {
     })
   }
 
+  const handleShare = async () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      
+      const file = new File([blob], 'eid-selfie.png', { type: 'image/png' })
+      
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'My Eid Selfie',
+            text: 'Check out my Eid selfie frame from EidSpark!',
+          })
+        } catch (err) {
+          console.error('Error sharing:', err)
+        }
+      } else {
+        handleDownload()
+      }
+    }, 'image/png')
+  }
+
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
       <Navbar />
@@ -150,17 +168,15 @@ export default function SelfieFrameGenerator() {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* Controls Column */}
           <div className="lg:col-span-5 space-y-8">
             <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] overflow-hidden">
               <CardHeader className="p-8 pb-4 bg-primary/5">
                 <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
-                  <Sparkles className="w-6 h-6" />
+                  <Sparkles className="w-6 h-6 text-secondary" />
                   Customize Frame
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
-                {/* Upload Section */}
                 <div className="space-y-4">
                   <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">1. Upload Photo</Label>
                   <div className="relative group">
@@ -184,7 +200,6 @@ export default function SelfieFrameGenerator() {
                   </div>
                 </div>
 
-                {/* Name Section */}
                 <div className="space-y-4">
                   <Label htmlFor="name" className="text-sm font-black text-muted-foreground uppercase tracking-widest">2. Your Name</Label>
                   <div className="relative">
@@ -199,7 +214,6 @@ export default function SelfieFrameGenerator() {
                   </div>
                 </div>
 
-                {/* Frame Selection */}
                 <div className="space-y-4">
                   <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">3. Select Theme</Label>
                   <div className="grid grid-cols-2 gap-4">
@@ -235,12 +249,12 @@ export default function SelfieFrameGenerator() {
 
             <div className="flex gap-4">
               <Button 
-                onClick={handleDownload}
+                onClick={handleShare}
                 disabled={!image}
-                className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform"
+                className="flex-1 h-16 rounded-2xl gold-gradient text-primary font-black text-lg shadow-xl hover:scale-105 transition-transform"
               >
-                <Download className="w-6 h-6 mr-2" />
-                Save Image
+                <Share2 className="w-6 h-6 mr-2" />
+                Share Photo
               </Button>
               <Button 
                 variant="outline"
@@ -256,7 +270,6 @@ export default function SelfieFrameGenerator() {
             </div>
           </div>
 
-          {/* Preview Column */}
           <div className="lg:col-span-7 flex flex-col items-center">
             <div className="relative w-full aspect-square max-w-2xl bg-slate-50 rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group">
               {!image ? (
@@ -276,7 +289,6 @@ export default function SelfieFrameGenerator() {
                 />
               )}
 
-              {/* Decorative elements for the preview box */}
               <div className="absolute top-6 left-6 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
                 <Moon className="w-12 h-12 text-primary" />
               </div>
