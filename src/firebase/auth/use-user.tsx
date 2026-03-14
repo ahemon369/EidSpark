@@ -10,7 +10,11 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) return;
+    // If auth is null (e.g. missing config), we should stop loading
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
