@@ -1,3 +1,4 @@
+
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -56,8 +57,8 @@ const tools = [
     color: "bg-purple-100 text-purple-700"
   },
   {
-    title: "Mosque Finder",
-    description: "Locate mosques near you across Dhaka, Chittagong, and beyond.",
+    title: "Mosque & Prayer",
+    description: "Find mosques near you and stay on track with accurate prayer times.",
     icon: MapPin,
     href: "/tools/mosque",
     color: "bg-rose-100 text-rose-700"
@@ -254,7 +255,7 @@ export default function Home() {
               <h4 className="font-bold text-primary mb-6">Platform</h4>
               <ul className="space-y-4 text-muted-foreground font-medium">
                 <li><Link href="/tools/countdown" className="hover:text-primary transition-colors">Eid Countdown</Link></li>
-                <li><Link href="/tools/mosque" className="hover:text-primary transition-colors">Mosque Finder</Link></li>
+                <li><Link href="/tools/mosque" className="hover:text-primary transition-colors">Mosque & Prayer</Link></li>
                 <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
               </ul>
             </div>
