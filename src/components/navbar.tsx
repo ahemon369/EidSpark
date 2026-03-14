@@ -1,13 +1,14 @@
+
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, LogIn, LogOut, User, Star } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useUser, useAuth } from "@/firebase"
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
+import { signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
@@ -35,50 +36,12 @@ const navItems = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { user, loading } = useUser()
   const auth = useAuth()
   const { toast } = useToast()
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
-
-  const handleLogin = async () => {
-    if (!auth) {
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Firebase is not initialized correctly.",
-      })
-      return
-    }
-
-    const provider = new GoogleAuthProvider()
-    // Optional: add scopes if needed
-    // provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-
-    try {
-      await signInWithPopup(auth, provider)
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in with Google.",
-      })
-    } catch (error: any) {
-      let message = "Please check your network connection."
-      
-      if (error.code === 'auth/popup-blocked') {
-        message = "The sign-in popup was blocked by your browser. Please allow popups for this site."
-      } else if (error.code === 'auth/api-key-not-valid') {
-        message = "Firebase API Key is invalid. Please update your environment variables."
-      } else if (error.code === 'auth/operation-not-allowed') {
-        message = "Google Sign-In is not enabled in the Firebase Console."
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Sign-In Failed",
-        description: message,
-      })
-    }
-  }
 
   const handleLogout = async () => {
     if (!auth) return
@@ -88,6 +51,7 @@ export function Navbar() {
         title: "Signed Out",
         description: "Come back soon for more Eid celebrations!",
       })
+      router.push("/")
     } catch (error) {
       toast({
         variant: "destructive",
@@ -166,9 +130,11 @@ export function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button size="lg" onClick={handleLogin} className="emerald-gradient text-white rounded-2xl font-black px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Sign In
+                <Button size="lg" asChild className="emerald-gradient text-white rounded-2xl font-black px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                  <Link href="/login">
+                    <LogIn className="w-5 h-5 mr-2" />
+                    Sign In
+                  </Link>
                 </Button>
               )}
             </div>
@@ -212,9 +178,11 @@ export function Navbar() {
                   Sign Out
                 </Button>
               ) : (
-                <Button onClick={handleLogin} className="w-full h-14 rounded-2xl emerald-gradient font-black text-lg">
-                  <LogIn className="w-5 h-5 mr-3" />
-                  Sign In with Google
+                <Button asChild className="w-full h-14 rounded-2xl emerald-gradient font-black text-lg">
+                  <Link href="/login" onClick={() => setIsOpen(false)}>
+                    <LogIn className="w-5 h-5 mr-3" />
+                    Sign In
+                  </Link>
                 </Button>
               )}
             </div>
