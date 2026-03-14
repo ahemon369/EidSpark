@@ -26,6 +26,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
+import Image from "next/image"
+import { PlaceHolderImages } from "@/lib/placeholder-images"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +54,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { toast } = useToast()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -97,8 +100,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {/* Logo */}
           <div className="p-8">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Sparkles className="w-6 h-6 text-secondary" />
+              <div className="relative h-10 w-10 flex items-center justify-center">
+                 <Image 
+                  src={logo?.imageUrl || ""} 
+                  alt="EidSpark Logo" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain h-10 w-auto"
+                 />
               </div>
               <span className="text-xl font-black text-primary">EidSpark</span>
             </Link>

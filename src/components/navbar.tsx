@@ -66,13 +66,13 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-12 h-12 overflow-hidden transition-transform group-hover:scale-110 flex items-center justify-center">
+            <div className="relative h-10 w-12 transition-transform group-hover:scale-105 flex items-center justify-center">
                <Image 
                 src={logo?.imageUrl || ""} 
                 alt="EidSpark Logo" 
-                width={48} 
-                height={48} 
-                className="object-contain"
+                width={40} 
+                height={40} 
+                className="object-contain h-10 w-auto"
                 priority
                />
             </div>
@@ -118,11 +118,15 @@ export function Navbar() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="rounded-xl">
+                      <Link href="/dashboard">My Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/tools/salami">My Salami History</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/tools/selfie">Create Eid Selfie</Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive rounded-xl">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
