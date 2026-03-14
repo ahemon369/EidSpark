@@ -15,9 +15,11 @@ export function initializeFirebase(): {
   auth: Auth | null;
 } {
   try {
-    // Check if configuration is valid
-    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'undefined') {
-      console.warn('Firebase API Key is missing. Please check your .env file or Firebase configuration.');
+    // Check if configuration is valid - must have at least an API Key and Project ID
+    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'undefined' || !firebaseConfig.projectId) {
+      if (typeof window !== 'undefined') {
+        console.warn('Firebase configuration is missing or incomplete. Check your environment variables.');
+      }
       return { app: null, firestore: null, auth: null };
     }
 
@@ -27,7 +29,9 @@ export function initializeFirebase(): {
 
     return { app, firestore, auth };
   } catch (error) {
-    console.error('Firebase initialization failed:', error);
+    if (typeof window !== 'undefined') {
+      console.error('Firebase initialization failed:', error);
+    }
     return { app: null, firestore: null, auth: null };
   }
 }

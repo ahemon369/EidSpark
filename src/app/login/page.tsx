@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Navbar } from "@/components/navbar"
@@ -6,11 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useAuth, useUser } from "@/firebase"
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth"
-import { LogIn, Star, Sparkles, ArrowRight } from "lucide-react"
+import { LogIn, Star, Sparkles, ArrowRight, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const { user, loading } = useUser()
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [configError, setConfigError] = useState(false)
 
   useEffect(() => {
     if (user && !loading) {
@@ -25,12 +26,19 @@ export default function LoginPage() {
     }
   }, [user, loading, router])
 
+  useEffect(() => {
+    // Detect if auth instance is missing due to config issues
+    if (!loading && !auth) {
+      setConfigError(true)
+    }
+  }, [auth, loading])
+
   const handleLogin = async () => {
     if (!auth) {
       toast({
         variant: "destructive",
-        title: "Connection Error",
-        description: "Firebase is not initialized correctly.",
+        title: "Configuration Error",
+        description: "Firebase is not configured correctly. Please check your environment variables.",
       })
       return
     }
@@ -44,11 +52,18 @@ export default function LoginPage() {
         title: "Welcome to EidSpark!",
         description: "Successfully signed in with Google.",
       })
-      router.push("/")
     } catch (error: any) {
-      let message = "Please check your network connection."
+      console.error("Login Error:", error)
+      let message = "An unexpected error occurred. Please check your connection."
+      
       if (error.code === 'auth/popup-blocked') {
         message = "The sign-in popup was blocked. Please allow popups for this site."
+      } else if (error.code === 'auth/network-request-failed') {
+        message = "Network request failed. Please check your internet connection."
+      } else if (error.code === 'auth/invalid-api-key') {
+        message = "The Firebase API key is invalid. Please check your setup."
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in your Firebase console."
       }
       
       toast({
@@ -95,10 +110,20 @@ export default function LoginPage() {
               </div>
             </CardHeader>
             <CardContent className="p-10 space-y-8">
+              {configError && (
+                <Alert variant="destructive" className="rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Configuration Required</AlertTitle>
+                  <AlertDescription>
+                    Firebase API keys are missing or invalid. Please add them to your environment variables to enable Google Sign-In.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-4">
                 <Button 
                   onClick={handleLogin} 
-                  disabled={isSigningIn}
+                  disabled={isSigningIn || configError}
                   className="w-full h-16 rounded-2xl bg-white border-2 border-primary/10 hover:border-primary/30 hover:bg-primary/5 text-primary font-black text-lg shadow-sm transition-all group active:scale-95"
                 >
                   <div className="flex items-center gap-3">
