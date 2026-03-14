@@ -1,3 +1,4 @@
+
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -65,6 +66,7 @@ const tools = [
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === "hero-mosque")
+  const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white">
@@ -212,8 +214,14 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 space-y-6">
               <Link href="/" className="flex items-center gap-3">
-                <div className="relative w-12 h-12 overflow-hidden rounded-2xl emerald-gradient shadow-lg shadow-primary/20 flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white fill-white" />
+                <div className="relative w-12 h-12 overflow-hidden flex items-center justify-center">
+                  <Image 
+                    src={logo?.imageUrl || ""} 
+                    alt="EidSpark Official Logo" 
+                    width={48} 
+                    height={48} 
+                    className="object-contain"
+                  />
                 </div>
                 <span className="text-2xl font-black tracking-tight text-primary">EidSpark</span>
               </Link>
@@ -237,7 +245,7 @@ export default function Home() {
               <ul className="space-y-4 text-muted-foreground font-medium">
                 <li><Link href="/tools/countdown" className="hover:text-primary transition-colors">Eid Countdown</Link></li>
                 <li><Link href="/tools/mosque" className="hover:text-primary transition-colors">Mosque Finder</Link></li>
-                <li><Link href="#" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
               </ul>
             </div>
 

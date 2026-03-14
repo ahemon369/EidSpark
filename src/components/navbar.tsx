@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User, Camera, Star } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, Star } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -60,8 +60,15 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-12 h-12 overflow-hidden rounded-2xl emerald-gradient shadow-lg shadow-primary/20 transition-transform group-hover:scale-110 flex items-center justify-center">
-               <Star className="w-6 h-6 text-white fill-white" />
+            <div className="relative w-12 h-12 overflow-hidden transition-transform group-hover:scale-110 flex items-center justify-center">
+               <Image 
+                src={logo?.imageUrl || ""} 
+                alt="EidSpark Logo" 
+                width={48} 
+                height={48} 
+                className="object-contain"
+                priority
+               />
             </div>
             <span className="text-2xl font-black font-headline tracking-tight text-primary">EidSpark</span>
           </Link>
