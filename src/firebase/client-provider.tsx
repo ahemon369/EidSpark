@@ -10,9 +10,9 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
   const [instances, setInstances] = useState<{
-    app: FirebaseApp;
-    firestore: Firestore;
-    auth: Auth;
+    app: FirebaseApp | null;
+    firestore: Firestore | null;
+    auth: Auth | null;
   } | null>(null);
 
   useEffect(() => {
@@ -20,13 +20,15 @@ export function FirebaseClientProvider({ children }: { children: React.ReactNode
     setInstances({ app, firestore, auth });
   }, []);
 
+  // Allow the app to render even if Firebase failed to initialize, 
+  // hooks will handle null instances gracefully.
   if (!instances) return null;
 
   return (
     <FirebaseProvider
-      app={instances.app}
-      firestore={instances.firestore}
-      auth={instances.auth}
+      app={instances.app as any}
+      firestore={instances.firestore as any}
+      auth={instances.auth as any}
     >
       <FirebaseErrorListener />
       {children}
