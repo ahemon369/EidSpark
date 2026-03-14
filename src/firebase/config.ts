@@ -1,12 +1,8 @@
-'use client';
-
-// The Firebase configuration object is fetched from the server.
-// Do not manually modify the values in this object.
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  "projectId": "studio-9253660853-bab82",
+  "appId": "1:351328812858:web:1f33e2418831a5949cda03",
+  "apiKey": "AIzaSyB6mEK4UGYBSuxxe0Xf6c431nIbJJIPJe4",
+  "authDomain": "studio-9253660853-bab82.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "351328812858"
 };
