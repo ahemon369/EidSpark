@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link"
@@ -12,6 +11,7 @@ import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import { useToast } from "@/hooks/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +37,7 @@ export function Navbar() {
   const pathname = usePathname()
   const { user, loading } = useUser()
   const auth = useAuth()
+  const { toast } = useToast()
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
@@ -45,8 +46,13 @@ export function Navbar() {
     const provider = new GoogleAuthProvider()
     try {
       await signInWithPopup(auth, provider)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error)
+      toast({
+        variant: "destructive",
+        title: "Sign-In Failed",
+        description: error.message || "Please check your network connection or Firebase console settings.",
+      })
     }
   }
 
@@ -124,7 +130,7 @@ export function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button size="lg" onClick={handleLogin} className="emerald-gradient rounded-2xl font-black px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                <Button size="lg" onClick={handleLogin} className="emerald-gradient text-white rounded-2xl font-black px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
                   <LogIn className="w-5 h-5 mr-2" />
                   Sign In
                 </Button>

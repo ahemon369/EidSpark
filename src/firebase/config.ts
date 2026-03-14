@@ -1,5 +1,7 @@
 'use client';
 
+// The Firebase configuration object is fetched from the server.
+// Do not manually modify the values in this object.
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "placeholder-api-key",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "placeholder-auth-domain",
