@@ -98,7 +98,6 @@ const highlights = [
 export default function Home() {
   const [previewIndex, setPreviewIndex] = useState(0)
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const heroImage = PlaceHolderImages.find(img => img.id === "hero-mosque")
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   // Auto-cycling Hero Preview

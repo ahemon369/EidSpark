@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Wallet, Plus, Trophy, Trash2, TrendingUp, Lock, Crown, Users, Send, Mail, Copy, Check, Loader2 } from "lucide-react"
+import { Wallet, Plus, Trophy, Trash2, Lock, Crown, Send, Mail, Copy, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, setDoc, query, orderBy, limit } from "firebase/firestore"
@@ -101,9 +101,9 @@ export default function SalamiTracker() {
       
       const link = `${window.location.origin}/salami/${docRef.id}`
       setGeneratedLink(link)
-      toast({ title: "Envelope Created!", description: "Share the link with your recipient." })
+      toast({ title: "Envelope Created!" })
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Could not create envelope." })
+      toast({ variant: "destructive", title: "Error" })
     } finally {
       setIsCreating(false)
     }
@@ -121,7 +121,7 @@ export default function SalamiTracker() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedLink)
-    toast({ title: "Copied!", description: "Link copied to clipboard." })
+    toast({ title: "Copied!" })
   }
 
   const total = salamiEntries.reduce((acc, curr) => acc + (curr.amount || 0), 0)
@@ -133,7 +133,6 @@ export default function SalamiTracker() {
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="text-center mb-12 space-y-4">
           <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Salami & Eidi</h1>
-          <p className="text-xl text-muted-foreground font-medium">Keep track of your blessings and send virtual joy.</p>
         </div>
 
         {!user ? (
@@ -141,10 +140,7 @@ export default function SalamiTracker() {
             <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto shadow-sm">
               <Lock className="w-8 h-8 text-primary/40" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-primary">Sign in to start tracking</h3>
-              <p className="text-muted-foreground">Log in to save your history, send virtual envelopes, and join the global leaderboard.</p>
-            </div>
+            <h3 className="text-xl font-bold text-primary">Sign in to start tracking</h3>
             <Button className="w-full h-14 rounded-2xl emerald-gradient text-white font-bold" onClick={() => window.location.href = '/login'}>
               Sign In Now
             </Button>
@@ -174,14 +170,8 @@ export default function SalamiTracker() {
                     </div>
                     <CardContent className="p-8">
                       <form onSubmit={handleAdd} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs font-bold uppercase ml-1">From Person</Label>
-                          <Input placeholder="e.g. Uncle Omar" value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl" required />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs font-bold uppercase ml-1">Amount (৳)</Label>
-                          <Input type="number" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 rounded-xl" required min="0" />
-                        </div>
+                        <Input placeholder="From Person" value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl" required />
+                        <Input type="number" placeholder="Amount (৳)" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 rounded-xl" required min="0" />
                         <Button type="submit" className="w-full h-14 emerald-gradient rounded-xl font-black text-lg shadow-lg">
                           <Plus className="w-5 h-5 mr-2" /> Add Record
                         </Button>
@@ -194,7 +184,6 @@ export default function SalamiTracker() {
                   <Card className="shadow-2xl border-none rounded-[2.5rem] bg-white/80 backdrop-blur-xl h-full">
                     <CardHeader className="p-8 pb-4 border-b border-primary/5">
                       <CardTitle className="text-2xl font-black text-primary">Salami History</CardTitle>
-                      <CardDescription>Records of all gifts received this Eid</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                       <div className="divide-y divide-primary/5 max-h-[600px] overflow-y-auto custom-scrollbar">
@@ -239,59 +228,33 @@ export default function SalamiTracker() {
                   <CardHeader className="emerald-gradient p-10 text-white text-center">
                     <Mail className="w-12 h-12 mx-auto mb-4 opacity-80" />
                     <CardTitle className="text-3xl font-black">Digital Eidi Envelope</CardTitle>
-                    <CardDescription className="text-white/70">Create a virtual surprise for your loved ones</CardDescription>
                   </CardHeader>
                   <CardContent className="p-10 space-y-8">
                     {!generatedLink ? (
                       <form onSubmit={handleCreateEnvelope} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase ml-1">Your Name</Label>
-                            <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Sender Name" className="h-12 rounded-xl" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase ml-1">Recipient Name</Label>
-                            <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Who is it for?" className="h-12 rounded-xl" required />
-                          </div>
+                          <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Your Name" className="h-12 rounded-xl" required />
+                          <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Recipient Name" className="h-12 rounded-xl" required />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs font-bold uppercase ml-1">Eid Message</Label>
-                          <textarea className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 focus:border-primary/20 outline-none transition-all" value={salamiMsg} onChange={(e) => setSalamiMsg(e.target.value)} placeholder="Write something special..."></textarea>
-                        </div>
+                        <textarea className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 focus:border-primary/20 outline-none transition-all" value={salamiMsg} onChange={(e) => setSalamiMsg(e.target.value)} placeholder="Eid Message..."></textarea>
                         <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase ml-1">Salami Amount (৳)</Label>
-                            <Input type="number" value={salamiAmt} onChange={(e) => setSalamiAmt(e.target.value)} placeholder="0" className="h-12 rounded-xl" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase ml-1">Payment Link (Optional)</Label>
-                            <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="bKash/Nagad number or link" className="h-12 rounded-xl" />
-                          </div>
+                          <Input type="number" value={salamiAmt} onChange={(e) => setSalamiAmt(e.target.value)} placeholder="Amount (৳)" className="h-12 rounded-xl" />
+                          <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="bKash/Nagad link" className="h-12 rounded-xl" />
                         </div>
-                        <Button type="submit" disabled={isCreating} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-[1.02] transition-transform">
-                          {isCreating ? "Creating Envelope..." : "Generate Magic Link"}
+                        <Button type="submit" disabled={isCreating} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl">
+                          {isCreating ? "Processing..." : "Generate Magic Link"}
                         </Button>
                       </form>
                     ) : (
-                      <div className="space-y-8 text-center animate-in zoom-in duration-500">
+                      <div className="space-y-8 text-center">
                         <div className="bg-primary/5 p-8 rounded-[2rem] border-2 border-dashed border-primary/20 space-y-4">
-                          <p className="text-primary font-black uppercase tracking-widest text-sm">Your Salami Link is Ready!</p>
+                          <p className="text-primary font-black uppercase tracking-widest text-sm">Magic Link Ready!</p>
                           <div className="flex gap-2">
                             <Input value={generatedLink} readOnly className="h-12 rounded-xl bg-white font-mono text-xs" />
                             <Button onClick={copyToClipboard} size="icon" className="h-12 w-12 rounded-xl emerald-gradient shrink-0"><Copy className="w-5 h-5" /></Button>
                           </div>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <Button variant="outline" className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('I sent you a digital Eid Salami! Open it here: ' + generatedLink)}`, '_blank')}>
-                            WhatsApp
-                          </Button>
-                          <Button variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(generatedLink)}`, '_blank')}>
-                            Facebook
-                          </Button>
-                        </div>
-                        
-                        <Button variant="ghost" onClick={() => setGeneratedLink("")} className="text-muted-foreground hover:text-primary">Create Another Envelope</Button>
+                        <Button variant="ghost" onClick={() => setGeneratedLink("")} className="text-muted-foreground hover:text-primary">Create Another</Button>
                       </div>
                     )}
                   </CardContent>
@@ -305,7 +268,6 @@ export default function SalamiTracker() {
                   <CardHeader className="emerald-gradient p-10 text-white text-center">
                     <Crown className="w-12 h-12 mx-auto mb-4 text-secondary fill-secondary" />
                     <CardTitle className="text-3xl font-black">Top Receivers</CardTitle>
-                    <CardDescription className="text-white/70">Who collected the most Salami this Eid?</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="divide-y divide-primary/5">
@@ -313,21 +275,18 @@ export default function SalamiTracker() {
                         <div className="p-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>
                       ) : leaderboard.length > 0 ? (
                         leaderboard.map((player, index) => (
-                          <div key={player.id} className={cn("flex items-center justify-between p-8 transition-colors", player.id === user.uid && "bg-secondary/10 border-l-8 border-secondary")}>
+                          <div key={player.id} className={cn("flex items-center justify-between p-8", player.id === user.uid && "bg-secondary/10 border-l-8 border-secondary")}>
                             <div className="flex items-center gap-6">
-                              <div className="w-8 text-2xl font-black text-muted-foreground/40">{index + 1}</div>
+                              <span className="text-2xl font-black text-muted-foreground/40">{index + 1}</span>
                               <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
                                 <AvatarImage src={player.photoURL} />
                                 <AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-black text-xl text-primary">{player.displayName} {player.id === user.uid && <span className="ml-2 text-[10px] bg-primary text-white px-2 py-1 rounded-full uppercase">You</span>}</p>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Rank</p>
+                                <p className="font-black text-xl text-primary">{player.displayName}</p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-3xl font-black text-primary">৳{player.totalSalami.toLocaleString()}</p>
-                            </div>
+                            <p className="text-3xl font-black text-primary">৳{player.totalSalami.toLocaleString()}</p>
                           </div>
                         ))
                       ) : (
