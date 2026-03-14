@@ -44,6 +44,8 @@ export default function LoginPage() {
 
     setIsSigningIn(true)
     const provider = new GoogleAuthProvider()
+    // Optional: Add custom parameters if needed
+    // provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
       await signInWithPopup(auth, provider)
@@ -61,6 +63,8 @@ export default function LoginPage() {
         message = "Google Sign-In is not enabled. Go to Firebase Console > Authentication > Sign-in method."
       } else if (error.code === 'auth/configuration-not-found') {
         message = "Check your Firebase project configuration."
+      } else if (error.code === 'auth/internal-error') {
+        message = "Internal authentication error. Please ensure Google Sign-In is enabled in the Firebase Console."
       }
       
       toast({

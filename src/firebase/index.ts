@@ -5,38 +5,27 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore'
 
+/**
+ * Initializes Firebase services. 
+ * Ensures that the app is only initialized once.
+ */
 export function initializeFirebase() {
   let app: FirebaseApp;
-  let auth: Auth | null = null;
-  let firestore: Firestore | null = null;
 
-  try {
-    if (!getApps().length) {
-      try {
-        app = initializeApp();
-      } catch (e) {
-        app = initializeApp(firebaseConfig);
-      }
-    } else {
-      app = getApp();
-    }
-
-    auth = getAuth(app);
-    firestore = getFirestore(app);
-
-    return {
-      firebaseApp: app,
-      auth,
-      firestore
-    };
-  } catch (error) {
-    console.error("Firebase initialization failed:", error);
-    return {
-      firebaseApp: null,
-      auth: null,
-      firestore: null
-    };
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
   }
+
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+
+  return {
+    firebaseApp: app,
+    auth,
+    firestore
+  };
 }
 
 export * from './provider';
