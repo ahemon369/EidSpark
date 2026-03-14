@@ -29,7 +29,8 @@ export default function SalamiTracker() {
     return collection(db, "users", user.uid, "salamiEntries")
   }, [db, user])
 
-  const { data: salamiEntries = [], isLoading: loadingSalami } = useCollection(salamiQuery)
+  const { data, isLoading: loadingSalami } = useCollection(salamiQuery)
+  const salamiEntries = data || []
 
   // Fetch global leaderboard
   const leaderboardQuery = useMemoFirebase(() => {
@@ -37,7 +38,8 @@ export default function SalamiTracker() {
     return query(collection(db, "leaderboard"), orderBy("totalSalami", "desc"), limit(10))
   }, [db])
 
-  const { data: leaderboard = [], isLoading: loadingLeaderboard } = useCollection(leaderboardQuery)
+  const { data: leaderboardData, isLoading: loadingLeaderboard } = useCollection(leaderboardQuery)
+  const leaderboard = leaderboardData || []
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,7 +58,7 @@ export default function SalamiTracker() {
       })
 
       // Update leaderboard profile
-      const currentTotal = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
+      const currentTotal = salamiEntries.reduce((acc, curr) => acc + (curr.amount || 0), 0)
       const newTotal = currentTotal + giftAmount
       
       setDoc(doc(db, "leaderboard", user.uid), {
@@ -72,7 +74,7 @@ export default function SalamiTracker() {
         description: `Successfully recorded ৳${giftAmount} from ${name}.`
       })
     } catch (error) {
-      // Errors are handled by FirebaseErrorListener, but we can log for UI state if needed
+      // Errors are handled by FirebaseErrorListener
     }
   }
 
@@ -83,7 +85,7 @@ export default function SalamiTracker() {
       deleteDoc(doc(db, "users", user.uid, "salamiEntries", entryId))
       
       // Update leaderboard
-      const currentTotal = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
+      const currentTotal = salamiEntries.reduce((acc, curr) => acc + (curr.amount || 0), 0)
       const newTotal = Math.max(0, currentTotal - entryAmount)
       
       setDoc(doc(db, "leaderboard", user.uid), {
@@ -95,8 +97,8 @@ export default function SalamiTracker() {
     }
   }
 
-  const total = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
-  const sortedEntries = [...(salamiEntries || [])].sort((a, b) => (b.amount || 0) - (a.amount || 0))
+  const total = salamiEntries.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+  const sortedEntries = [...salamiEntries].sort((a, b) => (b.amount || 0) - (a.amount || 0))
 
   return (
     <div className="min-h-screen bg-background">
