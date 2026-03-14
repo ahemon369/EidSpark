@@ -23,6 +23,17 @@ const famousMosques = [
   },
   {
     id: 2,
+    name: "Sixty Dome Mosque (Shat Gombuj)",
+    city: "Bagerhat",
+    address: "Bagerhat, Khulna Division",
+    distance: "180 km",
+    eidPrayers: ["8:00 AM", "9:00 AM"],
+    capacity: "Historic Large",
+    famous: true,
+    coordinates: { lat: 22.6746, lng: 89.7417 }
+  },
+  {
+    id: 3,
     name: "Tara Masjid (Star Mosque)",
     city: "Dhaka",
     address: "Abul Khairat Rd, Dhaka",
@@ -33,8 +44,30 @@ const famousMosques = [
     coordinates: { lat: 23.7153, lng: 90.4012 }
   },
   {
-    id: 3,
-    name: "Baytul Aman Jame Masjid",
+    id: 4,
+    name: "Hazrat Shah Jalal Dargah Mosque",
+    city: "Sylhet",
+    address: "Dargah Gate, Sylhet",
+    distance: "245 km",
+    eidPrayers: ["8:30 AM"],
+    capacity: "Large",
+    famous: true,
+    coordinates: { lat: 24.9015, lng: 91.8679 }
+  },
+  {
+    id: 5,
+    name: "Bagha Mosque",
+    city: "Rajshahi",
+    address: "Bagha, Rajshahi",
+    distance: "210 km",
+    eidPrayers: ["8:00 AM"],
+    capacity: "Medium",
+    famous: true,
+    coordinates: { lat: 24.2325, lng: 88.8354 }
+  },
+  {
+    id: 6,
+    name: "Baytul Aman Jame Mosque (Guthia)",
     city: "Barisal",
     address: "Guthia, Barisal",
     distance: "240 km",
@@ -44,26 +77,15 @@ const famousMosques = [
     coordinates: { lat: 22.7844, lng: 90.2241 }
   },
   {
-    id: 4,
-    name: "Amanat Shah Jame Masjid",
-    city: "Chittagong",
-    address: "Andarkilla, Chittagong",
-    distance: "250 km",
-    eidPrayers: ["7:30 AM", "8:30 AM"],
-    capacity: "Large",
-    famous: false,
-    coordinates: { lat: 22.3375, lng: 91.8388 }
-  },
-  {
-    id: 5,
-    name: "Hazrat Shah Jalal Dargah Mosque",
-    city: "Sylhet",
-    address: "Dargah Gate, Sylhet",
-    distance: "245 km",
-    eidPrayers: ["8:30 AM"],
-    capacity: "Large",
+    id: 7,
+    name: "Khan Mohammad Mridha Mosque",
+    city: "Dhaka",
+    address: "Lalbagh, Dhaka",
+    distance: "2.5 km",
+    eidPrayers: ["7:45 AM"],
+    capacity: "Small-Medium",
     famous: true,
-    coordinates: { lat: 24.9015, lng: 91.8679 }
+    coordinates: { lat: 23.7198, lng: 90.3845 }
   }
 ]
 
@@ -88,10 +110,10 @@ export default function MosqueFinder() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
               <Globe className="w-3 h-3" />
-              <span>Bangladesh Only</span>
+              <span>Bangladesh Heritage</span>
             </div>
             <h1 className="text-5xl font-black text-primary tracking-tight">Mosque Finder</h1>
-            <p className="text-xl text-muted-foreground font-medium">Find Eid prayers in Dhaka, Chittagong, Sylhet and across Bangladesh.</p>
+            <p className="text-xl text-muted-foreground font-medium">Find Eid prayers in major cities across Bangladesh.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
@@ -189,20 +211,16 @@ export default function MosqueFinder() {
 
           {/* Map Mock Section */}
           <div className="lg:col-span-7 relative min-h-[600px] lg:min-h-full rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-100">
-            {/* Mock Map Background */}
             <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/bd-map/1600/1200')] opacity-30 grayscale contrast-125"></div>
-            
-            {/* Map UI Overlay */}
             <div className="absolute inset-0 bg-emerald-900/5 pointer-events-none"></div>
 
-            {/* Simulated Markers */}
             {filteredMosques.map((mosque, idx) => (
               <div 
                 key={mosque.id}
                 className="absolute animate-bounce"
                 style={{ 
-                  top: `${20 + (idx * 15)}%`, 
-                  left: `${30 + (idx * 10)}%` 
+                  top: `${15 + (idx * 12)}%`, 
+                  left: `${25 + (idx * 8)}%` 
                 }}
               >
                 <div className="relative group/marker">
@@ -217,7 +235,6 @@ export default function MosqueFinder() {
               </div>
             ))}
 
-            {/* Map Controls */}
             <div className="absolute bottom-10 right-10 flex flex-col gap-3">
               <Button size="icon" variant="secondary" className="glass-card w-14 h-14 rounded-2xl shadow-xl text-primary font-black text-2xl">+</Button>
               <Button size="icon" variant="secondary" className="glass-card w-14 h-14 rounded-2xl shadow-xl text-primary font-black text-2xl">-</Button>
@@ -226,12 +243,6 @@ export default function MosqueFinder() {
             <div className="absolute top-10 left-10 glass-card p-6 rounded-[2rem] max-w-xs shadow-2xl animate-in fade-in slide-in-from-left duration-700 border-white/40">
               <h3 className="font-black text-2xl text-primary">Interactive Map</h3>
               <p className="text-sm text-muted-foreground font-bold mt-2">Discover and navigate to {filteredMosques.length} major mosques across Bangladesh.</p>
-              <div className="mt-6 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                <div className="flex items-center gap-2 text-primary font-black text-xs">
-                   <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                   FAMOUS MOSQUES
-                </div>
-              </div>
             </div>
           </div>
         </div>
