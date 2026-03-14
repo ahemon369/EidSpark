@@ -1,12 +1,12 @@
 
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Globe, Navigation, ChevronRight, List, Info, Clock, Timer, Sparkles, Map as MapIcon } from "lucide-react"
+import { MapPin, Clock, Timer, Sparkles, Navigation, List, Info, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Dynamically import the map to avoid SSR issues with Leaflet
@@ -40,6 +40,7 @@ export default function MosqueFinder() {
   const [mosques, setMosques] = useState<any[]>([])
   const [prayerTimes, setPrayerTimes] = useState<any>(null)
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; remaining: string } | null>(null)
+  const [currentPrayerName, setCurrentPrayerName] = useState<string | null>(null)
 
   // Fetch Prayer Times
   useEffect(() => {
@@ -59,49 +60,61 @@ export default function MosqueFinder() {
     fetchTimes()
   }, [mapConfig.center])
 
-  // Countdown logic
+  // Improved Prayer logic: Countdown and Current Prayer Highlighting
   useEffect(() => {
     if (!prayerTimes) return
 
     const timer = setInterval(() => {
       const now = new Date()
+      
+      const getPrayerDate = (timeStr: string, isTomorrow = false) => {
+        const [hours, minutes] = timeStr.split(':').map(Number)
+        const date = new Date()
+        if (isTomorrow) date.setDate(date.getDate() + 1)
+        date.setHours(hours, minutes, 0)
+        return date
+      }
+
       const prayers = [
-        { name: "Fajr", time: prayerTimes.Fajr },
-        { name: "Dhuhr", time: prayerTimes.Dhuhr },
-        { name: "Asr", time: prayerTimes.Asr },
-        { name: "Maghrib", time: prayerTimes.Maghrib },
-        { name: "Isha", time: prayerTimes.Isha },
+        { name: "Fajr", date: getPrayerDate(prayerTimes.Fajr) },
+        { name: "Dhuhr", date: getPrayerDate(prayerTimes.Dhuhr) },
+        { name: "Asr", date: getPrayerDate(prayerTimes.Asr) },
+        { name: "Maghrib", date: getPrayerDate(prayerTimes.Maghrib) },
+        { name: "Isha", date: getPrayerDate(prayerTimes.Isha) },
       ]
 
-      let upcoming = null
-      for (const p of prayers) {
-        const [hours, minutes] = p.time.split(':').map(Number)
-        const prayerDate = new Date()
-        prayerDate.setHours(hours, minutes, 0)
-
-        if (prayerDate > now) {
-          upcoming = { ...p, date: prayerDate }
+      // Determine Current and Next
+      let currentIdx = -1
+      for (let i = prayers.length - 1; i >= 0; i--) {
+        if (now >= prayers[i].date) {
+          currentIdx = i
           break
         }
       }
 
-      // If all passed today, next is tomorrow's Fajr
-      if (!upcoming) {
-        const [hours, minutes] = prayers[0].time.split(':').map(Number)
-        const tomorrowFajr = new Date()
-        tomorrowFajr.setDate(tomorrowFajr.getDate() + 1)
-        tomorrowFajr.setHours(hours, minutes, 0)
-        upcoming = { ...prayers[0], date: tomorrowFajr }
+      // If it's before Fajr today, current is yesterday's Isha
+      const currentName = currentIdx === -1 ? "Isha" : prayers[currentIdx].name
+      setCurrentPrayerName(currentName)
+
+      // Next Prayer
+      let nextIdx = currentIdx + 1
+      let isNextTomorrow = false
+      if (nextIdx >= prayers.length) {
+        nextIdx = 0
+        isNextTomorrow = true
       }
 
-      const diff = upcoming.date.getTime() - now.getTime()
+      const next = prayers[nextIdx]
+      const nextDate = getPrayerDate(prayerTimes[next.name], isNextTomorrow)
+      
+      const diff = nextDate.getTime() - now.getTime()
       const h = Math.floor(diff / (1000 * 60 * 60))
       const m = Math.floor((diff / (1000 * 60)) % 60)
       const s = Math.floor((diff / 1000) % 60)
 
       setNextPrayer({
-        name: upcoming.name,
-        time: upcoming.time,
+        name: next.name,
+        time: prayerTimes[next.name],
         remaining: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
       })
     }, 1000)
@@ -142,30 +155,30 @@ export default function MosqueFinder() {
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-20">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-16 animate-in fade-in slide-in-from-top duration-700">
-          <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 mb-12 animate-in fade-in slide-in-from-top duration-700">
+          <div className="space-y-4">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
               <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
               <span>Prayer & Mosque Companion</span>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Mosque Finder</h1>
-            <p className="text-xl text-muted-foreground font-medium max-w-2xl">
-              Locate mosques and view accurate daily prayer times for your location in <span className="text-primary font-bold">Bangladesh</span>.
+            <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Mosque Finder</h1>
+            <p className="text-lg text-muted-foreground font-medium max-w-xl">
+              Locate nearby mosques and view accurate prayer timings for <span className="text-primary font-bold">{selectedCity === "Current Location" ? "Your Current Area" : selectedCity}</span>.
             </p>
           </div>
           
-          <div className="flex flex-col gap-4">
-            <p className="text-sm font-black text-muted-foreground uppercase tracking-widest ml-1">Change Location</p>
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Select Division</p>
             <div className="flex flex-wrap gap-2">
               {cities.map((city) => (
                 <button
                   key={city.name}
                   onClick={() => handleCitySelect(city)}
                   className={cn(
-                    "rounded-2xl h-12 px-6 font-bold transition-all text-sm border-2",
+                    "rounded-xl h-10 px-5 font-bold transition-all text-xs border-2",
                     selectedCity === city.name 
                       ? "emerald-gradient text-white border-transparent shadow-lg scale-105" 
                       : "border-primary/10 text-primary hover:bg-primary/5 bg-white"
@@ -179,57 +192,64 @@ export default function MosqueFinder() {
         </div>
 
         {/* Prayer Times Section */}
-        <div className="mb-16 grid lg:grid-cols-12 gap-8 animate-in fade-in duration-700 delay-200">
-          <Card className="lg:col-span-4 emerald-gradient border-none shadow-2xl rounded-[3rem] overflow-hidden text-white relative group">
-             <CardContent className="p-10 relative z-10 flex flex-col justify-between h-full min-h-[300px]">
+        <div className="mb-12 grid lg:grid-cols-12 gap-6 animate-in fade-in duration-700 delay-200">
+          {/* Main Countdown Card */}
+          <Card className="lg:col-span-4 emerald-gradient border-none shadow-2xl rounded-[2.5rem] overflow-hidden text-white relative group">
+             <CardContent className="p-8 relative z-10 flex flex-col justify-between h-full min-h-[280px]">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-white/60 font-black uppercase tracking-[0.2em] text-xs">
-                    <Timer className="w-4 h-4 text-secondary" />
-                    Next Prayer Countdown
+                  <div className="flex items-center gap-2 text-white/60 font-black uppercase tracking-[0.2em] text-[10px]">
+                    <Timer className="w-3.5 h-3.5 text-secondary" />
+                    Next Prayer: {nextPrayer?.name || "..."}
                   </div>
-                  <h3 className="text-4xl font-black">{nextPrayer?.name || "Loading..."}</h3>
+                  <h3 className="text-3xl font-black tracking-tight">Time Remaining</h3>
                 </div>
                 
-                <div className="space-y-1">
-                  <div className="text-7xl font-black tracking-tighter drop-shadow-2xl">
+                <div className="py-4">
+                  <div className="text-7xl font-black tracking-tighter drop-shadow-2xl font-mono">
                     {nextPrayer?.remaining || "00:00:00"}
                   </div>
-                  <p className="text-white/60 font-bold uppercase tracking-widest text-sm">Time Remaining</p>
                 </div>
 
                 <div className="flex items-center gap-2 pt-4 border-t border-white/10">
                    <Clock className="w-4 h-4 text-secondary" />
-                   <span className="font-bold">Starts at {formatTime(nextPrayer?.time || "")}</span>
+                   <span className="font-bold text-sm">Azaan at {formatTime(nextPrayer?.time || "")}</span>
                 </div>
              </CardContent>
-             <div className="absolute -bottom-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-1000">
-                <Clock className="w-64 h-64" />
+             <div className="absolute -bottom-10 -right-10 opacity-10 group-hover:rotate-12 transition-transform duration-1000">
+                <Clock className="w-48 h-48" />
              </div>
           </Card>
 
+          {/* Individual Prayer Cards */}
           <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[
-              { id: 'Fajr', icon: Clock },
-              { id: 'Dhuhr', icon: Clock },
-              { id: 'Asr', icon: Clock },
-              { id: 'Maghrib', icon: Clock },
-              { id: 'Isha', icon: Clock },
-            ].map((p) => {
-              const isCurrent = nextPrayer && nextPrayer.name === p.id;
+            {["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].map((p) => {
+              const isCurrent = currentPrayerName === p;
+              const isNext = nextPrayer?.name === p;
+              
               return (
-                <Card key={p.id} className={cn(
-                  "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden flex flex-col justify-center items-center p-6 text-center space-y-4",
-                  isCurrent ? "bg-secondary text-primary scale-105 shadow-secondary/20" : "bg-white hover:bg-primary/5 group"
+                <Card key={p} className={cn(
+                  "border-none shadow-xl rounded-[2rem] transition-all duration-500 overflow-hidden flex flex-col justify-center items-center p-6 text-center space-y-4",
+                  isCurrent 
+                    ? "bg-secondary text-primary scale-105 shadow-secondary/20 ring-4 ring-secondary/20" 
+                    : isNext 
+                      ? "bg-primary/5 border-2 border-primary/20" 
+                      : "bg-white hover:bg-primary/5 group"
                 )}>
                   <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
-                    isCurrent ? "bg-white/20" : "bg-primary/5 group-hover:bg-primary group-hover:text-white"
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                    isCurrent ? "bg-white/30" : "bg-primary/5 group-hover:bg-primary group-hover:text-white"
                   )}>
-                    <p.icon className="w-6 h-6" />
+                    <Clock className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <p className={cn("text-xs font-black uppercase tracking-widest", isCurrent ? "text-primary/60" : "text-muted-foreground")}>{p.id}</p>
-                    <p className="text-2xl font-black">{prayerTimes ? formatTime(prayerTimes[p.id]) : "--:--"}</p>
+                    <p className={cn(
+                      "text-[10px] font-black uppercase tracking-widest", 
+                      isCurrent ? "text-primary/70" : "text-muted-foreground"
+                    )}>
+                      {p}
+                      {isCurrent && <span className="block text-[8px] opacity-70">(Now)</span>}
+                    </p>
+                    <p className="text-xl font-black">{prayerTimes ? formatTime(prayerTimes[p]) : "--:--"}</p>
                   </div>
                 </Card>
               )
@@ -238,32 +258,32 @@ export default function MosqueFinder() {
         </div>
 
         {/* Map & List Section */}
-        <div className="grid lg:grid-cols-12 gap-10">
+        <div className="grid lg:grid-cols-12 gap-8">
           {/* List and Info Panel */}
-          <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left duration-700">
-            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl flex flex-col max-h-[800px]">
-              <CardHeader className="p-10 pb-6 bg-primary/5">
-                <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
-                  <List className="w-6 h-6 text-secondary" />
+          <div className="lg:col-span-4 space-y-6 animate-in fade-in slide-in-from-left duration-700">
+            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl flex flex-col h-[700px]">
+              <CardHeader className="p-8 pb-4 bg-primary/5">
+                <CardTitle className="text-xl font-black text-primary flex items-center gap-3">
+                  <List className="w-5 h-5 text-secondary" />
                   Nearby Mosques
                 </CardTitle>
-                <CardDescription className="text-sm font-bold">{mosques.length} results found in this area</CardDescription>
+                <CardDescription className="text-xs font-bold text-muted-foreground/60">{mosques.length} locations identified</CardDescription>
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-grow">
                 {mosques.length > 0 ? (
                   <div className="divide-y divide-primary/5">
                     {mosques.map((mosque) => (
                       <div key={mosque.id} className="p-6 hover:bg-primary/5 transition-colors group">
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex justify-between items-start gap-3">
                           <div className="space-y-1">
-                            <h4 className="font-black text-primary leading-tight group-hover:text-secondary transition-colors">
+                            <h4 className="font-black text-primary text-sm leading-tight group-hover:text-secondary transition-colors">
                               {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
                             </h4>
-                            <p className="text-xs text-muted-foreground font-medium">
-                              {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location details unavailable"}
+                            <p className="text-[10px] text-muted-foreground font-medium">
+                              {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location data unavailable"}
                             </p>
                             {mosque.distance && (
-                              <p className="text-[10px] font-black uppercase text-secondary tracking-widest pt-1">
+                              <p className="text-[9px] font-black uppercase text-secondary tracking-widest pt-1">
                                 {mosque.distance < 1000 
                                   ? `${Math.round(mosque.distance)}m away` 
                                   : `${(mosque.distance / 1000).toFixed(1)}km away`}
@@ -273,7 +293,7 @@ export default function MosqueFinder() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="rounded-xl h-10 w-10 p-0 text-primary hover:bg-primary hover:text-white"
+                            className="rounded-xl h-9 w-9 p-0 text-primary hover:bg-primary hover:text-white"
                             onClick={() => {
                               const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
                               window.open(url, "_blank")
@@ -286,30 +306,28 @@ export default function MosqueFinder() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-20 text-center space-y-4">
-                    <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto">
-                      <MapPin className="w-8 h-8 text-primary/20" />
-                    </div>
-                    <p className="text-sm font-bold text-muted-foreground">Move the map or search to find mosques nearby.</p>
+                  <div className="p-16 text-center space-y-4 opacity-40">
+                    <MapPin className="w-10 h-10 mx-auto text-primary" />
+                    <p className="text-xs font-bold">Discovering mosques in your area...</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="bg-secondary/10 p-8 rounded-[2.5rem] border-2 border-secondary/20 space-y-4">
-              <div className="flex items-center gap-3 text-primary font-black">
-                <Info className="w-5 h-5 text-secondary" />
-                Community Notice
+            <div className="bg-secondary/5 p-6 rounded-[2rem] border border-secondary/20 flex gap-4 items-start">
+              <Info className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-black text-primary uppercase tracking-wider">Note for Users</p>
+                <p className="text-[10px] text-primary/70 font-bold leading-relaxed">
+                  Prayer times are based on the Karachi (Hanafi) calculation method, standard for Bangladesh. Please check with your local Masjid for exact Jamat times.
+                </p>
               </div>
-              <p className="text-xs text-primary/70 font-bold leading-relaxed">
-                Prayer times are calculated based on the Karachi methodology, standard for Bangladesh. Always refer to your local masjid for actual Jamat timings.
-              </p>
             </div>
           </div>
 
           {/* Map Container */}
-          <div className="lg:col-span-8 min-h-[600px] lg:min-h-[800px] relative animate-in fade-in slide-in-from-right duration-700">
-            <div className="absolute inset-0 rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] border-8 border-white bg-slate-50">
+          <div className="lg:col-span-8 min-h-[500px] lg:h-[700px] relative animate-in fade-in slide-in-from-right duration-700">
+            <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] border-8 border-white bg-slate-50">
               <MosqueMap 
                 center={mapConfig.center} 
                 zoom={mapConfig.zoom} 
@@ -318,9 +336,10 @@ export default function MosqueFinder() {
               />
             </div>
             
-            <div className="absolute bottom-10 left-10 glass-card p-6 rounded-[2rem] border-white/40 shadow-2xl pointer-events-none hidden md:block">
-              <h3 className="font-black text-2xl text-primary">Live Explorer</h3>
-              <p className="text-sm text-muted-foreground font-bold mt-2">Discovering mosques in <span className="text-secondary">{selectedCity}</span></p>
+            {/* Overlay Info */}
+            <div className="absolute bottom-6 right-6 glass-card p-5 rounded-[1.5rem] border-white/40 shadow-xl pointer-events-none hidden md:block">
+              <h3 className="font-black text-lg text-primary">Live Mosque Map</h3>
+              <p className="text-[10px] text-muted-foreground font-bold mt-1">Exploring <span className="text-secondary">{selectedCity}</span></p>
             </div>
           </div>
         </div>
