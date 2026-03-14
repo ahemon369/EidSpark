@@ -110,7 +110,7 @@ export default function SelfieFrameGenerator() {
       // 3. Draw Islamic Arch Overlay
       ctx.save()
       
-      // Navy Blue Frame Mask
+      // Outer Frame Mask (Navy Blue)
       ctx.fillStyle = selectedFrame.primary
       ctx.beginPath()
       ctx.moveTo(0, 0)
@@ -119,18 +119,18 @@ export default function SelfieFrameGenerator() {
       ctx.lineTo(0, res)
       ctx.closePath()
 
-      // The Arch Hole (Transparent Area)
-      // Ogee / Pointed Arch Path
+      // The Arch Hole (Subtracting from the mask)
       const archWidth = 880
       const archX = (res - archWidth) / 2
       const archBaseY = res
       const archPeakY = 150
+      const curveStartY = 500
 
       ctx.moveTo(archX, archBaseY)
-      ctx.lineTo(archX, 500) // Straight vertical side
-      // Curve to peak
-      ctx.bezierCurveTo(archX, 250, res/2 - 50, 150, res/2, archPeakY)
-      ctx.bezierCurveTo(res/2 + 50, 150, res - archX, 250, res - archX, 500)
+      ctx.lineTo(archX, curveStartY) // Straight vertical side
+      // Islamic Pointed Arch Path (Ogee-style curves)
+      ctx.bezierCurveTo(archX, 250, res/2 - 50, archPeakY, res/2, archPeakY)
+      ctx.bezierCurveTo(res/2 + 50, archPeakY, res - archX, 250, res - archX, curveStartY)
       ctx.lineTo(res - archX, archBaseY)
       ctx.closePath()
       ctx.fill('evenodd')
@@ -140,92 +140,84 @@ export default function SelfieFrameGenerator() {
       ctx.lineWidth = 15
       ctx.beginPath()
       ctx.moveTo(archX, archBaseY)
-      ctx.lineTo(archX, 500)
-      ctx.bezierCurveTo(archX, 250, res/2 - 50, 150, res/2, archPeakY)
-      ctx.bezierCurveTo(res/2 + 50, 150, res - archX, 250, res - archX, 500)
+      ctx.lineTo(archX, curveStartY)
+      ctx.bezierCurveTo(archX, 250, res/2 - 50, archPeakY, res/2, archPeakY)
+      ctx.bezierCurveTo(res/2 + 50, archPeakY, res - archX, 250, res - archX, curveStartY)
       ctx.lineTo(res - archX, archBaseY)
       ctx.stroke()
 
-      // 5. Corner Ornaments (Gold geometric patterns)
-      const patternSize = 100
-      ctx.fillStyle = selectedFrame.secondary
+      // 5. Corner Ornaments (Geometric stars)
       ctx.globalAlpha = 0.5
-      // Top Left
-      drawStar(ctx, 50, 50, 30, selectedFrame.secondary)
-      drawStar(ctx, 120, 50, 20, selectedFrame.secondary)
-      drawStar(ctx, 50, 120, 20, selectedFrame.secondary)
-      // Top Right
-      drawStar(ctx, res - 50, 50, 30, selectedFrame.secondary)
-      drawStar(ctx, res - 120, 50, 20, selectedFrame.secondary)
-      drawStar(ctx, res - 50, 120, 20, selectedFrame.secondary)
-      
+      drawStar(ctx, 60, 60, 40, selectedFrame.secondary)
+      drawStar(ctx, res - 60, 60, 40, selectedFrame.secondary)
       ctx.globalAlpha = 1.0
 
-      // 6. Hanging Lanterns
-      drawLantern(ctx, 220, 180, selectedFrame.secondary)
-      drawLantern(ctx, res - 220, 180, selectedFrame.secondary)
+      // 6. Hanging Lanterns from the arch peak area
+      drawLantern(ctx, 200, 200, selectedFrame.secondary)
+      drawLantern(ctx, res - 200, 200, selectedFrame.secondary)
       
-      // 7. Center Star
-      drawStar(ctx, res / 2, 80, 45, selectedFrame.secondary)
+      // 7. Center Star at Top
+      drawStar(ctx, res / 2, 80, 50, selectedFrame.secondary)
 
-      // 8. Mosque Silhouette at bottom
+      // 8. Mosque Silhouette at bottom (Foreground layer)
       ctx.fillStyle = selectedFrame.primary
       ctx.beginPath()
       ctx.moveTo(0, res)
       ctx.lineTo(0, res - 140)
       // Left Minaret
-      ctx.lineTo(50, res - 140)
-      ctx.lineTo(50, res - 260)
-      ctx.lineTo(70, res - 260)
-      ctx.lineTo(70, res - 140)
-      // Small Dome
-      ctx.quadraticCurveTo(150, res - 240, 250, res - 140)
+      ctx.lineTo(60, res - 140)
+      ctx.lineTo(60, res - 280)
+      ctx.lineTo(85, res - 280)
+      ctx.lineTo(85, res - 140)
+      // Small Dome Left
+      ctx.quadraticCurveTo(180, res - 240, 280, res - 140)
       // Main Center Dome
-      ctx.quadraticCurveTo(res / 2, res - 380, res - 250, res - 140)
+      ctx.quadraticCurveTo(res / 2, res - 400, res - 280, res - 140)
       // Small Dome Right
-      ctx.quadraticCurveTo(res - 150, res - 240, res - 70, res - 140)
+      ctx.quadraticCurveTo(res - 180, res - 240, res - 85, res - 140)
       // Right Minaret
-      ctx.lineTo(res - 70, res - 260)
-      ctx.lineTo(res - 50, res - 260)
-      ctx.lineTo(res - 50, res - 140)
+      ctx.lineTo(res - 85, res - 280)
+      ctx.lineTo(res - 60, res - 280)
+      ctx.lineTo(res - 60, res - 140)
       ctx.lineTo(res, res - 140)
       ctx.lineTo(res, res)
       ctx.closePath()
       ctx.fill()
 
-      // 9. Crescent Moon
+      // 9. Crescent Moon in the sky area
       ctx.fillStyle = selectedFrame.secondary
       ctx.beginPath()
-      ctx.arc(res / 2 + 60, res - 400, 45, 0, Math.PI * 2)
+      ctx.arc(res / 2 + 70, res - 420, 40, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = selectedFrame.primary // Cutout
+      ctx.fillStyle = selectedFrame.primary // Cutting out the crescent
       ctx.beginPath()
-      ctx.arc(res / 2 + 80, res - 400, 45, 0, Math.PI * 2)
+      ctx.arc(res / 2 + 95, res - 420, 40, 0, Math.PI * 2)
       ctx.fill()
 
-      // 10. Text Overlays
-      let textY = res - 80
-      if (textPosition === 'top') textY = 320
+      // 10. Text Overlays (Eid Mubarak & Name)
+      let textY = res - 100
+      if (textPosition === 'top') textY = 350
       if (textPosition === 'center') textY = res / 2
 
       ctx.shadowBlur = 15
-      ctx.shadowColor = "rgba(0,0,0,0.6)"
+      ctx.shadowColor = "rgba(0,0,0,0.5)"
       ctx.fillStyle = "#ffffff"
-      ctx.font = "bold 100px Inter, sans-serif"
+      ctx.font = "bold 110px Inter, sans-serif"
       ctx.textAlign = "center"
       ctx.fillText("Eid Mubarak", res / 2, textY)
 
       if (name) {
         ctx.fillStyle = selectedFrame.secondary
-        ctx.font = "600 60px Inter, sans-serif"
-        ctx.fillText(name, res / 2, textY + 80)
+        ctx.font = "600 65px Inter, sans-serif"
+        ctx.fillText(name, res / 2, textY + 85)
       }
 
+      // 11. Subtle Watermark
       ctx.shadowBlur = 0
-      ctx.fillStyle = "rgba(255,255,255,0.3)"
-      ctx.font = "24px Inter, sans-serif"
+      ctx.fillStyle = "rgba(255,255,255,0.4)"
+      ctx.font = "bold 24px Inter, sans-serif"
       ctx.textAlign = "right"
-      ctx.fillText("EidSpark – BD", res - 50, res - 30)
+      ctx.fillText("Made with EidSpark", res - 60, res - 40)
 
       ctx.restore()
     }
@@ -235,7 +227,7 @@ export default function SelfieFrameGenerator() {
       img.crossOrigin = "anonymous"
       img.src = image
       img.onload = () => {
-        // 2. Draw Selfie cropped to square
+        // Draw user image scaled and centered
         const size = Math.min(img.width, img.height)
         const offsetX = (img.width - size) / 2
         const offsetY = (img.height - size) / 2
@@ -253,17 +245,20 @@ export default function SelfieFrameGenerator() {
 
   const handleDownload = () => {
     const canvas = canvasRef.current
-    if (!canvas || !image) return
+    if (!canvas || !image) {
+      toast({ title: "Photo required", description: "Please upload a selfie first.", variant: "destructive" })
+      return
+    }
     const link = document.createElement('a')
     link.download = `EidSpark-Selfie-${Date.now()}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
-    toast({ title: "Card Downloaded!", description: "Share the joy with everyone." })
+    toast({ title: "Card Downloaded!", description: "Share the joy with your community." })
   }
 
   const shareSocial = (platform: 'facebook' | 'whatsapp') => {
     const url = window.location.href
-    const text = "Celebrate Eid with my custom EidSpark Selfie!"
+    const text = "Celebrate Eid with my custom EidSpark Selfie card!"
     let shareUrl = ""
     if (platform === 'facebook') {
       shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
@@ -273,6 +268,12 @@ export default function SelfieFrameGenerator() {
     window.open(shareUrl, '_blank')
   }
 
+  const handleReset = () => {
+    setImage(null)
+    setName("")
+    toast({ title: "Reset complete", description: "Ready for another selfie." })
+  }
+
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20 islamic-pattern pb-20">
       <Navbar />
@@ -280,15 +281,16 @@ export default function SelfieFrameGenerator() {
         <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
             <Camera className="w-4 h-4" />
-            <span>Islamic Card Engine</span>
+            <span>Islamic Arch Card Frame</span>
           </div>
-          <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Mosque Arch Selfie</h1>
+          <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Eid Selfie Frame</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
-            Experience traditional elegance. Upload your photo to fit inside a premium Islamic arch frame.
+            Redesign your festive selfies into a beautiful mosque-inspired greeting card with our architectural arch frames.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
+          {/* Controls Panel */}
           <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left duration-700">
             <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20">
               <CardHeader className="p-8 pb-4 bg-primary/5">
@@ -298,8 +300,9 @@ export default function SelfieFrameGenerator() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
+                {/* Image Upload */}
                 <div className="space-y-4">
-                  <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">1. Your Photo</Label>
+                  <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">1. Your Selfie</Label>
                   <div className="relative group">
                     <input type="file" accept="image/*" className="hidden" id="selfie-upload" onChange={handleImageUpload} />
                     <label 
@@ -307,13 +310,14 @@ export default function SelfieFrameGenerator() {
                       className="flex flex-col items-center justify-center h-44 border-4 border-dashed border-primary/10 rounded-[2.5rem] cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all bg-white/50"
                     >
                       <Upload className="w-10 h-10 text-primary mb-3" />
-                      <span className="font-black text-primary uppercase text-xs tracking-widest">Upload Selfie</span>
+                      <span className="font-black text-primary uppercase text-xs tracking-widest">Upload Photo</span>
                     </label>
                   </div>
                 </div>
 
+                {/* Recipient/User Name */}
                 <div className="space-y-4">
-                  <Label htmlFor="name" className="text-sm font-black text-muted-foreground uppercase tracking-widest">2. Personalized Name</Label>
+                  <Label htmlFor="name" className="text-sm font-black text-muted-foreground uppercase tracking-widest">2. Your Name</Label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input 
@@ -326,8 +330,9 @@ export default function SelfieFrameGenerator() {
                   </div>
                 </div>
 
+                {/* Frame Style Selection */}
                 <div className="space-y-4">
-                  <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">3. Pick a Style</Label>
+                  <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">3. Card Style</Label>
                   <div className="grid grid-cols-1 gap-3">
                     {frames.map((frame) => (
                       <button
@@ -348,6 +353,7 @@ export default function SelfieFrameGenerator() {
                   </div>
                 </div>
 
+                {/* Text Positioning */}
                 <div className="space-y-4">
                    <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">4. Message Position</Label>
                    <div className="flex gap-2">
@@ -372,15 +378,16 @@ export default function SelfieFrameGenerator() {
             </Card>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button onClick={() => shareSocial('facebook')} disabled={!image} className="h-14 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-xl transition-transform hover:scale-105">
+              <Button onClick={() => shareSocial('facebook')} disabled={!image} className="h-14 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 shadow-xl transition-transform">
                 <Facebook className="w-5 h-5 mr-2" /> Facebook
               </Button>
-              <Button onClick={() => shareSocial('whatsapp')} disabled={!image} className="h-14 rounded-2xl bg-green-500 text-white font-black hover:bg-green-600 shadow-xl transition-transform hover:scale-105">
+              <Button onClick={() => shareSocial('whatsapp')} disabled={!image} className="h-14 rounded-2xl bg-green-500 text-white font-black hover:bg-green-600 shadow-xl transition-transform">
                 <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
               </Button>
             </div>
           </div>
 
+          {/* Preview Panel */}
           <div className="lg:col-span-7 flex flex-col items-center animate-in fade-in slide-in-from-right duration-700">
             <div className="relative w-full aspect-square max-w-2xl bg-white rounded-[4rem] overflow-hidden shadow-2xl border-[12px] border-white group">
               <canvas ref={canvasRef} className="w-full h-full object-cover transition-all duration-500" />
@@ -389,23 +396,23 @@ export default function SelfieFrameGenerator() {
                   <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center animate-pulse">
                     <Camera className="w-12 h-12 text-primary/20" />
                   </div>
-                  <h3 className="text-2xl font-black text-primary/40 uppercase tracking-widest leading-tight">Waiting for your <br />selfie upload</h3>
+                  <h3 className="text-2xl font-black text-primary/40 uppercase tracking-widest leading-tight">Upload your selfie <br />to see the frame</h3>
                 </div>
               )}
             </div>
 
             <div className="flex gap-4 mt-8 w-full max-w-2xl">
               <Button onClick={handleDownload} disabled={!image} className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-2xl hover:scale-105 transition-transform">
-                <Download className="w-6 h-6 mr-3" /> Save HD Card
+                <Download className="w-6 h-6 mr-3" /> Download Eid Card
               </Button>
-              <Button variant="outline" onClick={() => { setImage(null); setName(""); }} className="w-16 h-16 rounded-2xl border-2 border-primary/10 text-primary hover:bg-primary/5">
+              <Button variant="outline" onClick={handleReset} className="w-16 h-16 rounded-2xl border-2 border-primary/10 text-primary hover:bg-primary/5">
                 <RefreshCcw className="w-6 h-6" />
               </Button>
             </div>
 
             <div className="mt-8 flex items-center gap-3 text-muted-foreground font-medium bg-white/50 px-8 py-4 rounded-full border border-white shadow-sm">
               <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
-              <p className="text-sm uppercase tracking-[0.2em] font-black">Classic Architecture Overlay Active</p>
+              <p className="text-sm uppercase tracking-[0.2em] font-black">High Definition Card Export Active</p>
             </div>
           </div>
         </div>
