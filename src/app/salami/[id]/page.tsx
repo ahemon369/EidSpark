@@ -30,6 +30,36 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
     }
   }, [isOpen])
 
+  const handlePaymentClick = () => {
+    if (!card?.paymentLink) return;
+    
+    let url = card.paymentLink.trim();
+    
+    // Check if the URL contains placeholders that shouldn't be opened
+    if (url.includes('<') || url.includes('>')) {
+      console.warn("Invalid payment link detected:", url);
+      return;
+    }
+
+    // Prepend protocol if missing
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      // If it's just a phone number, don't try to open it as a web link
+      if (/^\d+$/.test(url)) {
+        console.warn("Payment link is just a number, cannot open as URL.");
+        return;
+      }
+      url = `https://${url}`;
+    }
+
+    try {
+      // Use URL constructor to validate before opening
+      new URL(url);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      console.error("Malformed URL:", url);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-emerald-950 flex items-center justify-center">
@@ -127,7 +157,7 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
                   {card.paymentLink && (
                     <Button 
                       className="w-full h-14 rounded-2xl emerald-gradient text-white font-black text-lg shadow-xl"
-                      onClick={() => window.open(card.paymentLink, '_blank')}
+                      onClick={handlePaymentClick}
                     >
                       Collect via Payment Link <ExternalLink className="ml-2 w-5 h-5" />
                     </Button>
