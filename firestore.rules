@@ -44,6 +44,11 @@ service cloud.firestore {
       }
     }
 
+    match /salamiCards/{id} {
+      allow get: if true;
+      allow create: if isSignedIn();
+    }
+
     match /leaderboard/{userId} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId);
