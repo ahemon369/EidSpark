@@ -9,17 +9,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save } from "lucide-react"
+import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save, Facebook, MessageCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore } from "@/firebase"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc } from "firebase/firestore"
 
 const templates = [
-  { id: 'moon', name: 'Celestial Moon', bg: 'bg-emerald-950', accent: 'text-secondary', icon: Moon, gradient: ['#064e3b', '#022c22'] },
-  { id: 'lantern', name: 'Glowing Lantern', bg: 'bg-amber-900', accent: 'text-amber-400', icon: Sparkles, gradient: ['#78350f', '#451a03'] },
-  { id: 'mosque', name: 'Twilight Mosque', bg: 'bg-indigo-950', accent: 'text-indigo-300', icon: Layout, gradient: ['#1e1b4b', '#0f172a'] },
-  { id: 'gold', name: 'Royal Golden', bg: 'bg-amber-700', accent: 'text-yellow-100', icon: Star, gradient: ['#b45309', '#78350f'] },
+  { id: 'moon', name: 'Celestial Moon', bg: 'bg-emerald-950', accent: 'text-secondary', icon: Moon, gradient: ['#064e3b', '#022c22'], textColor: '#ffffff', secondaryColor: '#fbbf24' },
+  { id: 'lantern', name: 'Glowing Lantern', bg: 'bg-amber-900', accent: 'text-amber-400', icon: Sparkles, gradient: ['#78350f', '#451a03'], textColor: '#ffffff', secondaryColor: '#fbbf24' },
+  { id: 'mosque', name: 'Twilight Mosque', bg: 'bg-indigo-950', accent: 'text-indigo-300', icon: Layout, gradient: ['#1e1b4b', '#0f172a'], textColor: '#ffffff', secondaryColor: '#a5b4fc' },
+  { id: 'gold', name: 'Royal Golden', bg: 'bg-amber-50', accent: 'text-amber-900', icon: Star, gradient: ['#fffbeb', '#fef3c7'], textColor: '#451a03', secondaryColor: '#92400e' },
 ]
 
 export default function GreetingGenerator() {
@@ -60,14 +60,13 @@ export default function GreetingGenerator() {
 
     setIsSaving(true)
     try {
-      // Note: We're saving the metadata. Real image hosting would require Firebase Storage.
       await addDoc(collection(db, "users", user.uid, "eidGreetings"), {
         userId: user.uid,
         recipientName: name,
         templateId: selectedTemplate.id,
         greetingStyle: style,
         message: greeting,
-        generatedImageUrl: "", // Storage not configured for this MVP
+        generatedImageUrl: "",
         generationDate: new Date().toISOString()
       })
       toast({ title: "Saved to Gallery", description: "You can find your saved greetings in your profile." })
@@ -76,53 +75,6 @@ export default function GreetingGenerator() {
     } finally {
       setIsSaving(false)
     }
-  }
-
-  const renderToCanvas = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const scale = 2
-    canvas.width = 1080 * scale
-    canvas.height = 1080 * scale
-    ctx.scale(scale, scale)
-
-    const gradient = ctx.createLinearGradient(0, 0, 0, 1080)
-    gradient.addColorStop(0, selectedTemplate.gradient[0])
-    gradient.addColorStop(1, selectedTemplate.gradient[1])
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, 1080, 1080)
-
-    ctx.lineWidth = 40
-    ctx.strokeStyle = '#ffffff20'
-    ctx.strokeRect(20, 20, 1040, 1040)
-
-    ctx.fillStyle = '#ffffff'
-    ctx.textAlign = 'center'
-    
-    ctx.font = 'bold 120px Inter, sans-serif'
-    ctx.fillText("Eid Mubarak", 540, 250)
-
-    const words = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness.`
-    const lines = wrapText(ctx, words, 800)
-    
-    let y = 500
-    lines.forEach(line => {
-      ctx.fillText(line, 540, y)
-      y += 65
-    })
-
-    if (name) {
-      ctx.fillStyle = '#fbbf24'
-      ctx.font = 'bold 60px Inter, sans-serif'
-      ctx.fillText(`Dearest ${name}`, 540, 850)
-    }
-
-    ctx.fillStyle = '#ffffff40'
-    ctx.font = '300 24px Inter, sans-serif'
-    ctx.fillText("Created with EidSpark", 540, 1020)
   }
 
   const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number) => {
@@ -144,8 +96,76 @@ export default function GreetingGenerator() {
     return lines
   }
 
+  const renderToCanvas = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const scale = 2
+    canvas.width = 1080 * scale
+    canvas.height = 1080 * scale
+    ctx.scale(scale, scale)
+
+    // Background Gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1080)
+    gradient.addColorStop(0, selectedTemplate.gradient[0])
+    gradient.addColorStop(1, selectedTemplate.gradient[1])
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 1080, 1080)
+
+    // Border
+    ctx.lineWidth = 40
+    ctx.strokeStyle = `${selectedTemplate.secondaryColor}20`
+    ctx.strokeRect(20, 20, 1040, 1040)
+
+    ctx.textAlign = 'center'
+    
+    // Title Section
+    ctx.fillStyle = selectedTemplate.secondaryColor
+    ctx.font = 'bold 120px "Hind Siliguri", "Inter", sans-serif'
+    ctx.fillText("Eid Mubarak", 540, 250)
+
+    // Message Section
+    const messageText = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness.`
+    
+    // Dynamic Font Sizing for Message
+    let fontSize = 54
+    if (messageText.length > 200) fontSize = 42
+    if (messageText.length > 400) fontSize = 32
+
+    ctx.font = `500 ${fontSize}px "Hind Siliguri", "Inter", sans-serif`
+    ctx.fillStyle = selectedTemplate.textColor
+    
+    const lines = wrapText(ctx, messageText, 850)
+    const lineHeight = fontSize * 1.4
+    const totalHeight = lines.length * lineHeight
+    
+    let y = 540 - (totalHeight / 2)
+    lines.forEach(line => {
+      ctx.fillText(line, 540, y)
+      y += lineHeight
+    })
+
+    // Recipient Section
+    if (name) {
+      ctx.fillStyle = selectedTemplate.secondaryColor
+      ctx.font = 'bold 70px "Hind Siliguri", "Inter", sans-serif'
+      ctx.fillText(`Dear ${name}`, 540, 880)
+    }
+
+    // Branding
+    ctx.fillStyle = `${selectedTemplate.textColor}40`
+    ctx.font = '300 24px "Inter", sans-serif'
+    ctx.fillText("Created with EidSpark", 540, 1020)
+  }
+
   useEffect(() => {
-    renderToCanvas()
+    const font = new FontFace('Hind Siliguri', 'url(https://fonts.gstatic.com/s/hindsiliguri/v12/ijwa964vX920OOf6F2G1366166I.woff2)');
+    font.load().then(() => {
+      document.fonts.add(font);
+      renderToCanvas();
+    });
   }, [greeting, selectedTemplate, name])
 
   const handleDownload = () => {
@@ -156,6 +176,20 @@ export default function GreetingGenerator() {
     link.href = canvas.toDataURL('image/png')
     link.click()
     toast({ title: "Card Downloaded!", description: "Share the joy with your loved ones." })
+  }
+
+  const handleSocialShare = (platform: 'facebook' | 'whatsapp') => {
+    const url = window.location.href
+    const text = `Check out this personalized Eid Greeting I made for ${name || 'you'} on EidSpark!`
+    let shareUrl = ''
+    
+    if (platform === 'facebook') {
+      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+    } else {
+      shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`
+    }
+    
+    window.open(shareUrl, '_blank')
   }
 
   return (
@@ -170,7 +204,7 @@ export default function GreetingGenerator() {
           </div>
           <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">Eid Mubarak Cards</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
-            Generate personalized, high-quality Eid greetings instantly with our advanced AI and beautiful themes.
+            Generate personalized, high-quality Eid greetings in Bengali or English instantly with beautiful themes.
           </p>
         </div>
 
@@ -188,7 +222,7 @@ export default function GreetingGenerator() {
                   <Label htmlFor="name" className="text-sm font-black text-muted-foreground uppercase tracking-widest">Recipient's Name</Label>
                   <Input
                     id="name"
-                    placeholder="e.g. Grandma, Sarah, Bhai"
+                    placeholder="e.g. নিরা, Sarah, ভাইয়া"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="rounded-2xl h-14 text-lg border-2 border-primary/5 focus:border-primary/30"
@@ -246,13 +280,24 @@ export default function GreetingGenerator() {
               <canvas ref={canvasRef} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4 w-full max-w-xl">
-              <Button onClick={handleDownload} disabled={!greeting} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
-                <Download className="w-6 h-6 mr-2" /> Download
-              </Button>
-              <Button onClick={handleSaveToGallery} disabled={!greeting || isSaving} variant="outline" className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
-                {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
-              </Button>
+            <div className="flex flex-col gap-4 w-full max-w-xl">
+               <div className="flex flex-wrap justify-center gap-4 w-full">
+                <Button onClick={handleDownload} disabled={!greeting} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
+                  <Download className="w-6 h-6 mr-2" /> Download PNG
+                </Button>
+                <Button onClick={handleSaveToGallery} disabled={!greeting || isSaving} variant="outline" className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
+                  {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Button onClick={() => handleSocialShare('facebook')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
+                  <Facebook className="w-5 h-5 mr-2" /> Facebook
+                </Button>
+                <Button onClick={() => handleSocialShare('whatsapp')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
+                  <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
+                </Button>
+              </div>
             </div>
           </div>
         </div>
