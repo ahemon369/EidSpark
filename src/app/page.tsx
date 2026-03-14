@@ -8,8 +8,7 @@ import {
   Timer, 
   MapPin, 
   ArrowRight,
-  Star,
-  Sparkles
+  Star
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -57,6 +56,7 @@ const tools = [
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === "hero-mosque")
+  const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -170,9 +170,15 @@ export default function Home() {
       <footer className="bg-white border-t border-border py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary p-2 rounded-xl">
-                <Sparkles className="h-5 w-5 text-secondary" />
+            <div className="flex items-center gap-2 group">
+              <div className="relative w-8 h-8 overflow-hidden rounded-lg border border-primary/10 transition-transform group-hover:scale-110">
+                <Image 
+                  src={logo?.imageUrl || ""} 
+                  alt="EidSpark Logo" 
+                  fill 
+                  className="object-cover"
+                  data-ai-hint="eid moon mosque"
+                />
               </div>
               <span className="text-xl font-bold font-headline text-primary tracking-tight">EidSpark</span>
             </div>

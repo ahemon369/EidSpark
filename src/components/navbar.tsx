@@ -3,13 +3,15 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Moon, Menu, X, Sparkles, LogIn, LogOut, User } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useUser, useAuth } from "@/firebase"
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Image from "next/image"
+import { PlaceHolderImages } from "@/lib/placeholder-images"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,8 @@ export function Navbar() {
   const pathname = usePathname()
   const { user, loading } = useUser()
   const auth = useAuth()
+  
+  const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   const handleLogin = async () => {
     if (!auth) return
@@ -53,9 +57,15 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 glass shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary p-2 rounded-xl">
-              <Sparkles className="h-5 w-5 text-secondary" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="relative w-10 h-10 overflow-hidden rounded-xl border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
+              <Image 
+                src={logo?.imageUrl || ""} 
+                alt="EidSpark Logo" 
+                fill 
+                className="object-cover"
+                data-ai-hint="eid moon mosque"
+              />
             </div>
             <span className="text-xl font-bold font-headline tracking-tight text-primary">EidSpark</span>
           </Link>
