@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
-import { generateEidGreeting } from "@/ai/flows/generate-eid-greeting"
+import { generateEidGreeting, type GenerateEidGreetingOutput } from "@/ai/flows/generate-eid-greeting"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Loader2, Send, Download, Share2, Sparkles, Wand2, Moon, Star, Layout, Check, Palette, Save, Facebook, MessageCircle, RefreshCcw } from "lucide-react"
+import { Loader2, Send, Download, Sparkles, Wand2, Moon, Star, Layout, Save, Facebook, MessageCircle, RefreshCcw, Copy, Check } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore } from "@/firebase"
@@ -61,11 +61,13 @@ export default function GreetingGenerator() {
   const { user } = useUser()
   const db = useFirestore()
   const [name, setName] = useState("")
-  const [style, setStyle] = useState<"formal" | "casual" | "heartfelt" | "humorous">("heartfelt")
+  const [style, setStyle] = useState<"heartfelt" | "formal" | "blessing" | "simple" | "family" | "friend">("heartfelt")
+  const [language, setLanguage] = useState<"bangla" | "english" | "arabic">("bangla")
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [greeting, setGreeting] = useState("")
+  const [isCopied, setIsCopied] = useState(false)
+  const [greetingData, setGreetingData] = useState<GenerateEidGreetingOutput | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { toast } = useToast()
 
@@ -77,8 +79,12 @@ export default function GreetingGenerator() {
 
     setIsLoading(true)
     try {
-      const result = await generateEidGreeting({ recipientName: name, greetingStyle: style })
-      setGreeting(result.greetingMessage)
+      const result = await generateEidGreeting({ 
+        recipientName: name, 
+        greetingStyle: style,
+        language: language
+      })
+      setGreetingData(result)
     } catch (error) {
       toast({ title: "Generation failed", description: "Something went wrong.", variant: "destructive" })
     } finally {
@@ -86,12 +92,21 @@ export default function GreetingGenerator() {
     }
   }
 
+  const handleCopyText = () => {
+    if (!greetingData) return
+    const text = `${greetingData.title}\n\n${greetingData.message}\n\n${greetingData.recipientLine}`
+    navigator.clipboard.writeText(text)
+    setIsCopied(true)
+    toast({ title: "Copied!", description: "Message text copied to clipboard." })
+    setTimeout(() => setIsCopied(false), 2000)
+  }
+
   const handleSaveToGallery = async () => {
     if (!db || !user) {
       toast({ title: "Sign in required", description: "Log in to save greetings to your gallery." })
       return
     }
-    if (!greeting) return
+    if (!greetingData) return
 
     setIsSaving(true)
     try {
@@ -100,8 +115,10 @@ export default function GreetingGenerator() {
         recipientName: name,
         templateId: selectedTemplate.id,
         greetingStyle: style,
-        message: greeting,
-        generatedImageUrl: "",
+        language: language,
+        message: greetingData.message,
+        title: greetingData.title,
+        recipientLine: greetingData.recipientLine,
         generationDate: new Date().toISOString()
       })
       toast({ title: "Saved to Gallery", description: "You can find your saved greetings in your profile." })
@@ -163,20 +180,20 @@ export default function GreetingGenerator() {
     
     // 3. TOP SECTION: Title
     ctx.fillStyle = selectedTemplate.secondaryColor
+    const titleText = greetingData?.title || "Eid Mubarak"
     ctx.font = 'bold 100px "Hind Siliguri", "Inter", sans-serif'
     ctx.shadowBlur = 10
     ctx.shadowColor = 'rgba(0,0,0,0.3)'
-    ctx.fillText("Eid Mubarak", 540, 200)
+    ctx.fillText(titleText, 540, 200)
     ctx.shadowBlur = 0
 
     // 4. CENTER SECTION: AI Greeting Message
-    const messageText = greeting || `Wishing you a blessed and joyful Eid celebration full of peace and happiness. May this festive season bring you closer to your loved ones.`
+    const messageText = greetingData?.message || `Wishing you a blessed and joyful Eid celebration full of peace and happiness. May this festive season bring you closer to your loved ones.`
     
     // Dynamic Font Sizing for Message
     let fontSize = 48
     if (messageText.length > 150) fontSize = 42
     if (messageText.length > 300) fontSize = 36
-    if (messageText.length > 500) fontSize = 30
 
     ctx.font = `500 ${fontSize}px "Hind Siliguri", "Inter", sans-serif`
     ctx.fillStyle = selectedTemplate.textColor
@@ -185,24 +202,21 @@ export default function GreetingGenerator() {
     const lineHeight = fontSize * 1.5
     const totalHeight = lines.length * lineHeight
     
-    // Vertical centering logic within the center area
     let y = 540 - (totalHeight / 2)
-    
-    // Ensure we don't start too high and overlap title
     if (y < 300) y = 300
 
     lines.forEach((line, index) => {
-      // Prevent overflow into footer
       if (y + (index * lineHeight) < 850) {
         ctx.fillText(line, 540, y + (index * lineHeight))
       }
     })
 
-    // 5. BOTTOM SECTION: Recipient Name
-    if (name) {
+    // 5. BOTTOM SECTION: Recipient Line
+    const recipientText = greetingData?.recipientLine || (name ? `Dear ${name}` : "")
+    if (recipientText) {
       ctx.fillStyle = selectedTemplate.secondaryColor
       ctx.font = 'bold 64px "Hind Siliguri", "Inter", sans-serif'
-      ctx.fillText(`Dear ${name}`, 540, 920)
+      ctx.fillText(recipientText, 540, 920)
     }
 
     // 6. Branding / Footer
@@ -217,7 +231,7 @@ export default function GreetingGenerator() {
       document.fonts.add(font);
       renderToCanvas();
     });
-  }, [greeting, selectedTemplate, name])
+  }, [greetingData, selectedTemplate, name, language])
 
   const handleDownload = () => {
     const canvas = canvasRef.current
@@ -245,8 +259,7 @@ export default function GreetingGenerator() {
 
   const handleReset = () => {
     setName("")
-    setGreeting("")
-    setGreeting("")
+    setGreetingData(null)
     toast({ title: "Editor Reset", description: "Start creating a new card." })
   }
 
@@ -258,11 +271,11 @@ export default function GreetingGenerator() {
         <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest border border-secondary/20">
             <Sparkles className="w-4 h-4" />
-            <span>Premium Greeting Engine</span>
+            <span>AI Personalization Engine</span>
           </div>
           <h1 className="text-5xl lg:text-7xl font-black text-primary tracking-tight">AI Greeting Cards</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
-            Design beautiful, professional Eid cards with AI-powered messages that automatically adapt to your chosen theme.
+            Design beautiful Eid cards with trilingual AI messages in Bengali, English, and Arabic.
           </p>
         </div>
 
@@ -272,11 +285,11 @@ export default function GreetingGenerator() {
               <CardHeader className="p-10 pb-6 bg-primary/5">
                 <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
                   <Wand2 className="w-6 h-6 text-secondary" />
-                  Card Designer
+                  AI Message Generator
                 </CardTitle>
-                <CardDescription>Customize your festive message</CardDescription>
+                <CardDescription>Select style and language</CardDescription>
               </CardHeader>
-              <CardContent className="p-10 space-y-8">
+              <CardContent className="p-10 space-y-6">
                 <div className="space-y-3">
                   <Label htmlFor="name" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Recipient Name</Label>
                   <Input
@@ -288,19 +301,36 @@ export default function GreetingGenerator() {
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="style" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Greeting Style</Label>
-                  <Select value={style} onValueChange={(val: any) => setStyle(val)}>
-                    <SelectTrigger className="h-14 rounded-2xl text-lg border-2 border-primary/5">
-                      <SelectValue placeholder="Select style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="heartfelt">Heartfelt & Warm</SelectItem>
-                      <SelectItem value="formal">Formal & Respectful</SelectItem>
-                      <SelectItem value="casual">Casual & Friendly</SelectItem>
-                      <SelectItem value="humorous">Lighthearted & Fun</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label htmlFor="language" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Language</Label>
+                    <Select value={language} onValueChange={(val: any) => setLanguage(val)}>
+                      <SelectTrigger className="h-14 rounded-2xl text-lg border-2 border-primary/5">
+                        <SelectValue placeholder="Language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bangla">Bengali (বাংলা)</SelectItem>
+                        <SelectItem value="english">English</SelectItem>
+                        <SelectItem value="arabic">Arabic (عربي)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="style" className="text-xs font-black text-muted-foreground uppercase tracking-widest">Style</Label>
+                    <Select value={style} onValueChange={(val: any) => setStyle(val)}>
+                      <SelectTrigger className="h-14 rounded-2xl text-lg border-2 border-primary/5">
+                        <SelectValue placeholder="Style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="heartfelt">Heartfelt</SelectItem>
+                        <SelectItem value="blessing">Islamic Blessing</SelectItem>
+                        <SelectItem value="formal">Formal</SelectItem>
+                        <SelectItem value="simple">Short & Simple</SelectItem>
+                        <SelectItem value="family">Family Greeting</SelectItem>
+                        <SelectItem value="friend">Friend Greeting</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -311,16 +341,16 @@ export default function GreetingGenerator() {
                         key={template.id}
                         onClick={() => setSelectedTemplate(template)}
                         className={cn(
-                          "relative group h-24 rounded-2xl border-2 transition-all overflow-hidden text-left p-4",
+                          "relative group h-20 rounded-2xl border-2 transition-all overflow-hidden text-left p-4",
                           selectedTemplate.id === template.id ? "border-primary shadow-lg scale-105" : "border-primary/5"
                         )}
                       >
                         <div className={cn("absolute inset-0 opacity-10", template.bg)}></div>
-                        <div className="relative z-10 h-full flex flex-col justify-between">
+                        <div className="relative z-10 h-full flex items-center justify-between">
                           <span className={cn("text-[10px] font-black uppercase tracking-widest", template.accent)}>
                             {template.name}
                           </span>
-                          <template.icon className={cn("w-5 h-5", template.accent)} />
+                          <template.icon className={cn("w-4 h-4", template.accent)} />
                         </div>
                       </button>
                     ))}
@@ -331,9 +361,14 @@ export default function GreetingGenerator() {
                   <Button onClick={handleGenerate} disabled={isLoading} className="w-full emerald-gradient h-16 text-xl font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
                     {isLoading ? <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Crafting...</> : <><Send className="w-6 h-6 mr-2" /> Generate AI Message</>}
                   </Button>
-                  <Button onClick={handleReset} variant="ghost" className="h-12 rounded-xl text-primary font-bold">
-                    <RefreshCcw className="w-4 h-4 mr-2" /> Start Over
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCopyText} variant="outline" disabled={!greetingData} className="flex-1 h-12 rounded-xl text-primary font-bold">
+                      {isCopied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copy Text
+                    </Button>
+                    <Button onClick={handleReset} variant="ghost" className="flex-1 h-12 rounded-xl text-primary font-bold">
+                      <RefreshCcw className="w-4 h-4 mr-2" /> Reset
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -343,11 +378,11 @@ export default function GreetingGenerator() {
             {/* Live Preview Card */}
             <div className="relative w-full max-w-xl aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-slate-50">
               <canvas ref={canvasRef} className="w-full h-full object-cover transition-all duration-500" />
-              {!greeting && (
+              {!greetingData && (
                 <div className="absolute inset-0 flex items-center justify-center p-12 text-center bg-white/40 backdrop-blur-sm pointer-events-none">
                   <div className="space-y-4">
                     <Sparkles className="w-12 h-12 text-primary/20 mx-auto animate-pulse" />
-                    <p className="font-black text-primary/40 uppercase tracking-widest">Enter a name and generate <br /> your AI message</p>
+                    <p className="font-black text-primary/40 uppercase tracking-widest">Enter a name and generate <br /> your AI greeting</p>
                   </div>
                 </div>
               )}
@@ -356,20 +391,20 @@ export default function GreetingGenerator() {
             {/* Actions Panel */}
             <div className="flex flex-col gap-4 w-full max-w-xl">
                <div className="flex flex-wrap justify-center gap-4 w-full">
-                <Button onClick={handleDownload} disabled={!greeting} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
-                  <Download className="w-6 h-6 mr-2" /> Download PNG
+                <Button onClick={handleDownload} disabled={!greetingData} className="flex-1 h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
+                  <Download className="w-6 h-6 mr-2" /> Download Card
                 </Button>
-                <Button onClick={handleSaveToGallery} disabled={!greeting || isSaving} variant="outline" className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
+                <Button onClick={handleSaveToGallery} disabled={!greetingData || isSaving} variant="outline" className="flex-1 h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
                   {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
                 </Button>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <Button onClick={() => handleSocialShare('facebook')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
-                  <Facebook className="w-5 h-5 mr-2" /> Share Facebook
+                <Button onClick={() => handleSocialShare('facebook')} disabled={!greetingData} variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
+                  <Facebook className="w-5 h-5 mr-2" /> Facebook
                 </Button>
-                <Button onClick={() => handleSocialShare('whatsapp')} disabled={!greeting} variant="outline" className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
-                  <MessageCircle className="w-5 h-5 mr-2" /> Share WhatsApp
+                <Button onClick={() => handleSocialShare('whatsapp')} disabled={!greetingData} variant="outline" className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
+                  <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
                 </Button>
               </div>
             </div>
