@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Wallet, Plus, Trophy, Trash2, TrendingUp, Lock, Crown, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, setDoc, query, orderBy, limit } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,21 +23,21 @@ export default function SalamiTracker() {
   const [name, setName] = useState("")
   const [amount, setAmount] = useState("")
 
-  // Fetch user's gifts from Firestore
-  const giftsQuery = useMemo(() => {
+  // Fetch user's gifts from Firestore - Using salamiEntries as per backend.json
+  const salamiQuery = useMemoFirebase(() => {
     if (!db || !user) return null
-    return collection(db, "users", user.uid, "gifts")
+    return collection(db, "users", user.uid, "salamiEntries")
   }, [db, user])
 
-  const { data: gifts = [], loading: loadingGifts } = useCollection(giftsQuery)
+  const { data: salamiEntries = [], isLoading: loadingSalami } = useCollection(salamiQuery)
 
   // Fetch global leaderboard
-  const leaderboardQuery = useMemo(() => {
+  const leaderboardQuery = useMemoFirebase(() => {
     if (!db) return null
     return query(collection(db, "leaderboard"), orderBy("totalSalami", "desc"), limit(10))
   }, [db])
 
-  const { data: leaderboard = [], loading: loadingLeaderboard } = useCollection(leaderboardQuery)
+  const { data: leaderboard = [], isLoading: loadingLeaderboard } = useCollection(leaderboardQuery)
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,16 +46,17 @@ export default function SalamiTracker() {
     const giftAmount = parseFloat(amount)
     
     try {
-      // Add to user's gifts
-      addDoc(collection(db, "users", user.uid, "gifts"), {
-        giverName: name,
+      // Add to user's gifts using schema-compliant fields
+      addDoc(collection(db, "users", user.uid, "salamiEntries"), {
+        userId: user.uid,
+        personName: name,
         amount: giftAmount,
-        recipientUid: user.uid,
+        entryDate: new Date().toISOString(),
         createdAt: serverTimestamp()
       })
 
       // Update leaderboard profile
-      const currentTotal = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+      const currentTotal = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
       const newTotal = currentTotal + giftAmount
       
       setDoc(doc(db, "leaderboard", user.uid), {
@@ -68,41 +69,34 @@ export default function SalamiTracker() {
       setAmount("")
       toast({
         title: "Salami Added!",
-        description: `Successfully recorded $${giftAmount} from ${name}.`
+        description: `Successfully recorded ৳${giftAmount} from ${name}.`
       })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not save entry. Please try again.",
-        variant: "destructive"
-      })
+      // Errors are handled by FirebaseErrorListener, but we can log for UI state if needed
     }
   }
 
-  const handleDelete = async (giftId: string, giftAmount: number) => {
+  const handleDelete = async (entryId: string, entryAmount: number) => {
     if (!db || !user) return
     
     try {
-      deleteDoc(doc(db, "users", user.uid, "gifts", giftId))
+      deleteDoc(doc(db, "users", user.uid, "salamiEntries", entryId))
       
       // Update leaderboard
-      const currentTotal = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0)
-      const newTotal = Math.max(0, currentTotal - giftAmount)
+      const currentTotal = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
+      const newTotal = Math.max(0, currentTotal - entryAmount)
       
       setDoc(doc(db, "leaderboard", user.uid), {
         totalSalami: newTotal
       }, { merge: true })
 
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Delete failed"
-      })
+      // Handled globally
     }
   }
 
-  const total = gifts.reduce((acc, curr) => acc + (curr.amount || 0), 0)
-  const sortedEntries = [...gifts].sort((a, b) => (b.amount || 0) - (a.amount || 0))
+  const total = (salamiEntries || []).reduce((acc, curr) => acc + (curr.amount || 0), 0)
+  const sortedEntries = [...(salamiEntries || [])].sort((a, b) => (b.amount || 0) - (a.amount || 0))
 
   return (
     <div className="min-h-screen bg-background">
@@ -130,7 +124,7 @@ export default function SalamiTracker() {
                 <div className="emerald-gradient p-8 text-white text-center">
                   <Wallet className="w-10 h-10 mx-auto mb-4 opacity-80" />
                   <p className="text-white/80 font-medium mb-1">Total Salami Collected</p>
-                  <p className="text-4xl font-bold">${total.toLocaleString()}</p>
+                  <p className="text-4xl font-bold">৳{total.toLocaleString()}</p>
                 </div>
                 <CardContent className="p-6">
                   <form onSubmit={handleAdd} className="space-y-4">
@@ -146,7 +140,7 @@ export default function SalamiTracker() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Amount ($)</Label>
+                      <Label htmlFor="amount">Amount (৳)</Label>
                       <Input 
                         id="amount" 
                         type="number" 
@@ -173,7 +167,7 @@ export default function SalamiTracker() {
                 <div>
                   <p className="text-sm font-medium text-primary">Average Gift</p>
                   <p className="text-2xl font-bold text-primary">
-                    ${gifts.length > 0 ? (total / gifts.length).toFixed(1) : 0}
+                    ৳{salamiEntries.length > 0 ? (total / salamiEntries.length).toFixed(0) : 0}
                   </p>
                 </div>
               </Card>
@@ -202,12 +196,12 @@ export default function SalamiTracker() {
                         <CardDescription>All your Eidi records</CardDescription>
                       </div>
                       <div className="text-sm font-bold text-primary bg-accent/50 px-3 py-1 rounded-full">
-                        {gifts.length} Entries
+                        {salamiEntries.length} Entries
                       </div>
                     </CardHeader>
                     <CardContent className="p-0">
                       <div className="divide-y max-h-[500px] overflow-y-auto custom-scrollbar">
-                        {loadingGifts ? (
+                        {loadingSalami ? (
                           <div className="p-12 text-center text-muted-foreground">Loading your gifts...</div>
                         ) : sortedEntries.length > 0 ? (
                           sortedEntries.map((entry, index) => (
@@ -221,18 +215,18 @@ export default function SalamiTracker() {
                               <div className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
                                   <AvatarFallback className="bg-primary text-white font-bold">
-                                    {entry.giverName?.[0]}
+                                    {entry.personName?.[0]}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <p className="font-bold text-lg text-primary">{entry.giverName}</p>
+                                  <p className="font-bold text-lg text-primary">{entry.personName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    Received on {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString() : 'Just now'}
+                                    Received on {entry.entryDate ? new Date(entry.entryDate).toLocaleDateString() : 'Just now'}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-6">
-                                <p className="text-2xl font-bold text-primary">${entry.amount}</p>
+                                <p className="text-2xl font-bold text-primary">৳{entry.amount}</p>
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
@@ -295,7 +289,7 @@ export default function SalamiTracker() {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-2xl font-bold text-primary">${player.totalSalami.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-primary">৳{player.totalSalami.toLocaleString()}</p>
                               </div>
                             </div>
                           ))
