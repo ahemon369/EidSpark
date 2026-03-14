@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2 } from "lucide-react"
+import { Navigation, Loader2, AlertCircle } from "lucide-react"
 
 // Fix for Leaflet default marker icons in Next.js
 const mosqueIcon = L.divIcon({
@@ -46,28 +46,47 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
 function MosqueFetcher({ onFetch }: { onFetch: (mosques: Mosque[]) => void }) {
   const map = useMap()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
 
-  const fetchMosques = async () => {
+  const fetchMosques = useCallback(async () => {
     const bounds = map.getBounds()
-    const query = `
-      [out:json];
-      node["amenity"="place_of_worship"]["religion"="muslim"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      out;
-    `
+    const query = `[out:json];node["amenity"="place_of_worship"]["religion"="muslim"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});out;`
+    
+    const endpoints = [
+      "https://overpass-api.de/api/interpreter",
+      "https://lz4.overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter"
+    ]
+
     setLoading(true)
-    try {
-      const response = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: query,
-      })
-      const data = await response.json()
-      onFetch(data.elements || [])
-    } catch (error) {
-      console.error("Failed to fetch mosques:", error)
-    } finally {
-      setLoading(false)
+    setError(false)
+    let success = false
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`, {
+          method: "GET",
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+        
+        if (!response.ok) throw new Error("API response error")
+        
+        const data = await response.json()
+        onFetch(data.elements || [])
+        success = true
+        break // Stop at the first successful endpoint
+      } catch (err) {
+        console.warn(`Failed to fetch from ${endpoint}, trying fallback...`)
+      }
     }
-  }
+
+    if (!success) {
+      setError(true)
+    }
+    setLoading(false)
+  }, [map, onFetch])
 
   useMapEvents({
     moveend: () => {
@@ -77,13 +96,22 @@ function MosqueFetcher({ onFetch }: { onFetch: (mosques: Mosque[]) => void }) {
 
   useEffect(() => {
     fetchMosques()
-  }, [])
+  }, [fetchMosques])
 
-  return loading ? (
-    <div className="absolute top-4 right-4 z-[1000] bg-white p-2 rounded-full shadow-lg flex items-center gap-2 text-primary text-xs font-bold">
-      <Loader2 className="w-4 h-4 animate-spin" /> Updating...
-    </div>
-  ) : null
+  return (
+    <>
+      {loading && (
+        <div className="absolute top-4 right-4 z-[1000] bg-white p-2 px-4 rounded-full shadow-lg flex items-center gap-2 text-primary text-xs font-bold border border-primary/10">
+          <Loader2 className="w-4 h-4 animate-spin" /> Updating mosques...
+        </div>
+      )}
+      {error && !loading && (
+        <div className="absolute top-4 right-4 z-[1000] bg-destructive/10 text-destructive p-2 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold border border-destructive/20 backdrop-blur-md">
+          <AlertCircle className="w-4 h-4" /> Connection error. Try moving the map.
+        </div>
+      )}
+    </>
+  )
 }
 
 export default function MosqueMap({ center, zoom, onLocationFound }: MapProps) {
@@ -91,7 +119,7 @@ export default function MosqueMap({ center, zoom, onLocationFound }: MapProps) {
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
 
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude]
@@ -104,8 +132,8 @@ export default function MosqueMap({ center, zoom, onLocationFound }: MapProps) {
   }, [onLocationFound])
 
   return (
-    <div className="relative w-full h-full rounded-[2rem] overflow-hidden">
-      <MapContainer center={center} zoom={zoom} scrollWheelZoom={true}>
+    <div className="relative w-full h-full rounded-[2rem] overflow-hidden bg-slate-50">
+      <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -128,15 +156,15 @@ export default function MosqueMap({ center, zoom, onLocationFound }: MapProps) {
             <Popup className="rounded-2xl overflow-hidden">
               <div className="p-2 space-y-3 min-w-[200px]">
                 <div>
-                  <h3 className="font-black text-primary text-base m-0">
+                  <h3 className="font-black text-primary text-base m-0 leading-tight">
                     {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
                   </h3>
-                  <p className="text-xs text-muted-foreground font-medium m-0">
+                  <p className="text-xs text-muted-foreground font-medium mt-1 m-0">
                     {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location details unavailable"}
                   </p>
                 </div>
                 <Button
-                  className="w-full emerald-gradient h-10 rounded-xl text-xs font-bold shadow-md"
+                  className="w-full emerald-gradient h-10 rounded-xl text-xs font-bold shadow-md hover:scale-[1.02] transition-transform"
                   onClick={() => {
                     const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
                     window.open(url, "_blank")
