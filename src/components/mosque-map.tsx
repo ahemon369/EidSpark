@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin } from "lucide-react"
+import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin, Heart } from "lucide-react"
 
 // Custom Emerald Marker for Mosques
 const mosqueIcon = L.divIcon({
@@ -36,6 +36,7 @@ interface MapProps {
   zoom: number
   onLocationFound: (location: [number, number]) => void
   onMosquesUpdate?: (mosques: Mosque[]) => void
+  onSaveMosque?: (mosque: Mosque) => void
 }
 
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -136,7 +137,7 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
   )
 }
 
-export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpdate }: MapProps) {
+export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpdate, onSaveMosque }: MapProps) {
   const [mosques, setMosques] = useState<Mosque[]>([])
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
 
@@ -216,17 +217,27 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
                     <Navigation className="w-4 h-4 mr-2" />
                     Get Directions
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 rounded-xl text-xs font-black border-2 border-primary/10 hover:bg-primary/5 text-primary"
-                    onClick={() => {
-                      const url = `https://www.google.com/maps/search/?api=1&query=${mosque.lat},${mosque.lon}`
-                      window.open(url, "_blank")
-                    }}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View on Maps
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 rounded-xl text-xs font-black border-2 border-primary/10 hover:bg-primary/5 text-primary"
+                      onClick={() => {
+                        const url = `https://www.google.com/maps/search/?api=1&query=${mosque.lat},${mosque.lon}`
+                        window.open(url, "_blank")
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Maps
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 rounded-xl text-xs font-black border-2 border-secondary/10 hover:bg-secondary/5 text-secondary"
+                      onClick={() => onSaveMosque?.(mosque)}
+                    >
+                      <Heart className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Popup>

@@ -6,8 +6,11 @@ import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Clock, Timer, Sparkles, Navigation, List, Info, ChevronRight, LocateFixed } from "lucide-react"
+import { MapPin, Clock, Timer, Sparkles, Navigation, List, Info, ChevronRight, LocateFixed, Heart, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useUser, useFirestore } from "@/firebase"
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore"
+import { useToast } from "@/hooks/use-toast"
 
 // Dynamically import the map to avoid SSR issues with Leaflet
 const MosqueMap = dynamic(() => import("@/components/mosque-map"), {
@@ -32,6 +35,10 @@ const cities = [
 ]
 
 export default function MosqueFinder() {
+  const { user } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+
   const [mapConfig, setMapConfig] = useState<{ center: [number, number]; zoom: number }>({
     center: [23.8103, 90.4125], // Default to Dhaka
     zoom: 13,
@@ -41,6 +48,7 @@ export default function MosqueFinder() {
   const [prayerTimes, setPrayerTimes] = useState<any>(null)
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; remaining: string } | null>(null)
   const [currentPrayerName, setCurrentPrayerName] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
 
   // Fetch Prayer Times
   useEffect(() => {
@@ -138,10 +146,47 @@ export default function MosqueFinder() {
   }, [])
 
   const handleMosquesUpdate = useCallback((newMosques: any[]) => {
-    // Sort mosques by distance before updating state
     const sorted = [...newMosques].sort((a, b) => (a.distance || 0) - (b.distance || 0))
     setMosques(sorted)
   }, [])
+
+  const handleSaveMosque = async (mosque: any) => {
+    if (!user || !db) {
+      toast({ title: "Sign in required", description: "Log in to save favorite mosques." })
+      return
+    }
+
+    setSavingId(mosque.id.toString())
+    try {
+      // Check for duplicates
+      const q = query(
+        collection(db, "users", user.uid, "savedMosques"), 
+        where("mosqueId", "==", mosque.id.toString())
+      )
+      const existing = await getDocs(q)
+      
+      if (!existing.empty) {
+        toast({ title: "Already Saved", description: "This mosque is already in your favorites." })
+        setSavingId(null)
+        return
+      }
+
+      await addDoc(collection(db, "users", user.uid, "savedMosques"), {
+        userId: user.uid,
+        mosqueId: mosque.id.toString(),
+        name: mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque",
+        address: mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Bangladesh",
+        lat: mosque.lat,
+        lon: mosque.lon,
+        savedAt: new Date().toISOString()
+      })
+      toast({ title: "Mosque Saved!", description: "Find it in your dashboard favorites." })
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setSavingId(null)
+    }
+  }
 
   const formatTime = (timeStr: string) => {
     if (!timeStr) return "--:--"
@@ -156,7 +201,6 @@ export default function MosqueFinder() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         
-        {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 mb-12 animate-in fade-in slide-in-from-top duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
@@ -191,7 +235,6 @@ export default function MosqueFinder() {
           </div>
         </div>
 
-        {/* Prayer Times Section */}
         <div className="mb-12 grid lg:grid-cols-12 gap-6 animate-in fade-in duration-700 delay-200">
           <Card className="lg:col-span-4 emerald-gradient border-none shadow-2xl rounded-[2.5rem] overflow-hidden text-white relative group">
              <CardContent className="p-8 relative z-10 flex flex-col justify-between h-full min-h-[280px]">
@@ -254,7 +297,6 @@ export default function MosqueFinder() {
           </div>
         </div>
 
-        {/* Map & List Section */}
         <div className="grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 space-y-6 animate-in fade-in slide-in-from-left duration-700">
             <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl flex flex-col h-[700px]">
@@ -271,7 +313,7 @@ export default function MosqueFinder() {
                     {mosques.map((mosque) => (
                       <div key={mosque.id} className="p-6 hover:bg-primary/5 transition-colors group">
                         <div className="flex justify-between items-start gap-3">
-                          <div className="space-y-1">
+                          <div className="space-y-1 flex-grow">
                             <h4 className="font-black text-primary text-sm leading-tight group-hover:text-secondary transition-colors">
                               {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
                             </h4>
@@ -287,18 +329,28 @@ export default function MosqueFinder() {
                               </p>
                             )}
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="rounded-xl h-10 px-4 text-xs font-black text-primary hover:bg-primary hover:text-white border-2 border-primary/5"
-                            onClick={() => {
-                              const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
-                              window.open(url, "_blank")
-                            }}
-                          >
-                            <Navigation className="w-4 h-4 mr-2" />
-                            Navigate
-                          </Button>
+                          <div className="flex flex-col gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="rounded-xl h-10 px-4 text-xs font-black text-primary hover:bg-primary hover:text-white border-2 border-primary/5"
+                              onClick={() => {
+                                const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
+                                window.open(url, "_blank")
+                              }}
+                            >
+                              <Navigation className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="rounded-xl h-10 px-4 text-xs font-black text-secondary hover:bg-secondary hover:text-primary border-2 border-secondary/5"
+                              onClick={() => handleSaveMosque(mosque)}
+                              disabled={savingId === mosque.id.toString()}
+                            >
+                              {savingId === mosque.id.toString() ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -330,6 +382,7 @@ export default function MosqueFinder() {
                 zoom={mapConfig.zoom} 
                 onLocationFound={handleLocationFound} 
                 onMosquesUpdate={handleMosquesUpdate}
+                onSaveMosque={handleSaveMosque}
               />
             </div>
             
