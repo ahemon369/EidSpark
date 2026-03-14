@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink } from "lucide-react"
+import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin } from "lucide-react"
 
 // Custom Emerald Marker for Mosques
 const mosqueIcon = L.divIcon({
@@ -16,10 +16,10 @@ const mosqueIcon = L.divIcon({
 })
 
 const userLocationIcon = L.divIcon({
-  html: `<div class="relative w-6 h-6"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div><div class="absolute inset-1 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div></div>`,
+  html: `<div class="relative w-7 h-7"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div><div class="absolute inset-1.5 bg-blue-500 rounded-full border-4 border-white shadow-lg"></div></div>`,
   className: "custom-user-icon",
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 })
 
 interface Mosque {
@@ -124,12 +124,12 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
     <>
       {loading && (
         <div className="absolute top-6 right-6 z-[1000] bg-white p-3 px-6 rounded-2xl shadow-2xl flex items-center gap-3 text-primary text-sm font-black border-2 border-primary/10 animate-in fade-in zoom-in">
-          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Updating Map...
+          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Syncing...
         </div>
       )}
       {error && !loading && (
         <div className="absolute top-6 right-6 z-[1000] bg-destructive/10 text-destructive p-3 px-6 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-black border-2 border-destructive/20 backdrop-blur-md">
-          <AlertCircle className="w-5 h-5" /> Connection Timeout
+          <AlertCircle className="w-5 h-5" /> Retrying Connection
         </div>
       )}
     </>
@@ -142,14 +142,16 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
   useEffect(() => {
     if (typeof window !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      const watcher = navigator.geolocation.watchPosition(
         (pos) => {
           const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude]
           setUserPos(newPos)
           onLocationFound(newPos)
         },
-        (err) => console.error("Geolocation failed:", err)
+        (err) => console.error("Geolocation failed:", err),
+        { enableHighAccuracy: true }
       )
+      return () => navigator.geolocation.clearWatch(watcher)
     }
   }, [onLocationFound])
 
@@ -170,7 +172,11 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
         {userPos && (
           <Marker position={userPos} icon={userLocationIcon}>
-            <Popup className="custom-popup">You are here</Popup>
+            <Popup className="custom-popup">
+              <div className="p-2 font-black text-primary uppercase tracking-widest text-[10px]">
+                You are here
+              </div>
+            </Popup>
           </Marker>
         )}
 
@@ -187,14 +193,14 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
                     {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
                   </h3>
                   <p className="text-xs text-muted-foreground font-bold m-0 opacity-80">
-                    {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location details unavailable"}
+                    {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location hidden for privacy"}
                   </p>
-                  {mosque.distance && (
-                    <div className="flex items-center gap-1 text-[10px] font-black uppercase text-secondary tracking-widest pt-1">
-                      <MapIcon className="w-3 h-3" />
-                      {mosque.distance < 1000 
-                        ? `${Math.round(mosque.distance)}m away` 
-                        : `${(mosque.distance / 1000).toFixed(1)}km away`}
+                  {mosque.distance !== undefined && (
+                    <div className="flex items-center gap-1 text-[11px] font-black uppercase text-secondary tracking-widest pt-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      Distance: {mosque.distance < 1000 
+                        ? `${Math.round(mosque.distance)} meters` 
+                        : `${(mosque.distance / 1000).toFixed(2)} kilometers`}
                     </div>
                   )}
                 </div>

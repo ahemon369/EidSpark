@@ -6,7 +6,7 @@ import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Clock, Timer, Sparkles, Navigation, List, Info, ChevronRight } from "lucide-react"
+import { MapPin, Clock, Timer, Sparkles, Navigation, List, Info, ChevronRight, LocateFixed } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Dynamically import the map to avoid SSR issues with Leaflet
@@ -21,7 +21,7 @@ const MosqueMap = dynamic(() => import("@/components/mosque-map"), {
 })
 
 const cities = [
-  { name: "Current Location", coords: null },
+  { name: "My Location", coords: null },
   { name: "Dhaka", coords: [23.8103, 90.4125] as [number, number] },
   { name: "Chittagong", coords: [22.3569, 91.7832] as [number, number] },
   { name: "Sylhet", coords: [24.8949, 91.8687] as [number, number] },
@@ -47,7 +47,6 @@ export default function MosqueFinder() {
     const fetchTimes = async () => {
       try {
         const [lat, lng] = mapConfig.center
-        // Method 1: University of Islamic Sciences, Karachi (Best for Bangladesh/Hanafi)
         const response = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=1`)
         const data = await response.json()
         if (data.data) {
@@ -60,7 +59,7 @@ export default function MosqueFinder() {
     fetchTimes()
   }, [mapConfig.center])
 
-  // Improved Prayer logic: Countdown and Current Prayer Highlighting
+  // Prayer logic: Countdown and Current Prayer Highlighting
   useEffect(() => {
     if (!prayerTimes) return
 
@@ -83,7 +82,6 @@ export default function MosqueFinder() {
         { name: "Isha", date: getPrayerDate(prayerTimes.Isha) },
       ]
 
-      // Determine Current and Next
       let currentIdx = -1
       for (let i = prayers.length - 1; i >= 0; i--) {
         if (now >= prayers[i].date) {
@@ -92,11 +90,9 @@ export default function MosqueFinder() {
         }
       }
 
-      // If it's before Fajr today, current is yesterday's Isha
       const currentName = currentIdx === -1 ? "Isha" : prayers[currentIdx].name
       setCurrentPrayerName(currentName)
 
-      // Next Prayer
       let nextIdx = currentIdx + 1
       let isNextTomorrow = false
       if (nextIdx >= prayers.length) {
@@ -130,6 +126,7 @@ export default function MosqueFinder() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
           setMapConfig({ center: [pos.coords.latitude, pos.coords.longitude], zoom: 15 })
+          setSelectedCity("My Location")
         })
       }
     }
@@ -137,11 +134,13 @@ export default function MosqueFinder() {
 
   const handleLocationFound = useCallback((location: [number, number]) => {
     setMapConfig({ center: location, zoom: 15 })
-    setSelectedCity("Current Location")
+    setSelectedCity("My Location")
   }, [])
 
   const handleMosquesUpdate = useCallback((newMosques: any[]) => {
-    setMosques(newMosques)
+    // Sort mosques by distance before updating state
+    const sorted = [...newMosques].sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    setMosques(sorted)
   }, [])
 
   const formatTime = (timeStr: string) => {
@@ -162,11 +161,11 @@ export default function MosqueFinder() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
               <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
-              <span>Prayer & Mosque Companion</span>
+              <span>Real-Time Mosque Finder</span>
             </div>
-            <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Mosque Finder</h1>
+            <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Find Mosques Near You</h1>
             <p className="text-lg text-muted-foreground font-medium max-w-xl">
-              Locate nearby mosques and view accurate prayer timings for <span className="text-primary font-bold">{selectedCity === "Current Location" ? "Your Current Area" : selectedCity}</span>.
+              Instant mosque discovery and directions for <span className="text-primary font-bold">{selectedCity === "My Location" ? "Your Current Area" : selectedCity}</span>.
             </p>
           </div>
           
@@ -178,12 +177,13 @@ export default function MosqueFinder() {
                   key={city.name}
                   onClick={() => handleCitySelect(city)}
                   className={cn(
-                    "rounded-xl h-10 px-5 font-bold transition-all text-xs border-2",
+                    "rounded-xl h-10 px-5 font-bold transition-all text-xs border-2 flex items-center gap-2",
                     selectedCity === city.name 
                       ? "emerald-gradient text-white border-transparent shadow-lg scale-105" 
                       : "border-primary/10 text-primary hover:bg-primary/5 bg-white"
                   )}
                 >
+                  {city.name === "My Location" && <LocateFixed className="w-3 h-3" />}
                   {city.name}
                 </button>
               ))}
@@ -193,7 +193,6 @@ export default function MosqueFinder() {
 
         {/* Prayer Times Section */}
         <div className="mb-12 grid lg:grid-cols-12 gap-6 animate-in fade-in duration-700 delay-200">
-          {/* Main Countdown Card */}
           <Card className="lg:col-span-4 emerald-gradient border-none shadow-2xl rounded-[2.5rem] overflow-hidden text-white relative group">
              <CardContent className="p-8 relative z-10 flex flex-col justify-between h-full min-h-[280px]">
                 <div className="space-y-2">
@@ -220,7 +219,6 @@ export default function MosqueFinder() {
              </div>
           </Card>
 
-          {/* Individual Prayer Cards */}
           <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-5 gap-4">
             {["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].map((p) => {
               const isCurrent = currentPrayerName === p;
@@ -247,7 +245,6 @@ export default function MosqueFinder() {
                       isCurrent ? "text-primary/70" : "text-muted-foreground"
                     )}>
                       {p}
-                      {isCurrent && <span className="block text-[8px] opacity-70">(Now)</span>}
                     </p>
                     <p className="text-xl font-black">{prayerTimes ? formatTime(prayerTimes[p]) : "--:--"}</p>
                   </div>
@@ -259,15 +256,14 @@ export default function MosqueFinder() {
 
         {/* Map & List Section */}
         <div className="grid lg:grid-cols-12 gap-8">
-          {/* List and Info Panel */}
           <div className="lg:col-span-4 space-y-6 animate-in fade-in slide-in-from-left duration-700">
             <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl flex flex-col h-[700px]">
               <CardHeader className="p-8 pb-4 bg-primary/5">
                 <CardTitle className="text-xl font-black text-primary flex items-center gap-3">
                   <List className="w-5 h-5 text-secondary" />
-                  Nearby Mosques
+                  Sorted by Distance
                 </CardTitle>
-                <CardDescription className="text-xs font-bold text-muted-foreground/60">{mosques.length} locations identified</CardDescription>
+                <CardDescription className="text-xs font-bold text-muted-foreground/60">{mosques.length} nearby locations</CardDescription>
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-grow">
                 {mosques.length > 0 ? (
@@ -280,10 +276,11 @@ export default function MosqueFinder() {
                               {mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}
                             </h4>
                             <p className="text-[10px] text-muted-foreground font-medium">
-                              {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location data unavailable"}
+                              {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location details hidden"}
                             </p>
-                            {mosque.distance && (
-                              <p className="text-[9px] font-black uppercase text-secondary tracking-widest pt-1">
+                            {mosque.distance !== undefined && (
+                              <p className="text-[11px] font-black uppercase text-secondary tracking-widest pt-1 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
                                 {mosque.distance < 1000 
                                   ? `${Math.round(mosque.distance)}m away` 
                                   : `${(mosque.distance / 1000).toFixed(1)}km away`}
@@ -293,13 +290,14 @@ export default function MosqueFinder() {
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            className="rounded-xl h-9 w-9 p-0 text-primary hover:bg-primary hover:text-white"
+                            className="rounded-xl h-10 px-4 text-xs font-black text-primary hover:bg-primary hover:text-white border-2 border-primary/5"
                             onClick={() => {
                               const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
                               window.open(url, "_blank")
                             }}
                           >
-                            <Navigation className="w-4 h-4" />
+                            <Navigation className="w-4 h-4 mr-2" />
+                            Navigate
                           </Button>
                         </div>
                       </div>
@@ -308,24 +306,23 @@ export default function MosqueFinder() {
                 ) : (
                   <div className="p-16 text-center space-y-4 opacity-40">
                     <MapPin className="w-10 h-10 mx-auto text-primary" />
-                    <p className="text-xs font-bold">Discovering mosques in your area...</p>
+                    <p className="text-xs font-bold uppercase tracking-widest">Searching Mosques...</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="bg-secondary/5 p-6 rounded-[2rem] border border-secondary/20 flex gap-4 items-start">
+            <div className="bg-secondary/5 p-6 rounded-[2rem] border border-secondary/20 flex gap-4 items-start shadow-sm">
               <Info className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="text-xs font-black text-primary uppercase tracking-wider">Note for Users</p>
-                <p className="text-[10px] text-primary/70 font-bold leading-relaxed">
-                  Prayer times are based on the Karachi (Hanafi) calculation method, standard for Bangladesh. Please check with your local Masjid for exact Jamat times.
+                <p className="text-[11px] text-primary/70 font-bold leading-relaxed">
+                  Real-time data provided by OpenStreetMap. Distances are calculated in a straight line from your coordinates.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Map Container */}
           <div className="lg:col-span-8 min-h-[500px] lg:h-[700px] relative animate-in fade-in slide-in-from-right duration-700">
             <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] border-8 border-white bg-slate-50">
               <MosqueMap 
@@ -336,10 +333,9 @@ export default function MosqueFinder() {
               />
             </div>
             
-            {/* Overlay Info */}
-            <div className="absolute bottom-6 right-6 glass-card p-5 rounded-[1.5rem] border-white/40 shadow-xl pointer-events-none hidden md:block">
-              <h3 className="font-black text-lg text-primary">Live Mosque Map</h3>
-              <p className="text-[10px] text-muted-foreground font-bold mt-1">Exploring <span className="text-secondary">{selectedCity}</span></p>
+            <div className="absolute bottom-6 left-6 glass-card p-4 rounded-[1.5rem] border-white/40 shadow-xl pointer-events-none hidden md:flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+              <p className="text-xs font-black text-primary uppercase tracking-widest">Live Location Active</p>
             </div>
           </div>
         </div>
