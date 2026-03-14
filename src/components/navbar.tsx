@@ -42,23 +42,59 @@ export function Navbar() {
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   const handleLogin = async () => {
-    if (!auth) return
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Firebase is not initialized correctly.",
+      })
+      return
+    }
+
     const provider = new GoogleAuthProvider()
+    // Optional: add scopes if needed
+    // provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+
     try {
       await signInWithPopup(auth, provider)
+      toast({
+        title: "Welcome back!",
+        description: "Successfully signed in with Google.",
+      })
     } catch (error: any) {
-      console.error("Login failed:", error)
+      let message = "Please check your network connection."
+      
+      if (error.code === 'auth/popup-blocked') {
+        message = "The sign-in popup was blocked by your browser. Please allow popups for this site."
+      } else if (error.code === 'auth/api-key-not-valid') {
+        message = "Firebase API Key is invalid. Please update your environment variables."
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in the Firebase Console."
+      }
+      
       toast({
         variant: "destructive",
         title: "Sign-In Failed",
-        description: error.message || "Please check your network connection or Firebase console settings.",
+        description: message,
       })
     }
   }
 
   const handleLogout = async () => {
     if (!auth) return
-    await signOut(auth)
+    try {
+      await signOut(auth)
+      toast({
+        title: "Signed Out",
+        description: "Come back soon for more Eid celebrations!",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      })
+    }
   }
 
   return (
