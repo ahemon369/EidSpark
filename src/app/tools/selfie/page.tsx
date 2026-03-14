@@ -17,9 +17,9 @@ import {
   Star,
   User,
   Layout,
-  AlignTop,
+  PanelTop,
   AlignCenter,
-  AlignBottom
+  PanelBottom
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -118,8 +118,6 @@ export default function SelfieFrameGenerator() {
       ctx.font = 'bold 24px Inter, sans-serif'
       ctx.textAlign = 'right'
       ctx.fillText("Made with EidSpark", resolution - 60, resolution - 60)
-
-      // Stickers logic could be added here if we had SVGs
     }
   }
 
@@ -263,9 +261,9 @@ export default function SelfieFrameGenerator() {
                    <Label className="text-sm font-black text-muted-foreground uppercase tracking-widest">4. Text Position</Label>
                    <div className="flex gap-2">
                       {[
-                        { id: 'top', icon: AlignTop },
+                        { id: 'top', icon: PanelTop },
                         { id: 'center', icon: AlignCenter },
-                        { id: 'bottom', icon: AlignBottom }
+                        { id: 'bottom', icon: PanelBottom }
                       ].map(pos => (
                         <Button
                           key={pos.id}
