@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
@@ -43,6 +43,13 @@ const MoonMap = dynamic(() => import("@/components/moon-sighting-map"), {
   ),
 })
 
+interface Star {
+  top: string;
+  left: string;
+  size: string;
+  delay: string;
+}
+
 export default function MoonSightingTrackerPage() {
   const { user } = useUser()
   const db = useFirestore()
@@ -56,6 +63,20 @@ export default function MoonSightingTrackerPage() {
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  
+  // Star State for hydration fix
+  const [stars, setStars] = useState<Star[]>([])
+
+  useEffect(() => {
+    // Generate stars only on the client to avoid hydration mismatch
+    const generatedStars = [...Array(100)].map(() => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      size: `${Math.random() * 2 + 1}px`,
+      delay: `${Math.random() * 5}s`
+    }))
+    setStars(generatedStars)
+  }, [])
 
   // Fetch Sightings
   const sightingsRef = useMemoFirebase(() => {
@@ -147,16 +168,16 @@ export default function MoonSightingTrackerPage() {
       
       {/* Immersive Star Field */}
       <div className="fixed inset-0 pointer-events-none opacity-20">
-        {[...Array(100)].map((_, i) => (
+        {stars.map((star, i) => (
           <div 
             key={i} 
             className="absolute bg-white rounded-full animate-twinkle" 
             style={{ 
-              top: `${Math.random() * 100}%`, 
-              left: `${Math.random() * 100}%`, 
-              width: `${Math.random() * 2 + 1}px`, 
-              height: `${Math.random() * 2 + 1}px`,
-              animationDelay: `${Math.random() * 5}s`
+              top: star.top, 
+              left: star.left, 
+              width: star.size, 
+              height: star.size,
+              animationDelay: star.delay
             }}
           />
         ))}
