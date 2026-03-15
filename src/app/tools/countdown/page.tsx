@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardContent } from "@/components/ui/card"
-import { Moon, Star, Sparkles, MapPin, CalendarDays } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Moon, Star, Sparkles, MapPin, CalendarDays, Volume2, VolumeX } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function EidCountdown() {
   const [timeLeft, setTimeLeft] = useState({
@@ -12,6 +14,8 @@ export default function EidCountdown() {
     minutes: 0,
     seconds: 0
   })
+  const [isPlayingTakbir, setIsPlayingTakbir] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     // Expected Eid-ul-Fitr Date: March 20, 2026
@@ -36,6 +40,20 @@ export default function EidCountdown() {
 
     return () => clearInterval(timer)
   }, [])
+
+  const toggleTakbir = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("https://www.islamicfinder.org/takbeer/Eid_Takbeer.mp3")
+      audioRef.current.onended = () => setIsPlayingTakbir(false)
+    }
+    
+    if (isPlayingTakbir) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play()
+    }
+    setIsPlayingTakbir(!isPlayingTakbir)
+  }
 
   return (
     <div className="min-h-screen bg-emerald-950 text-white selection:bg-secondary selection:text-emerald-950">
@@ -93,9 +111,23 @@ export default function EidCountdown() {
               ))}
             </div>
             
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/5 border border-white/10 text-secondary text-xs font-black uppercase tracking-widest backdrop-blur-md">
-              <CalendarDays className="w-4 h-4" />
-              <span>Expected Eid-ul-Fitr Date: March 20, 2026 (Bangladesh)</span>
+            <div className="flex flex-col items-center gap-6">
+              <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/5 border border-white/10 text-secondary text-xs font-black uppercase tracking-widest backdrop-blur-md">
+                <CalendarDays className="w-4 h-4" />
+                <span>Expected Eid-ul-Fitr Date: March 20, 2026 (Bangladesh)</span>
+              </div>
+
+              <Button 
+                onClick={toggleTakbir}
+                variant="outline"
+                className={cn(
+                  "rounded-full h-14 px-10 font-black text-lg gap-3 transition-all border-2 shadow-2xl",
+                  isPlayingTakbir ? "bg-white text-emerald-950 border-white scale-105" : "text-white border-white/20 hover:bg-white/10"
+                )}
+              >
+                {isPlayingTakbir ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                {isPlayingTakbir ? "Stop Takbir" : "Play Eid Takbir"}
+              </Button>
             </div>
           </div>
 
