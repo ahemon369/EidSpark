@@ -6,7 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents }
 import L from "leaflet"
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2, MapPin, Heart } from "lucide-react"
+import { Navigation, Loader2, MapPin, Heart, Clock, Timer } from "lucide-react"
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
@@ -33,10 +33,10 @@ const getStandardMosqueIcon = () => {
 }
 
 const userLocationIcon = L.divIcon({
-  html: `<div class="relative w-7 h-7"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div><div class="absolute inset-1.5 bg-blue-500 rounded-full border-4 border-white shadow-lg"></div></div>`,
+  html: `<div class="relative w-8 h-8"><div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div><div class="absolute inset-1.5 bg-blue-500 rounded-full border-4 border-white shadow-xl"></div></div>`,
   className: "custom-user-icon",
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 })
 
 interface Mosque {
@@ -138,6 +138,111 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
   )
 }
 
+function MosquePopup({ mosque, onSave }: { mosque: Mosque, onSave?: (m: Mosque) => void }) {
+  const [times, setTimes] = useState<any>(null);
+  const [next, setNext] = useState<string>("");
+
+  useEffect(() => {
+    const fetchTimes = async () => {
+      const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${mosque.lat}&longitude=${mosque.lon}&method=1`);
+      const data = await res.json();
+      if (data.data) {
+        setTimes(data.data.timings);
+        
+        // Find next prayer logic
+        const now = new Date();
+        const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+        for (const p of prayers) {
+          const [h, m] = data.data.timings[p].split(':').map(Number);
+          const pDate = new Date();
+          pDate.setHours(h, m, 0);
+          if (pDate > now) {
+            setNext(p);
+            break;
+          }
+        }
+        if (!next) setNext("Fajr");
+      }
+    };
+    fetchTimes();
+  }, [mosque.lat, mosque.lon, next]);
+
+  return (
+    <div className="p-0 space-y-0 min-w-[280px] bg-white">
+      <div className="emerald-gradient p-6 text-white">
+        <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full inline-flex items-center gap-1 mb-2 border border-white/10">
+          <span className="text-[8px] font-black uppercase tracking-widest">Verified Observatory</span>
+        </div>
+        <h3 className="font-black text-xl m-0 leading-tight">
+          {mosque.tags.name || mosque.tags["name:en"] || "Local Mosque"}
+        </h3>
+        <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">
+          {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location Registry"}
+        </p>
+      </div>
+      
+      <div className="p-6 space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
+            <p className="text-sm font-black text-primary flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              {mosque.distance ? `${(mosque.distance / 1000).toFixed(2)} km` : "---"}
+            </p>
+          </div>
+          <div className="bg-secondary/5 p-3 rounded-2xl border border-secondary/10">
+            <p className="text-[8px] font-black text-secondary uppercase tracking-widest mb-1">Next Azan</p>
+            <p className="text-sm font-black text-secondary flex items-center gap-1">
+              <Timer className="w-3 h-3" />
+              {next || "---"}
+            </p>
+          </div>
+        </div>
+
+        {times && (
+          <div className="space-y-2 border-t border-slate-50 pt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-3.5 h-3.5 text-primary/40" />
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Today's Schedule</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].map(p => (
+                <div key={p} className={cn(
+                  "px-2.5 py-1 rounded-lg text-[10px] font-bold border",
+                  next === p ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-100"
+                )}>
+                  {p} {times[p]}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 gap-2 pt-2">
+          <Button
+            className="w-full h-12 rounded-xl emerald-gradient text-white font-black text-xs shadow-lg"
+            onClick={() => {
+              const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
+              window.open(url, "_blank")
+            }}
+          >
+            <Navigation className="w-4 h-4 mr-2" />
+            Navigate Now
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full h-12 rounded-xl text-xs font-black border-2 border-secondary/10 hover:bg-secondary/5 text-secondary"
+            onClick={() => onSave?.(mosque)}
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            Add to Favorites
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpdate, onSaveMosque }: MapProps) {
   const [mosques, setMosques] = useState<Mosque[]>([])
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
@@ -178,9 +283,9 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
         {userPos && (
           <Marker position={userPos} icon={userLocationIcon}>
-            <Popup className="custom-popup">
-              <div className="p-2 font-black text-primary uppercase tracking-widest text-[10px]">
-                Your Current Position
+            <Popup className="custom-popup-minimal">
+              <div className="p-3 font-black text-blue-600 text-[10px] uppercase tracking-[0.25em] text-center">
+                Current Location
               </div>
             </Popup>
           </Marker>
@@ -202,50 +307,8 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
                 <Tooltip direction="top" offset={[0, -35]} opacity={1}>
                   <span className="font-black text-xs text-primary">{name}</span>
                 </Tooltip>
-                <Popup className="rounded-[2rem] overflow-hidden custom-popup">
-                  <div className="p-0 space-y-0 min-w-[260px]">
-                    <div className="emerald-gradient p-5 text-white">
-                      <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full inline-flex items-center gap-1 mb-2 border border-white/10">
-                        <span className="text-[8px] font-black uppercase tracking-widest">Type: Mosque</span>
-                      </div>
-                      <h3 className="font-black text-lg m-0 leading-tight">
-                        {name}
-                      </h3>
-                      <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">
-                        {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location Registry Entry"}
-                      </p>
-                    </div>
-                    
-                    <div className="p-5 space-y-4">
-                      {mosque.distance !== undefined && (
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-secondary tracking-widest">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {(mosque.distance / 1000).toFixed(2)} km from you
-                        </div>
-                      )}
-                      
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button
-                          className="w-full h-11 rounded-xl emerald-gradient text-white font-black text-xs shadow-lg"
-                          onClick={() => {
-                            const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
-                            window.open(url, "_blank")
-                          }}
-                        >
-                          <Navigation className="w-4 h-4 mr-2" />
-                          Open in Google Maps
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full h-11 rounded-xl text-xs font-black border-2 border-secondary/10 hover:bg-secondary/5 text-secondary"
-                          onClick={() => onSaveMosque?.(mosque)}
-                        >
-                          <Heart className="w-4 h-4 mr-2" />
-                          Save to Profile
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                <Popup className="rounded-[2.5rem] overflow-hidden custom-popup">
+                  <MosquePopup mosque={mosque} onSave={onSaveMosque} />
                 </Popup>
               </Marker>
             )
@@ -299,8 +362,16 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           padding: 7px;
         }
 
-        .mosque-marker-wrapper:hover .mosque-marker-icon {
-          transform: scale(1.1) translateY(-5px);
+        .custom-popup .leaflet-popup-content-wrapper {
+          border-radius: 2.5rem;
+          padding: 0;
+          overflow: hidden;
+          box-shadow: 0 32px 64px -12px rgba(6, 95, 70, 0.25);
+        }
+
+        .custom-popup .leaflet-popup-content {
+          margin: 0;
+          width: 280px !important;
         }
 
         .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
