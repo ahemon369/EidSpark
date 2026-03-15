@@ -314,16 +314,16 @@ export default function Home() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
               {tools.map((tool, index) => (
                 <Link key={tool.title} href={tool.href} className="group">
-                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.12)] transition-all duration-300 rounded-[3rem] overflow-hidden group-hover:-translate-y-3 active:scale-95 border-2 border-transparent hover:border-primary/5">
+                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.15)] transition-all duration-200 ease-in-out rounded-[3rem] overflow-hidden group-hover:-translate-y-2 active:scale-95 border-2 border-transparent hover:border-primary/5">
                     <CardHeader className="p-12 pb-0">
-                      <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.color)}>
+                      <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-10 transition-transform duration-200 ease-in-out group-hover:scale-110 shadow-lg", tool.color)}>
                         <tool.icon className="w-10 h-10" />
                       </div>
                       <CardTitle className="text-3xl font-black group-hover:text-primary transition-colors">{tool.title}</CardTitle>
                       <CardDescription className="text-lg mt-6 leading-relaxed font-medium">{tool.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-12 pt-8 flex justify-end">
-                      <div className="w-14 h-14 rounded-full border-2 border-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:scale-110 group-hover:translate-x-1 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full border-2 border-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:scale-110 group-hover:translate-x-2 transition-all duration-200 ease-in-out">
                         <ArrowRight className="w-7 h-7" />
                       </div>
                     </CardContent>
