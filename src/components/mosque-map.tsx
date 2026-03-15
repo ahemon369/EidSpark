@@ -2,19 +2,31 @@
 "use client"
 
 import { useEffect, useState, useMemo, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
 import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin, Heart } from "lucide-react"
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Custom Emerald Marker for Mosques
+// Custom Mosque Marker with Dome and Minaret Silhouette
 const mosqueIcon = L.divIcon({
-  html: `<div class="bg-primary p-2.5 rounded-full border-4 border-white shadow-2xl transform hover:scale-110 transition-transform"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/><path d="M9 16c-1 0-2 1-2 2v4"/><path d="M15 16c1 0 2 1 2 2v4"/></svg></div>`,
-  className: "custom-mosque-icon",
-  iconSize: [44, 44],
-  iconAnchor: [22, 22],
+  html: `
+    <div class="mosque-marker-wrapper">
+      <div class="mosque-marker-glow"></div>
+      <div class="mosque-marker-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L10.5 4.5H13.5L12 2Z" />
+          <path d="M12 4.5C8.686 4.5 6 7.186 6 10.5V13H18V10.5C18 7.186 15.314 4.5 12 4.5Z" />
+          <path d="M4 12V22H5.5V12H4ZM18.5 12V22H20V12H18.5ZM6.5 14V22H17.5V14H6.5Z" />
+          <path d="M12 1C12 1 12.5 2 12 2.5C11.5 2 12 1 12 1Z" />
+        </svg>
+      </div>
+    </div>
+  `,
+  className: "custom-mosque-marker",
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
 })
 
 const userLocationIcon = L.divIcon({
@@ -163,18 +175,16 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
     if (onMosquesUpdate) onMosquesUpdate(fetched)
   }
 
-  const tileUrl = MAPBOX_TOKEN 
-    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
-    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
 
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-slate-50">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
-          attribution={MAPBOX_TOKEN ? '© Mapbox & OpenStreetMap' : '&copy; OpenStreetMap contributors'}
+          attribution='© Mapbox & OpenStreetMap'
           url={tileUrl}
-          tileSize={MAPBOX_TOKEN ? 512 : 256}
-          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
+          tileSize={512}
+          zoomOffset={-1}
         />
         <ChangeView center={center} zoom={zoom} />
         <MosqueFetcher userPos={userPos} onFetch={handleFetch} />
@@ -195,6 +205,9 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
             position={[mosque.lat, mosque.lon]}
             icon={mosqueIcon}
           >
+            <Tooltip direction="top" offset={[0, -35]} opacity={1}>
+              <span className="font-black text-xs text-primary">{mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque"}</span>
+            </Tooltip>
             <Popup className="rounded-[2rem] overflow-hidden custom-popup">
               <div className="p-4 space-y-4 min-w-[240px]">
                 <div className="space-y-1">
@@ -252,6 +265,67 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           </Marker>
         ))}
       </MapContainer>
+
+      <style jsx global>{`
+        @keyframes marker-drop {
+          0% { transform: translateY(-50px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes marker-glow-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .mosque-marker-wrapper {
+          position: relative;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: marker-drop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .mosque-marker-glow {
+          position: absolute;
+          width: 32px;
+          height: 32px;
+          background: rgba(16, 185, 129, 0.2);
+          border-radius: 50%;
+          animation: marker-glow-pulse 2s infinite;
+        }
+
+        .mosque-marker-icon {
+          position: relative;
+          width: 36px;
+          height: 36px;
+          background: #065f46;
+          color: white;
+          border-radius: 50%;
+          border: 2px solid #E9BE24;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+          transition: all 0.3s ease;
+          padding: 7px;
+        }
+
+        .mosque-marker-wrapper:hover .mosque-marker-icon {
+          transform: scale(1.1) translateY(-5px);
+          background: #059669;
+        }
+
+        .leaflet-tooltip {
+          background: white;
+          border: 2px solid #065f46;
+          border-radius: 12px;
+          padding: 6px 12px;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+      `}</style>
     </div>
   )
 }

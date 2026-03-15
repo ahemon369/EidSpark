@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
 import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck, ExternalLink, Globe } from "lucide-react"
@@ -12,19 +12,24 @@ import { cn } from "@/lib/utils"
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Custom Marker Style with Glow and Drop Animation
+// Custom Mosque Marker with Dome and Minaret Silhouette
 const mosqueIcon = L.divIcon({
   html: `
     <div class="mosque-marker-wrapper">
       <div class="mosque-marker-glow"></div>
       <div class="mosque-marker-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L10.5 4.5H13.5L12 2Z" />
+          <path d="M12 4.5C8.686 4.5 6 7.186 6 10.5V13H18V10.5C18 7.186 15.314 4.5 12 4.5Z" />
+          <path d="M4 12V22H5.5V12H4ZM18.5 12V22H20V12H18.5ZM6.5 14V22H17.5V14H6.5Z" />
+          <path d="M12 1C12 1 12.5 2 12 2.5C11.5 2 12 1 12 1Z" />
+        </svg>
       </div>
     </div>
   `,
   className: "custom-mosque-marker",
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
+  iconSize: [44, 44],
+  iconAnchor: [22, 44],
 })
 
 // User Location Icon
@@ -99,6 +104,9 @@ export default function JamaatMap({
               click: () => onSelectMosque(mosque.id),
             }}
           >
+            <Tooltip direction="top" offset={[0, -40]} opacity={1}>
+              <span className="font-black text-xs text-primary">{mosque.name}</span>
+            </Tooltip>
             <Popup className="custom-popup-mosque">
               <MosquePopupContent mosque={mosque} />
             </Popup>
@@ -112,11 +120,17 @@ export default function JamaatMap({
           60% { transform: translateY(5px); opacity: 1; }
           100% { transform: translateY(0); }
         }
+
+        @keyframes marker-glow-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
         
         .mosque-marker-wrapper {
           position: relative;
-          width: 50px;
-          height: 50px;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -125,32 +139,33 @@ export default function JamaatMap({
 
         .mosque-marker-glow {
           position: absolute;
-          width: 40px;
-          height: 40px;
-          background: rgba(16, 185, 129, 0.4);
+          width: 36px;
+          height: 36px;
+          background: rgba(16, 185, 129, 0.2);
           border-radius: 50%;
-          filter: blur(10px);
-          animation: pulse 2s infinite;
+          animation: marker-glow-pulse 2s infinite;
         }
 
         .mosque-marker-icon {
           position: relative;
           width: 40px;
           height: 40px;
-          background: #065f46;
+          background: #065f46; /* Emerald Green */
           color: white;
-          border-radius: 12px;
-          border: 3px solid white;
+          border-radius: 50%;
+          border: 2px solid #E9BE24; /* Vibrant Gold Border */
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+          box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           transition: all 0.3s ease;
+          padding: 8px;
         }
 
         .mosque-marker-wrapper:hover .mosque-marker-icon {
           transform: scale(1.1) translateY(-5px);
           background: #059669;
+          box-shadow: 0 12px 24px rgba(0,0,0,0.4);
         }
 
         .custom-popup-mosque .leaflet-popup-content-wrapper {
@@ -167,6 +182,18 @@ export default function JamaatMap({
 
         .custom-popup-mosque .leaflet-popup-tip {
           background: white;
+        }
+
+        .leaflet-tooltip {
+          background: white;
+          border: 2px solid #065f46;
+          border-radius: 12px;
+          padding: 6px 12px;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .leaflet-tooltip-top:before {
+          border-top-color: #065f46;
         }
       `}</style>
     </div>
