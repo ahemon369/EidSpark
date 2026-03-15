@@ -1,0 +1,47 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-mosque",
+      "description": "Baitul Mukarram National Mosque at twilight",
+      "imageUrl": "https://picsum.photos/seed/baitul-mukarram/1200/800",
+      "imageHint": "mosque twilight"
+    },
+    {
+      "id": "app-logo",
+      "description": "Official EidSpark Logo",
+      "imageUrl": "https://i.ibb.co.com/QFnnGs8d/Pngtree-eid-al-fitr-2026-crescent-23769107.png",
+      "imageHint": "eidspark logo"
+    },
+    {
+      "id": "greeting-bg",
+      "description": "Intricate Bangladeshi traditional pattern",
+      "imageUrl": "https://picsum.photos/seed/bd-pattern/800/800",
+      "imageHint": "traditional pattern"
+    },
+    {
+      "id": "tara-masjid",
+      "description": "Tara Masjid (Star Mosque) in Dhaka",
+      "imageUrl": "https://picsum.photos/seed/tara-masjid/600/400",
+      "imageHint": "star mosque"
+    },
+    {
+      "id": "preview-greeting",
+      "description": "Preview of the AI Greeting Designer",
+      "imageUrl": "https://picsum.photos/seed/preview-greeting/600/400",
+      "imageHint": "eid greeting"
+    },
+    {
+      "id": "preview-selfie",
+      "description": "Preview of the AI Selfie Studio",
+      "imageUrl": "https://picsum.photos/seed/preview-selfie/600/400",
+      "imageHint": "eid selfie"
+    },
+    {
+      "id": "preview-map",
+      "description": "Preview of the Mosque Finder Map",
+      "imageUrl": "https://picsum.photos/seed/preview-map/600/400",
+      "imageHint": "mosque map"
+    }
+  ]
+}

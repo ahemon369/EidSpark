@@ -100,13 +100,40 @@ export default function Home() {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
+  const previews = [
+    {
+      label: "Greeting Designer",
+      title: "Eid Mubarak Card",
+      desc: "AI-generated trilingual blessings.",
+      icon: Send,
+      image: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageUrl || "",
+      hint: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageHint || "eid greeting"
+    },
+    {
+      label: "Selfie Studio",
+      title: "Royal Arch Frame",
+      desc: "AI background replacement active.",
+      icon: Camera,
+      image: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageUrl || "",
+      hint: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageHint || "eid selfie"
+    },
+    {
+      label: "Mosque Finder",
+      title: "Nearby Prayer Locations",
+      desc: "Real-time markers in Dhaka.",
+      icon: MapIcon,
+      image: PlaceHolderImages.find(img => img.id === "preview-map")?.imageUrl || "",
+      hint: PlaceHolderImages.find(img => img.id === "preview-map")?.imageHint || "mosque map"
+    }
+  ]
+
   // Auto-cycling Hero Preview
   useEffect(() => {
     const interval = setInterval(() => {
-      setPreviewIndex((prev) => (prev + 1) % 3)
+      setPreviewIndex((prev) => (prev + 1) % previews.length)
     }, 3000)
     return () => clearInterval(interval)
-  }, [])
+  }, [previews.length])
 
   // Live Countdown logic
   useEffect(() => {
@@ -129,30 +156,6 @@ export default function Home() {
     tick()
     return () => clearInterval(timer)
   }, [])
-
-  const previews = [
-    {
-      label: "Greeting Designer",
-      title: "Eid Mubarak Card",
-      desc: "AI-generated trilingual blessings.",
-      icon: Send,
-      image: "https://picsum.photos/seed/preview-greeting/600/400"
-    },
-    {
-      label: "Selfie Studio",
-      title: "Royal Arch Frame",
-      desc: "AI background replacement active.",
-      icon: Camera,
-      image: "https://picsum.photos/seed/preview-selfie/600/400"
-    },
-    {
-      label: "Mosque Finder",
-      title: "Nearby Prayer Locations",
-      desc: "Real-time markers in Dhaka.",
-      icon: MapIcon,
-      image: "https://picsum.photos/seed/preview-map/600/400"
-    }
-  ]
 
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white islamic-pattern">
@@ -241,6 +244,7 @@ export default function Home() {
                         fill
                         className="object-cover opacity-90"
                         priority={idx === 0}
+                        data-ai-hint={item.hint}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                       <div className="absolute bottom-12 left-10 right-10 text-white glass-card p-8 rounded-[2.5rem] border-white/20 bg-white/10 backdrop-blur-xl">
