@@ -22,8 +22,8 @@ import {
   LocateFixed
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, orderBy } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { collection, query, where, orderBy, doc } from "firebase/firestore"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AddJamaatTimeModal } from "@/components/add-jamaat-time-modal"
@@ -73,13 +73,13 @@ export default function JamaatFinderPage() {
   }, [db])
   const { data: allMosques, isLoading: loadingMosques } = useCollection(mosquesRef)
 
-  // Fetch Admin Role logic
-  const rolesRef = useMemoFirebase(() => {
+  // Fetch Admin Role logic using useDoc to avoid permission error on listing collection
+  const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return collection(db, "roles_admin")
+    return doc(db, "roles_admin", user.uid)
   }, [db, user])
-  const { data: adminRoles } = useCollection(rolesRef)
-  const isAdmin = adminRoles?.some(role => role.id === user?.uid)
+  const { data: adminDoc } = useDoc(adminRoleRef)
+  const isAdmin = !!adminDoc
 
   const handleFindNearMe = useCallback(() => {
     if (!navigator.geolocation) {
