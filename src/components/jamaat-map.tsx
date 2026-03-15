@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -8,7 +9,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
 import { cn } from "@/lib/utils"
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 /**
  * Generates a dynamic Leaflet DivIcon based on mosque properties.
