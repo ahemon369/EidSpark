@@ -2,13 +2,12 @@
 "use client"
 
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc, updateDoc, deleteDoc, collectionGroup, query, where } from "firebase/firestore"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { collection, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   CheckCircle2, 
   XCircle, 
-  Trash2, 
   Clock, 
   MapPin, 
   ShieldAlert,
@@ -57,17 +56,15 @@ export function AdminJamaatPanel() {
           <ShieldAlert className="w-8 h-8" />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-primary tracking-tight">Admin Moderation Center</h2>
-          <p className="text-sm font-medium text-muted-foreground">Approve or reject community contributions to maintain data quality.</p>
+          <h2 className="text-2xl font-black text-primary tracking-tight">Moderation Center</h2>
+          <p className="text-sm font-medium text-muted-foreground">Approve community contributions to ensure accurate data across Bangladesh.</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-10">
         {/* Pending Mosques */}
         <section className="space-y-6">
-          <div className="flex items-center justify-between px-4">
-            <h3 className="text-xl font-black text-primary">Pending Mosques ({pendingMosques?.length || 0})</h3>
-          </div>
+          <h3 className="text-xl font-black text-primary px-4">Pending Mosques ({pendingMosques?.length || 0})</h3>
           
           <div className="space-y-4">
             {loadingMosques ? (
@@ -87,12 +84,6 @@ export function AdminJamaatPanel() {
                         <ExternalLink className="w-4 h-4" />
                       </Button>
                     </div>
-
-                    {m.description && (
-                      <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
-                        <p className="text-xs italic text-muted-foreground leading-relaxed">"{m.description}"</p>
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-2 gap-3">
                       <Button 
@@ -117,17 +108,15 @@ export function AdminJamaatPanel() {
             ) : (
               <div className="p-20 text-center bg-white/50 rounded-[3rem] border-2 border-dashed opacity-40">
                 <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-emerald-500" />
-                <p className="font-bold text-sm uppercase tracking-widest">All caught up!</p>
+                <p className="font-bold text-sm uppercase tracking-widest">No pending mosques</p>
               </div>
             )}
           </div>
         </section>
 
-        {/* Global Pending Times (Simplified check) */}
+        {/* Global Stats */}
         <section className="space-y-6">
-          <div className="flex items-center justify-between px-4">
-            <h3 className="text-xl font-black text-primary">Data Health</h3>
-          </div>
+          <h3 className="text-xl font-black text-primary px-4">System Overview</h3>
           <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 text-center space-y-6">
              <div className="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mx-auto text-primary">
                <Clock className="w-10 h-10" />
@@ -135,17 +124,13 @@ export function AdminJamaatPanel() {
              <div className="space-y-2">
                <h4 className="text-xl font-black">Jamaat Time Verifications</h4>
                <p className="text-sm text-muted-foreground font-medium">
-                 Individual prayer times are automatically ranked by community verification counts. Admins can manually override if flagged.
+                 Individual prayer times are automatically ranked by community verification counts. Moderation helps flag incorrect data.
                </p>
              </div>
              <div className="pt-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
                    <span className="text-xs font-black text-emerald-800 uppercase tracking-widest">Auto-Verified</span>
-                   <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black">ACTIVE</span>
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50 border border-blue-100">
-                   <span className="text-xs font-black text-blue-800 uppercase tracking-widest">Global Flag System</span>
-                   <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-[10px] font-black">COMING SOON</span>
+                   <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Active</span>
                 </div>
              </div>
           </Card>

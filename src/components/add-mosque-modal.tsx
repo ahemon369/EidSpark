@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useFirestore, useUser } from "@/firebase"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc } from "firebase/firestore"
 import { 
   Dialog, 
   DialogContent, 
@@ -47,6 +47,8 @@ export function AddMosqueModal() {
           longitude: pos.coords.longitude.toString()
         }))
         toast({ title: "Location Detected!" })
+      }, () => {
+        toast({ variant: "destructive", title: "Error", description: "GPS failed. Please enter manually." })
       })
     }
   }
@@ -104,16 +106,14 @@ export function AddMosqueModal() {
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Mosque Name</Label>
-                <Input 
-                  value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g. Baitul Mukarram National Mosque" 
-                  className="h-12 rounded-xl"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Mosque Name</Label>
+              <Input 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                placeholder="e.g. Baitul Mukarram National Mosque" 
+                className="h-12 rounded-xl"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -22,15 +22,13 @@ import {
   Layout,
   Map as MapIcon,
   Users,
-  Compass,
-  Github,
-  Mail,
+  Twitter,
+  Globe,
   CalendarDays,
   Volume2,
   VolumeX,
-  Share2,
-  Twitter,
-  Globe
+  Github,
+  Mail
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -40,11 +38,18 @@ import { cn } from "@/lib/utils"
 
 const tools = [
   {
+    title: "Eid Jamaat Finder",
+    description: "Discover nearby mosques and real-time Eid prayer times across Bangladesh.",
+    icon: MapIcon,
+    href: "/tools/jamaat-finder",
+    color: "bg-emerald-100 text-emerald-700"
+  },
+  {
     title: "Zakat Calculator",
     description: "Calculate your zakat obligation in BDT accurately with our modern tool.",
     icon: Calculator,
     href: "/tools/zakat",
-    color: "bg-emerald-100 text-emerald-700"
+    color: "bg-blue-100 text-blue-700"
   },
   {
     title: "Greeting Generator",
@@ -65,7 +70,7 @@ const tools = [
     description: "Report and view community moon sightings across all divisions of BD.",
     icon: Globe,
     href: "/tools/moon-sighting",
-    color: "bg-blue-100 text-blue-700"
+    color: "bg-indigo-100 text-indigo-700"
   },
   {
     title: "Salami Tracker",
@@ -73,13 +78,6 @@ const tools = [
     icon: Wallet,
     href: "/tools/salami",
     color: "bg-purple-100 text-purple-700"
-  },
-  {
-    title: "Mosque & Prayer",
-    description: "Find mosques near you and stay on track with accurate prayer times.",
-    icon: MapPin,
-    href: "/tools/mosque",
-    color: "bg-rose-100 text-rose-700"
   }
 ]
 
@@ -91,15 +89,15 @@ const highlights = [
     color: "text-amber-500"
   },
   {
-    title: "Mosque Finder Map",
-    description: "Real-time navigation to the nearest mosques across all divisions of Bangladesh with accurate prayer timings.",
+    title: "Live Jamaat Map",
+    description: "Real-time navigation to mosques with community-verified Eid prayer times across Bangladesh.",
     icon: MapIcon,
     color: "text-emerald-500"
   },
   {
-    title: "Eid Selfie Frame Creator",
-    description: "Replace backgrounds and add premium architectural frames to your festive photos instantly.",
-    icon: Layout,
+    title: "Digital Salami Cards",
+    description: "Send and track digital blessings with unique magic links and automated payment collection.",
+    icon: Wallet,
     color: "text-blue-500"
   }
 ]
@@ -114,9 +112,17 @@ export default function Home() {
 
   const previews = [
     {
+      label: "Jamaat Finder",
+      title: "Local Eid Prayers",
+      desc: "Community verified times in Dhaka.",
+      icon: MapIcon,
+      image: PlaceHolderImages.find(img => img.id === "preview-map")?.imageUrl || "",
+      hint: "mosque map"
+    },
+    {
       label: "Greeting Designer",
-      title: "Eid Mubarak Card",
-      desc: "AI-generated trilingual blessings.",
+      title: "AI Eid Card",
+      desc: "Generated trilingual blessings.",
       icon: Send,
       image: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageUrl || "",
       hint: "eid greeting"
@@ -128,14 +134,6 @@ export default function Home() {
       icon: Camera,
       image: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageUrl || "",
       hint: "eid selfie"
-    },
-    {
-      label: "Mosque Finder",
-      title: "Nearby Prayer Locations",
-      desc: "Real-time markers in Dhaka.",
-      icon: MapIcon,
-      image: PlaceHolderImages.find(img => img.id === "preview-map")?.imageUrl || "",
-      hint: "mosque map"
     }
   ]
 
@@ -226,7 +224,7 @@ export default function Home() {
                   </h1>
                   
                   <p className="text-xl text-white/80 max-w-xl leading-relaxed font-medium">
-                    Smart Eid tools for everyone in Bangladesh. From Zakat calculation to AI Eid greetings and moon sighting maps.
+                    Smart Eid tools for everyone in Bangladesh. From Live Jamaat Finder to AI Eid greetings and moon sighting maps.
                   </p>
                 </div>
                 
@@ -235,7 +233,7 @@ export default function Home() {
                     <Link href="#tools">Explore Tools <ChevronRight className="ml-2 w-6 h-6" /></Link>
                   </Button>
                   <Button size="lg" variant="outline" className="rounded-2xl px-12 h-16 text-xl font-black border-2 border-white/30 text-white hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl" asChild>
-                    <Link href="/tools/moon-sighting">Moon Sighting</Link>
+                    <Link href="/tools/jamaat-finder">Live Jamaat Finder</Link>
                   </Button>
                 </div>
 
@@ -392,41 +390,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Social Proof Bar */}
-        <section className="py-16 relative bg-white/30 backdrop-blur-sm border-b border-primary/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 text-center lg:text-left">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
-                  <Users className="w-3 h-3" />
-                  <span>The Community Choice</span>
-                </div>
-                <h3 className="text-2xl lg:text-3xl font-black text-slate-800">Trusted by Muslims across Bangladesh</h3>
-              </div>
-              
-              <div className="flex flex-wrap justify-center items-center gap-12 lg:gap-20">
-                <div className="group">
-                  <div className="text-5xl font-black text-primary group-hover:text-secondary transition-colors duration-300">10,000+</div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Active Users</p>
-                </div>
-                
-                <div className="hidden lg:block w-px h-16 bg-slate-200"></div>
-
-                <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center lg:text-left">Serving all major divisions</p>
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-2">
-                    {['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi'].map((city) => (
-                      <span key={city} className="px-4 py-1.5 rounded-xl bg-white text-primary font-bold text-xs border-2 border-primary/5 shadow-sm hover:border-primary/20 transition-all cursor-default">
-                        {city}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Tools Section */}
         <section id="tools" className="py-32 relative bg-white/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -458,7 +421,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Mosque Finder Highlight */}
+        {/* Jamaat Finder Highlight */}
         <section className="py-24 px-4">
           <div className="max-w-7xl mx-auto emerald-gradient rounded-[4rem] p-12 lg:p-24 relative overflow-hidden shadow-2xl">
             <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
@@ -467,12 +430,12 @@ export default function Home() {
                     <MapPin className="w-4 h-4 text-secondary" />
                     <span>Explore Bangladesh</span>
                   </div>
-                  <h2 className="text-5xl lg:text-7xl font-black tracking-tight leading-tight">Find Mosques Near You 🕌</h2>
+                  <h2 className="text-5xl lg:text-7xl font-black tracking-tight leading-tight">Live Eid Jamaat Finder 🕌</h2>
                   <p className="text-xl text-white/80 font-medium max-w-lg">
-                    Discover nearby mosques across Bangladesh with real-time locations and accurate prayer times. Perfect for Eid prayers or daily congregation.
+                    Discover and contribute Eid prayer times for local mosques across Bangladesh. Real-time updates and community verification.
                   </p>
                   <Button size="lg" className="bg-secondary text-primary font-black px-12 h-16 rounded-2xl text-xl hover:scale-105 transition-all shadow-xl" asChild>
-                    <Link href="/tools/mosque">Open Mosque Map</Link>
+                    <Link href="/tools/jamaat-finder">Open Jamaat Finder</Link>
                   </Button>
                </div>
                
@@ -480,7 +443,7 @@ export default function Home() {
                   <div className="aspect-[4/3] bg-white/10 rounded-[3rem] border-8 border-white/10 backdrop-blur-md relative overflow-hidden group animate-float">
                      <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
                      <MapIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 text-white/20" />
-                     {/* Floating marker simulations with pulsing animation */}
+                     {/* Floating marker simulations */}
                      <div className="absolute top-[20%] left-[30%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-pulse">
                         <MapPin className="w-5 h-5 text-primary" />
                      </div>
@@ -582,7 +545,7 @@ export default function Home() {
               <div className="space-y-4">
                 <h4 className="text-lg font-black text-primary uppercase tracking-widest">About EidSpark</h4>
                 <p className="text-muted-foreground font-medium leading-relaxed">
-                  Empowering Eid celebrations with modern technology. Our mission is to blend tradition with modern convenience for every Bangladeshi family.
+                  Empowering Eid celebrations with modern technology. Built for the Muslim community of Bangladesh.
                 </p>
               </div>
             </div>
@@ -600,9 +563,8 @@ export default function Home() {
             <div>
               <h4 className="font-black text-primary uppercase tracking-widest mb-8">Platform</h4>
               <ul className="space-y-5 text-muted-foreground font-bold">
-                <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Moon Sight Map</Link></li>
-                <li><Link href="/tools/mosque" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Mosque Finder</Link></li>
-                <li><Link href="/tools/qibla" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Qibla Finder</Link></li>
+                <li><Link href="/tools/countdown" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Eid Countdown</Link></li>
+                <li><Link href="/tools/jamaat-finder" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Mosque Finder</Link></li>
                 <li><Link href="/about" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> About Us</Link></li>
               </ul>
             </div>
@@ -643,9 +605,6 @@ export default function Home() {
                 <Link href="#" className="hover:opacity-70 transition-opacity">Terms of Service</Link>
               </div>
             </div>
-            <p className="text-muted-foreground/60 text-xs font-bold uppercase tracking-widest pt-4">
-              Built for the Muslim community of Bangladesh.
-            </p>
           </div>
         </div>
       </footer>

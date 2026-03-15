@@ -42,7 +42,7 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
 
     setIsSubmitting(true)
     try {
-      // Check if this time already exists for this mosque
+      // Check if this specific time already exists for this mosque to avoid duplicates and handle verification
       const q = query(
         collection(db, "mosques", mosqueId, "jamaatTimes"),
         where("time", "==", time)
@@ -50,7 +50,7 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
       const existing = await getDocs(q)
       
       if (!existing.empty) {
-        // Increment community count if same time reported
+        // Increment community verification count if same time reported
         const timeDoc = existing.docs[0]
         await updateDoc(doc(db, "mosques", mosqueId, "jamaatTimes", timeDoc.id), {
           communitySubmissionCount: increment(1)
@@ -60,14 +60,14 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
         // Create new time entry
         await addDoc(collection(db, "mosques", mosqueId, "jamaatTimes"), {
           mosqueId,
-          eidDate: "2026-03-20", // Hardcoded for 2026 requirement or dynamic
+          eidDate: "2026-03-20", // Default for upcoming Eid
           time,
           isApprovedByAdmin: false,
           submittedByUserId: user.uid,
           submittedAt: new Date().toISOString(),
           communitySubmissionCount: 1
         })
-        toast({ title: "Time Added!", description: "Will appear once approved." })
+        toast({ title: "Time Added!", description: "Will appear once approved by a moderator." })
       }
       
       setOpen(false)

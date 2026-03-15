@@ -5,11 +5,11 @@ import { useEffect, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { MapPin, Navigation, Clock, CheckCircle2, Star } from "lucide-react"
+import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck } from "lucide-react"
 import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
 
-// Custom Icon
+// Custom Mosque Icon
 const mosqueIcon = L.divIcon({
   html: `
     <div class="relative w-12 h-12 flex items-center justify-center">
@@ -33,7 +33,7 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
 }
 
 export default function JamaatMap({ mosques, onSelectMosque }: { mosques: any[], onSelectMosque: (id: string) => void }) {
-  const [center] = useState<[number, number]>([23.8103, 90.4125]) // Dhaka
+  const [center] = useState<[number, number]>([23.8103, 90.4125]) // Default center: Dhaka
   const zoom = 12
 
   return (

@@ -28,7 +28,7 @@ import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AddJamaatTimeModal } from "@/components/add-jamaat-time-modal"
 import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
 
-// Dynamically import map
+// Dynamically import map to avoid SSR issues with Leaflet
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ssr: false,
   loading: () => (
@@ -53,13 +53,7 @@ export default function JamaatFinderPage() {
   }, [db])
   const { data: allMosques, isLoading: loadingMosques } = useCollection(mosquesRef)
 
-  // Fetch Admin Role
-  const adminRef = useMemoFirebase(() => {
-    if (!db || !user) return null
-    return where("userId", "==", user.uid) // Simple check, rules will enforce properly
-  }, [db, user])
-  
-  // Logic to determine if user is admin (check roles_admin collection)
+  // Fetch Admin Role logic
   const rolesRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return collection(db, "roles_admin")
