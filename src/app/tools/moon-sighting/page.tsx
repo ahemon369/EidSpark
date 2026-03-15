@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -21,10 +22,11 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
-  EyeOff
+  EyeOff,
+  ShieldCheck
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, query, orderBy, limit, deleteDoc, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
@@ -61,6 +63,14 @@ export default function MoonSightingTrackerPage() {
   }, [db])
 
   const { data: sightings, isLoading: loadingSightings } = useCollection(sightingsRef)
+
+  // Fetch Admin Role
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, "roles_admin", user.uid)
+  }, [db, user])
+  const { data: adminDoc } = useDoc(adminRoleRef)
+  const isAdmin = !!adminDoc
 
   // Today's specific reports counter
   const todaySeenCount = sightings?.filter(s => {
@@ -328,7 +338,10 @@ export default function MoonSightingTrackerPage() {
                             </div>
                             <div>
                               <h4 className="font-black text-sm text-white">{s.locationName}</h4>
-                              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{s.userName}</p>
+                              <div className="flex items-center gap-1">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{s.userName}</p>
+                                {isAdmin && <ShieldCheck className="w-3 h-3 text-secondary" />}
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
@@ -338,11 +351,11 @@ export default function MoonSightingTrackerPage() {
                         </div>
                         {s.notes && <p className="text-[11px] text-slate-400 italic pl-13 line-clamp-2 leading-relaxed">"{s.notes}"</p>}
                         
-                        {user && user.uid === s.userId && (
+                        {user && (user.uid === s.userId || isAdmin) && (
                           <button 
                             onClick={() => handleDelete(s.id)}
                             disabled={isDeleting === s.id}
-                            className="absolute top-6 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-rose-500 text-white p-1.5 rounded-lg shadow-lg hover:scale-110 active:scale-95"
+                            className="absolute top-6 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-rose-500 text-white p-1.5 rounded-lg shadow-lg hover:scale-110 active:scale-95 z-20"
                           >
                             {isDeleting === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                           </button>
