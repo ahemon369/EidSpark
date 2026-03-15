@@ -7,6 +7,8 @@ import L from "leaflet"
 import { Button } from "@/components/ui/button"
 import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin, Heart } from "lucide-react"
 
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
 // Custom Emerald Marker for Mosques
 const mosqueIcon = L.divIcon({
   html: `<div class="bg-primary p-2.5 rounded-full border-4 border-white shadow-2xl transform hover:scale-110 transition-transform"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/><path d="M9 16c-1 0-2 1-2 2v4"/><path d="M15 16c1 0 2 1 2 2v4"/></svg></div>`,
@@ -161,12 +163,18 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
     if (onMosquesUpdate) onMosquesUpdate(fetched)
   }
 
+  const tileUrl = MAPBOX_TOKEN 
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-slate-50">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={MAPBOX_TOKEN ? '© Mapbox & OpenStreetMap' : '&copy; OpenStreetMap contributors'}
+          url={tileUrl}
+          tileSize={MAPBOX_TOKEN ? 512 : 256}
+          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
         />
         <ChangeView center={center} zoom={zoom} />
         <MosqueFetcher userPos={userPos} onFetch={handleFetch} />

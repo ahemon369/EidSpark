@@ -9,6 +9,8 @@ import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck } from "lucide-rea
 import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
 
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
 // Custom Mosque Icon
 const mosqueIcon = L.divIcon({
   html: `
@@ -66,12 +68,18 @@ export default function JamaatMap({
     }
   }, [userLocation])
 
+  const tileUrl = MAPBOX_TOKEN 
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
   return (
     <div className="w-full h-full relative">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={MAPBOX_TOKEN ? '© Mapbox & OpenStreetMap' : '&copy; OpenStreetMap contributors'}
+          url={tileUrl}
+          tileSize={MAPBOX_TOKEN ? 512 : 256}
+          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
         />
         <ChangeView center={center} zoom={zoom} />
 

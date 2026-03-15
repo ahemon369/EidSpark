@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect } from "react"
@@ -6,6 +7,8 @@ import L from "leaflet"
 import { format } from "date-fns"
 import { User, Clock, CheckCircle2, XCircle, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
 // Custom Glowing Marker Icons
 const seenIcon = L.divIcon({
@@ -60,12 +63,18 @@ export default function MoonSightingMap({ sightings }: { sightings: Sighting[] }
   const center: [number, number] = [23.6850, 90.3563] // Center of Bangladesh
   const zoom = 7
 
+  const tileUrl = MAPBOX_TOKEN 
+    ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
   return (
     <div className="relative w-full h-full rounded-[3rem] overflow-hidden shadow-[0_48px_96px_-12px_rgba(0,0,0,0.5)] border-8 border-white/10 bg-slate-900 group">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution={MAPBOX_TOKEN ? '© Mapbox & OpenStreetMap' : '&copy; OpenStreetMap contributors'}
+          url={tileUrl}
+          tileSize={MAPBOX_TOKEN ? 512 : 256}
+          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
         />
         <ChangeView center={center} zoom={zoom} />
 
