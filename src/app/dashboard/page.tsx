@@ -14,7 +14,8 @@ import {
   Sparkles,
   Calculator,
   Timer,
-  Layout
+  Layout,
+  Compass
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -53,7 +54,7 @@ export default function DashboardOverview() {
   const quickActions = [
     { title: "New Greeting", desc: "Design a custom card", href: "/tools/greeting", icon: Send, color: "text-blue-600", bg: "bg-blue-50" },
     { title: "Selfie Studio", desc: "AI poster frames", href: "/tools/selfie", icon: Camera, color: "text-rose-600", bg: "bg-rose-50" },
-    { title: "Find Mosque", desc: "Nearby prayer map", href: "/tools/mosque", icon: MapPin, color: "text-amber-600", bg: "bg-amber-50" },
+    { title: "Qibla Finder", desc: "Compass direction", href: "/tools/qibla", icon: Compass, color: "text-blue-600", bg: "bg-blue-50" },
     { title: "Zakat Calc", desc: "Financial assistant", href: "/tools/zakat", icon: Calculator, color: "text-emerald-600", bg: "bg-emerald-50" },
   ]
 

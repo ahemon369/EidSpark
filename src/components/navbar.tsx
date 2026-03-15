@@ -28,7 +28,7 @@ const navItems = [
   { name: "Greeting", href: "/tools/greeting" },
   { name: "Selfie", href: "/tools/selfie" },
   { name: "Salami", href: "/tools/salami" },
-  { name: "Countdown", href: "/tools/countdown" },
+  { name: "Qibla", href: "/tools/qibla" },
   { name: "Mosques", href: "/tools/mosque" },
   { name: "About", href: "/about" },
 ]

@@ -21,7 +21,8 @@ import {
   MessageCircle,
   Layout,
   Map as MapIcon,
-  Users
+  Users,
+  Compass
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -52,17 +53,17 @@ const tools = [
     color: "bg-orange-100 text-orange-700"
   },
   {
+    title: "Qibla Finder",
+    description: "Find the direction of the Kaaba from anywhere using your device compass.",
+    icon: Compass,
+    href: "/tools/qibla",
+    color: "bg-blue-100 text-blue-700"
+  },
+  {
     title: "Salami Tracker",
     description: "Keep track of your Eid Eidi/Salami and join the national leaderboard.",
     icon: Wallet,
     href: "/tools/salami",
-    color: "bg-blue-100 text-blue-700"
-  },
-  {
-    title: "Eid Countdown",
-    description: "Animated countdown to Eid-ul-Fitr and Eid-ul-Adha for Bangladesh.",
-    icon: Timer,
-    href: "/tools/countdown",
     color: "bg-purple-100 text-purple-700"
   },
   {
