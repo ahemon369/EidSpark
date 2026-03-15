@@ -372,6 +372,17 @@ export default function CanvaGreetingGenerator() {
         elements: elements,
         generationDate: new Date().toISOString()
       })
+      
+      // Trigger Notification
+      await addDoc(collection(db, "users", user.uid, "notifications"), {
+        userId: user.uid,
+        title: "Greeting Created! 💌",
+        message: `Your personalized card for ${aiName || 'Friend'} has been saved to your gallery.`,
+        type: "greeting",
+        isRead: false,
+        createdAt: new Date().toISOString()
+      })
+
       toast({ title: "Saved to Gallery", description: "Find this in your profile history." })
     } catch (error) {
       // Handled globally

@@ -140,6 +140,16 @@ export default function MoonSightingTrackerPage() {
         timestamp: new Date().toISOString()
       })
       
+      // Trigger Notification
+      await addDoc(collection(db, "users", user.uid, "notifications"), {
+        userId: user.uid,
+        title: "Report Posted! 🌙",
+        message: `Your moon sighting report from ${locationName} is now live on the community map.`,
+        type: "moon",
+        isRead: false,
+        createdAt: new Date().toISOString()
+      })
+
       toast({ title: "Sighting Reported!", description: "Your report is now live on the community map." })
       setLocationName("")
       setNotes("")

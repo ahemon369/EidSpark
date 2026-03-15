@@ -82,6 +82,16 @@ export function AddMosqueModal() {
         createdAt: new Date().toISOString()
       })
       
+      // Trigger Notification
+      await addDoc(collection(db, "users", user.uid, "notifications"), {
+        userId: user.uid,
+        title: "Mosque Submitted! 🕌",
+        message: `Thank you for adding ${formData.name}. It is now pending verification by our team.`,
+        type: "mosque",
+        isRead: false,
+        createdAt: new Date().toISOString()
+      })
+
       toast({ title: "Thank you!", description: "Your mosque has been added and is now live on the map." })
       setOpen(false)
       setFormData({ name: "", district: "", area: "", latitude: "", longitude: "", eidPrayerTime: "", description: "" })

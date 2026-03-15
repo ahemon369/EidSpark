@@ -14,12 +14,10 @@ import {
   History, 
   Settings, 
   LogOut, 
-  Bell, 
   Plus, 
   Menu,
   X,
   ChevronRight,
-  Sparkles,
   ArrowLeft,
   Globe
 } from "lucide-react"
@@ -30,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import { NotificationCenter } from "@/components/notification-center"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +49,7 @@ const menuItems = [
 ]
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useUser()
+  const { user, loading: isUserLoading } = useUser()
   const auth = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -202,10 +201,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </DropdownMenu>
             </div>
 
-            <Button variant="ghost" size="icon" className="rounded-full relative">
-              <Bell className="w-5 h-5 text-slate-600" />
-              <div className="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full border-2 border-white"></div>
-            </Button>
+            <NotificationCenter />
 
             <div className="h-8 w-px bg-slate-200 mx-2"></div>
 

@@ -67,6 +67,17 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
           submittedAt: new Date().toISOString(),
           communitySubmissionCount: 1
         })
+
+        // Trigger Notification
+        await addDoc(collection(db, "users", user.uid, "notifications"), {
+          userId: user.uid,
+          title: "Jamaat Time Added! 🕒",
+          message: `Your update for ${mosqueName} (${time}) is pending approval. JazakAllah!`,
+          type: "jamaat",
+          isRead: false,
+          createdAt: new Date().toISOString()
+        })
+
         toast({ title: "Time Added!", description: "Will appear once approved by a moderator." })
       }
       
