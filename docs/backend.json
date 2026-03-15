@@ -97,6 +97,24 @@
         "savedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "name", "savedAt"]
+    },
+    "MoonSighting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MoonSighting",
+      "type": "object",
+      "description": "A community report of a moon sighting in Bangladesh.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "locationName": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "seen": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "userId", "locationName", "lat", "lng", "timestamp", "seen"]
     }
   },
   "auth": {
@@ -151,6 +169,13 @@
         "definition": {
           "entityName": "SalamiCard",
           "description": "Digital Salami envelopes sent by users."
+        }
+      },
+      {
+        "path": "/moonSightings/{id}",
+        "definition": {
+          "entityName": "MoonSighting",
+          "description": "Community moon sighting reports."
         }
       }
     ]

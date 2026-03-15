@@ -28,6 +28,7 @@ const navItems = [
   { name: "Greeting", href: "/tools/greeting" },
   { name: "Selfie", href: "/tools/selfie" },
   { name: "Salami", href: "/tools/salami" },
+  { name: "Moon Sight", href: "/tools/moon-sighting" },
   { name: "Qibla", href: "/tools/qibla" },
   { name: "Mosques", href: "/tools/mosque" },
   { name: "About", href: "/about" },

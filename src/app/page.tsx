@@ -29,7 +29,8 @@ import {
   Volume2,
   VolumeX,
   Share2,
-  Twitter
+  Twitter,
+  Globe
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -60,10 +61,10 @@ const tools = [
     color: "bg-orange-100 text-orange-700"
   },
   {
-    title: "Qibla Finder",
-    description: "Find the direction of the Kaaba from anywhere using your device compass.",
-    icon: Compass,
-    href: "/tools/qibla",
+    title: "Moon Sighting Map",
+    description: "Report and view community moon sightings across all divisions of BD.",
+    icon: Globe,
+    href: "/tools/moon-sighting",
     color: "bg-blue-100 text-blue-700"
   },
   {
@@ -225,7 +226,7 @@ export default function Home() {
                   </h1>
                   
                   <p className="text-xl text-white/80 max-w-xl leading-relaxed font-medium">
-                    Smart Eid tools for everyone in Bangladesh. From Zakat calculation to AI Eid greetings and mosque finding.
+                    Smart Eid tools for everyone in Bangladesh. From Zakat calculation to AI Eid greetings and moon sighting maps.
                   </p>
                 </div>
                 
@@ -234,7 +235,7 @@ export default function Home() {
                     <Link href="#tools">Explore Tools <ChevronRight className="ml-2 w-6 h-6" /></Link>
                   </Button>
                   <Button size="lg" variant="outline" className="rounded-2xl px-12 h-16 text-xl font-black border-2 border-white/30 text-white hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl" asChild>
-                    <Link href="/tools/greeting">Create Greeting</Link>
+                    <Link href="/tools/moon-sighting">Moon Sighting</Link>
                   </Button>
                 </div>
 
@@ -599,7 +600,7 @@ export default function Home() {
             <div>
               <h4 className="font-black text-primary uppercase tracking-widest mb-8">Platform</h4>
               <ul className="space-y-5 text-muted-foreground font-bold">
-                <li><Link href="/tools/countdown" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Eid Countdown</Link></li>
+                <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Moon Sight Map</Link></li>
                 <li><Link href="/tools/mosque" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Mosque Finder</Link></li>
                 <li><Link href="/tools/qibla" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Qibla Finder</Link></li>
                 <li><Link href="/about" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> About Us</Link></li>
