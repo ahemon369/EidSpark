@@ -7,28 +7,26 @@ import L from "leaflet"
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Button } from "@/components/ui/button"
 import { Navigation, Loader2, MapPin, Heart, Clock, Timer } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Premium Green Mosque Marker Icon
+// Premium Green Mosque Marker Icon using icons8 URL as requested
 const getStandardMosqueIcon = () => {
+  const iconUrl = "https://img.icons8.com/ios-filled/50/ffffff/mosque.png";
+  
   return L.divIcon({
     html: `
       <div class="mosque-marker-wrapper">
         <div class="mosque-marker-glow" style="background: rgba(16, 185, 129, 0.4)"></div>
-        <div class="mosque-marker-icon" style="background: #10b981; border-color: #E9BE24; border-width: 2px; border-style: solid; box-shadow: 0 4px 12px rgba(0,0,0,0.2)">
-          <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L10.5 4.5H13.5L12 2Z" />
-            <path d="M12 4.5C8.686 4.5 6 7.186 6 10.5V13H18V10.5C18 7.186 15.314 4.5 12 4.5Z" />
-            <path d="M4 12V22H5.5V12H4ZM18.5 12V22H20V12H18.5ZM6.5 14V22H17.5V14H6.5Z" />
-            <path d="M12 1C12 1 12.5 2 12 2.5C11.5 2 12 1 12 1Z" />
-          </svg>
+        <div class="mosque-marker-icon" style="background: #10b981; border: 2px solid #fbbf24;">
+          <img src="${iconUrl}" style="width: 24px; height: 24px;" alt="mosque" />
         </div>
       </div>
     `,
     className: "custom-mosque-marker",
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
+    iconSize: [44, 44],
+    iconAnchor: [22, 44],
   });
 }
 
@@ -131,7 +129,7 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
     <>
       {loading && (
         <div className="absolute top-6 right-6 z-[1000] bg-white p-3 px-6 rounded-2xl shadow-2xl flex items-center gap-3 text-primary text-sm font-black border-2 border-primary/10 animate-in fade-in zoom-in">
-          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Syncing Local Registry...
+          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Syncing Registry...
         </div>
       )}
     </>
@@ -149,7 +147,6 @@ function MosquePopup({ mosque, onSave }: { mosque: Mosque, onSave?: (m: Mosque) 
       if (data.data) {
         setTimes(data.data.timings);
         
-        // Find next prayer logic
         const now = new Date();
         const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
         for (const p of prayers) {
@@ -318,21 +315,21 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
       <style jsx global>{`
         @keyframes marker-drop {
-          0% { transform: translateY(-50px); opacity: 0; }
-          60% { transform: translateY(5px); opacity: 1; }
-          100% { transform: translateY(0); }
+          0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+          60% { transform: translateY(5px) scale(1.1); opacity: 1; }
+          100% { transform: translateY(0) scale(1); }
         }
 
         @keyframes marker-glow-pulse {
           0% { transform: scale(0.8); opacity: 0.5; }
-          50% { transform: scale(1.5); opacity: 0; }
+          50% { transform: scale(1.4); opacity: 0; }
           100% { transform: scale(0.8); opacity: 0.5; }
         }
         
         .mosque-marker-wrapper {
           position: relative;
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -341,25 +338,23 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
         .mosque-marker-glow {
           position: absolute;
-          width: 30px;
-          height: 30px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          animation: marker-glow-pulse 2s infinite;
+          animation: marker-glow-pulse 2s infinite ease-out;
         }
 
         .mosque-marker-icon {
           position: relative;
-          width: 36px;
-          height: 36px;
-          color: white;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
-          border: 2px solid white;
           display: flex;
           align-items: center;
           justify-content: center;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           transition: all 0.3s ease;
-          padding: 7px;
+          z-index: 2;
         }
 
         .custom-popup .leaflet-popup-content-wrapper {
@@ -374,14 +369,24 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           width: 280px !important;
         }
 
+        .leaflet-tooltip {
+          background: white;
+          border: 2px solid #065f46;
+          border-radius: 12px;
+          padding: 6px 12px;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+          font-family: 'Hind Siliguri', sans-serif;
+          font-weight: 800;
+        }
+
         .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
           background-color: rgba(16, 185, 129, 0.2) !important;
         }
         .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-          background-color: rgba(16, 185, 129, 0.8) !important;
+          background-color: #10b981 !important;
           color: white !important;
           font-weight: 900 !important;
-          border: 2px solid white;
+          border: 2px solid #fbbf24;
         }
       `}</style>
     </div>
