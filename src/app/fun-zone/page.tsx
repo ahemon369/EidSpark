@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -40,7 +39,7 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  RechartTooltip, 
+  Tooltip, 
   ResponsiveContainer, 
   Cell 
 } from "recharts"
@@ -536,7 +535,7 @@ export default function FunZone() {
                       <BarChart data={chartData}>
                         <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
                         <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `৳${value}`} />
-                        <RechartTooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }} />
+                        <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }} />
                         <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
                           {chartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#065f46" : "#fbbf24"} />
