@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -18,7 +18,8 @@ import {
   Loader2, 
   Navigation,
   Globe,
-  Settings
+  Settings,
+  LocateFixed
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
@@ -27,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AddJamaatTimeModal } from "@/components/add-jamaat-time-modal"
 import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
+import { useToast } from "@/hooks/use-toast"
 
 // Dynamically import map to avoid SSR issues with Leaflet
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
@@ -39,12 +41,30 @@ const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ),
 })
 
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3 // metres
+  const φ1 = (lat1 * Math.PI) / 180
+  const φ2 = (lat2 * Math.PI) / 180
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
+
 export default function JamaatFinderPage() {
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMosqueId, setSelectedMosqueId] = useState<string | null>(null)
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
+  const [isDetecting, setIsDetecting] = useState(false)
   
   // Fetch Mosques
   const mosquesRef = useMemoFirebase(() => {
@@ -61,16 +81,49 @@ export default function JamaatFinderPage() {
   const { data: adminRoles } = useCollection(rolesRef)
   const isAdmin = adminRoles?.some(role => role.id === user?.uid)
 
+  const handleFindNearMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast({ variant: "destructive", title: "Not Supported", description: "Geolocation is not supported by your browser." })
+      return
+    }
+
+    setIsDetecting(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude]
+        setUserLocation(loc)
+        setIsDetecting(false)
+        toast({ title: "Location Found", description: "Showing nearest mosques." })
+      },
+      (err) => {
+        setIsDetecting(false)
+        toast({ variant: "destructive", title: "Location Error", description: "Please enable GPS access to find mosques near you." })
+      }
+    )
+  }, [toast])
+
   const filteredMosques = useMemo(() => {
     if (!allMosques) return []
-    const approved = allMosques.filter(m => m.isApprovedByAdmin || isAdmin)
-    if (!searchQuery) return approved
-    return approved.filter(m => 
+    let mosques = allMosques.filter(m => m.isApprovedByAdmin || isAdmin)
+    
+    // Calculate distances if user location is known
+    if (userLocation) {
+      mosques = mosques.map(m => ({
+        ...m,
+        distance: calculateDistance(userLocation[0], userLocation[1], m.latitude, m.longitude)
+      }))
+      // Sort by distance
+      mosques.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    }
+
+    if (!searchQuery) return mosques
+    
+    return mosques.filter(m => 
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.area.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [allMosques, searchQuery, isAdmin])
+  }, [allMosques, searchQuery, isAdmin, userLocation])
 
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-20">
@@ -101,6 +154,18 @@ export default function JamaatFinderPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Button 
+              variant="outline" 
+              className={cn(
+                "h-14 rounded-2xl border-2 font-black px-6 shadow-xl transition-all",
+                userLocation ? "border-primary bg-primary/5 text-primary" : "border-slate-200 hover:border-primary/30"
+              )}
+              onClick={handleFindNearMe}
+              disabled={isDetecting}
+            >
+              {isDetecting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <LocateFixed className="w-5 h-5 mr-2" />}
+              Find Near Me
+            </Button>
             <AddMosqueModal />
           </div>
         </div>
@@ -131,7 +196,11 @@ export default function JamaatFinderPage() {
 
           <TabsContent value="map" className="animate-in fade-in duration-700">
             <div className="h-[750px] relative rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-slate-50">
-              <JamaatMap mosques={filteredMosques} onSelectMosque={setSelectedMosqueId} />
+              <JamaatMap 
+                mosques={filteredMosques} 
+                onSelectMosque={setSelectedMosqueId} 
+                userLocation={userLocation}
+              />
             </div>
           </TabsContent>
 
@@ -184,10 +253,17 @@ function MosqueCard({ mosque, isAdmin }: { mosque: any, isAdmin: boolean }) {
         </div>
         <div className="relative z-10 space-y-2">
           <h3 className="text-2xl font-black tracking-tight leading-tight">{mosque.name}</h3>
-          <p className="text-xs font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5" />
-            {mosque.area}, {mosque.district}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5" />
+              {mosque.area}, {mosque.district}
+            </p>
+            {mosque.distance !== undefined && (
+              <p className="text-[10px] font-black text-secondary uppercase tracking-widest">
+                {mosque.distance < 1000 ? `${Math.round(mosque.distance)}m away` : `${(mosque.distance / 1000).toFixed(1)}km away`}
+              </p>
+            )}
+          </div>
         </div>
       </div>
       <CardContent className="p-8 space-y-6">

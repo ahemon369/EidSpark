@@ -24,17 +24,47 @@ const mosqueIcon = L.divIcon({
   iconAnchor: [24, 24],
 })
 
+// User Location Icon
+const userLocationIcon = L.divIcon({
+  html: `
+    <div class="relative w-8 h-8 flex items-center justify-center">
+      <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div>
+      <div class="absolute inset-2 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
+    </div>
+  `,
+  className: "custom-user-icon",
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+})
+
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap()
   useEffect(() => {
-    map.setView(center, zoom)
+    if (center) {
+      map.setView(center, zoom)
+    }
   }, [center, zoom, map])
   return null
 }
 
-export default function JamaatMap({ mosques, onSelectMosque }: { mosques: any[], onSelectMosque: (id: string) => void }) {
-  const [center] = useState<[number, number]>([23.8103, 90.4125]) // Default center: Dhaka
-  const zoom = 12
+export default function JamaatMap({ 
+  mosques, 
+  onSelectMosque, 
+  userLocation 
+}: { 
+  mosques: any[], 
+  onSelectMosque: (id: string) => void,
+  userLocation?: [number, number] | null
+}) {
+  const [center, setCenter] = useState<[number, number]>([23.8103, 90.4125]) // Default center: Dhaka
+  const [zoom, setZoom] = useState(12)
+
+  useEffect(() => {
+    if (userLocation) {
+      setCenter(userLocation)
+      setZoom(15)
+    }
+  }, [userLocation])
 
   return (
     <div className="w-full h-full relative">
@@ -44,6 +74,14 @@ export default function JamaatMap({ mosques, onSelectMosque }: { mosques: any[],
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ChangeView center={center} zoom={zoom} />
+
+        {userLocation && (
+          <Marker position={userLocation} icon={userLocationIcon}>
+            <Popup>
+              <div className="p-2 font-black text-blue-600 text-xs uppercase tracking-widest">You are here</div>
+            </Popup>
+          </Marker>
+        )}
 
         {mosques.map((mosque) => (
           <Marker
