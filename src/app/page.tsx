@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -28,7 +27,10 @@ import {
   Volume2,
   VolumeX,
   Github,
-  Mail
+  Mail,
+  ShieldCheck,
+  CheckCircle2,
+  Heart
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -42,102 +44,96 @@ const tools = [
     description: "Discover nearby mosques and real-time Eid prayer times across Bangladesh.",
     icon: MapIcon,
     href: "/tools/jamaat-finder",
-    color: "bg-emerald-100 text-emerald-700"
+    color: "bg-emerald-100 text-emerald-700",
+    darkColor: "dark:bg-emerald-900/30 dark:text-emerald-400"
   },
   {
-    title: "Zakat Calculator",
-    description: "Calculate your zakat obligation in BDT accurately with our modern tool.",
+    title: "Zakat Assistant",
+    description: "Calculate your mandatory zakat obligation in BDT with precision.",
     icon: Calculator,
     href: "/tools/zakat",
-    color: "bg-blue-100 text-blue-700"
+    color: "bg-blue-100 text-blue-700",
+    darkColor: "dark:bg-blue-900/30 dark:text-blue-400"
   },
   {
-    title: "Greeting Generator",
-    description: "Create AI-powered Eid cards with traditional Bangladeshi motifs.",
+    title: "Greeting Studio",
+    description: "Create trilingual AI-powered Eid cards with traditional motifs.",
     icon: Send,
     href: "/tools/greeting",
-    color: "bg-amber-100 text-amber-700"
+    color: "bg-amber-100 text-amber-700",
+    darkColor: "dark:bg-amber-900/30 dark:text-amber-400"
   },
   {
-    title: "Selfie Frame",
-    description: "Decorate your Eid selfies with beautiful themed frames and share.",
+    title: "Selfie Frame AI",
+    description: "Decorate your Eid selfies with beautiful themed backdrops and frames.",
     icon: Camera,
     href: "/tools/selfie",
-    color: "bg-orange-100 text-orange-700"
+    color: "bg-orange-100 text-orange-700",
+    darkColor: "dark:bg-orange-900/30 dark:text-orange-400"
   },
   {
-    title: "Moon Sighting Map",
-    description: "Report and view community moon sightings across all divisions of BD.",
+    title: "Moon Sighting Live",
+    description: "Report and view community moon sightings across all divisions.",
     icon: Globe,
     href: "/tools/moon-sighting",
-    color: "bg-indigo-100 text-indigo-700"
+    color: "bg-indigo-100 text-indigo-700",
+    darkColor: "dark:bg-indigo-900/30 dark:text-indigo-400"
   },
   {
     title: "Salami Tracker",
-    description: "Keep track of your Eid Eidi/Salami and join the national leaderboard.",
+    description: "Manage your Eid Eidi/Salami and share unique digital envelopes.",
     icon: Wallet,
     href: "/tools/salami",
-    color: "bg-purple-100 text-purple-700"
+    color: "bg-purple-100 text-purple-700",
+    darkColor: "dark:bg-purple-900/30 dark:text-purple-400"
   }
 ]
 
-const highlights = [
-  {
-    title: "AI Greeting Generator",
-    description: "Our trilingual AI creates heartfelt blessings in Bangla, English, and Arabic, tailored just for your loved ones.",
-    icon: Sparkles,
-    color: "text-amber-500"
-  },
-  {
-    title: "Live Jamaat Map",
-    description: "Real-time navigation to mosques with community-verified Eid prayer times across Bangladesh.",
-    icon: MapIcon,
-    color: "text-emerald-500"
-  },
-  {
-    title: "Digital Salami Cards",
-    description: "Send and track digital blessings with unique magic links and automated payment collection.",
-    icon: Wallet,
-    color: "text-blue-500"
-  }
+const stats = [
+  { label: "Active Users", value: "10K+", icon: Users },
+  { label: "Mosques Verified", value: "500+", icon: CheckCircle2 },
+  { label: "Greetings Sent", value: "50K+", icon: Sparkles },
+  { label: "Community Reports", value: "1.2K+", icon: MessageCircle },
 ]
 
 export default function Home() {
   const [previewIndex, setPreviewIndex] = useState(0)
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const [isPlayingTakbir, setIsPlayingTakbir] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   const previews = [
     {
-      label: "Jamaat Finder",
-      title: "Local Eid Prayers",
+      label: "Live Map",
+      title: "Jamaat Finder",
       desc: "Community verified times in Dhaka.",
       icon: MapIcon,
       image: PlaceHolderImages.find(img => img.id === "preview-map")?.imageUrl || "",
-      hint: "mosque map"
     },
     {
-      label: "Greeting Designer",
-      title: "AI Eid Card",
-      desc: "Generated trilingual blessings.",
+      label: "AI Studio",
+      title: "Greeting Designer",
+      desc: "Trilingual blessings in 10 seconds.",
       icon: Send,
       image: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageUrl || "",
-      hint: "eid greeting"
     },
     {
       label: "Selfie Studio",
-      title: "Royal Arch Frame",
-      desc: "AI background replacement active.",
+      title: "Poster Frame AI",
+      desc: "Automatic background replacement.",
       icon: Camera,
       image: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageUrl || "",
-      hint: "eid selfie"
+    },
+    {
+      label: "Financial Tool",
+      title: "Zakat Calculator",
+      desc: "Accurate BDT wealth calculation.",
+      icon: Calculator,
+      image: PlaceHolderImages.find(img => img.id === "hero-mosque")?.imageUrl || "",
     }
   ]
 
-  // Auto-cycling Hero Preview
+  // Auto-cycling Preview
   useEffect(() => {
     const interval = setInterval(() => {
       setPreviewIndex((prev) => (prev + 1) % previews.length)
@@ -145,10 +141,9 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [previews.length])
 
-  // Live Countdown logic
+  // Countdown
   useEffect(() => {
-    const target = new Date("2026-03-20T00:00:00") // Fixed Eid Date
-    
+    const target = new Date("2026-03-20T00:00:00")
     const tick = () => {
       const now = new Date().getTime()
       const diff = target.getTime() - now
@@ -166,112 +161,75 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  const toggleTakbir = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio("https://www.islamicfinder.org/takbeer/Eid_Takbeer.mp3")
-      audioRef.current.onended = () => setIsPlayingTakbir(false)
-    }
-    
-    if (isPlayingTakbir) {
-      audioRef.current.pause()
-    } else {
-      audioRef.current.play()
-    }
-    setIsPlayingTakbir(!isPlayingTakbir)
-  }
-
-  const shareCountdown = (platform: 'facebook' | 'whatsapp' | 'twitter') => {
-    const url = encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/tools/countdown' : '');
-    const text = encodeURIComponent("Check out the live Eid-ul-Fitr 2026 countdown on EidSpark! 🌙 #EidSpark #EidMubarak");
-    
-    const shares = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-      whatsapp: `https://wa.me/?text=${text}%20${url}`,
-      twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`
-    };
-    
-    window.open(shares[platform], '_blank');
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white islamic-pattern">
+    <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white islamic-pattern transition-colors duration-500">
       <Navbar />
       
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-40 emerald-gradient">
-          <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-             <div className="absolute top-20 right-[10%] animate-float">
-               <Moon className="w-40 h-40 text-secondary fill-secondary" />
+      <main className="flex-grow pt-20">
+        {/* Premium Hero Section */}
+        <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32 lg:pb-48 emerald-gradient dark:from-slate-950 dark:to-emerald-950 transition-all duration-1000">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+             <div className="absolute top-20 right-[15%] animate-float-slow">
+               <Moon className="w-48 h-48 text-secondary fill-secondary drop-shadow-[0_0_50px_rgba(233,190,36,0.5)]" />
              </div>
-             <div className="absolute bottom-20 left-[5%] animate-float delay-1000">
+             <div className="absolute bottom-40 left-[5%] animate-float delay-1000">
                <Sparkles className="w-32 h-32 text-secondary/40" />
              </div>
-             <div className="absolute inset-0 opacity-10 islamic-pattern"></div>
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-white/5 rounded-full blur-[120px] animate-slow-gradient"></div>
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-white">
             <div className="grid lg:grid-cols-2 gap-20 items-center">
               <div className="space-y-12 animate-in fade-in slide-in-from-left duration-1000">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold tracking-wide backdrop-blur-md shadow-xl">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] backdrop-blur-xl shadow-2xl">
                   <Star className="w-4 h-4 fill-secondary text-secondary" />
                   <span>The Ultimate Eid Companion for Bangladesh</span>
                 </div>
                 
                 <div className="space-y-6">
-                  <h1 className="text-6xl lg:text-8xl font-black leading-[1.1] tracking-tight">
-                    EidSpark – <span className="text-secondary drop-shadow-2xl">Spark</span> Your Celebration
+                  <h1 className="text-6xl lg:text-[100px] font-black leading-[0.9] tracking-tighter">
+                    Spark Your <br />
+                    <span className="text-secondary drop-shadow-2xl">Celebration</span>
                   </h1>
                   
                   <p className="text-xl text-white/80 max-w-xl leading-relaxed font-medium">
-                    Smart Eid tools for everyone in Bangladesh. From Live Jamaat Finder to AI Eid greetings and moon sighting maps.
+                    Modern smart tools built for the Muslim community. From trilingual AI greetings to real-time community moon sighting reports.
                   </p>
                 </div>
                 
-                <div className="flex flex-wrap gap-5">
-                  <Button size="lg" className="bg-secondary text-primary hover:bg-secondary/90 rounded-2xl px-12 h-16 text-xl font-black shadow-2xl hover:scale-105 transition-all" asChild>
-                    <Link href="#tools">Explore Tools <ChevronRight className="ml-2 w-6 h-6" /></Link>
+                <div className="flex flex-wrap gap-6">
+                  <Button size="lg" className="bg-secondary text-primary hover:bg-secondary/90 rounded-[2rem] px-12 h-20 text-2xl font-black shadow-[0_20px_50px_rgba(233,190,36,0.3)] hover:scale-105 transition-all" asChild>
+                    <Link href="#tools">Explore Studio <ChevronRight className="ml-2 w-6 h-6" /></Link>
                   </Button>
-                  <Button size="lg" variant="outline" className="rounded-2xl px-12 h-16 text-xl font-black border-2 border-white/30 text-white hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl" asChild>
-                    <Link href="/tools/jamaat-finder">Live Jamaat Finder</Link>
+                  <Button size="lg" variant="outline" className="rounded-[2rem] px-12 h-20 text-2xl font-black border-4 border-white/30 text-white hover:bg-white/10 transition-all backdrop-blur-xl shadow-2xl" asChild>
+                    <Link href="/tools/jamaat-finder">Live Map</Link>
                   </Button>
                 </div>
 
-                <div className="space-y-4 pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex -space-x-3">
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="w-12 h-12 rounded-full border-4 border-emerald-900 bg-muted overflow-hidden shadow-lg transition-transform hover:scale-110 hover:z-20">
-                          <Image src={`https://picsum.photos/seed/user-${i}/100/100`} alt="User" width={48} height={48} />
-                        </div>
-                      ))}
-                      <div className="w-12 h-12 rounded-full border-4 border-emerald-900 bg-secondary flex items-center justify-center text-primary font-black text-xs shadow-lg">
-                        +10k
+                <div className="pt-8 flex items-center gap-6">
+                  <div className="flex -space-x-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="w-14 h-14 rounded-full border-4 border-emerald-900 bg-muted overflow-hidden shadow-2xl transition-transform hover:scale-110 hover:z-20">
+                        <Image src={`https://picsum.photos/seed/user-${i}/100/100`} alt="User" width={56} height={56} />
                       </div>
-                    </div>
-                    <div className="text-sm font-bold text-white/70">
-                      <span className="text-white block text-lg font-black tracking-tight">10,000+ Active Users</span>
-                      In Dhaka, Chittagong, Sylhet & Rajshahi
-                    </div>
+                    ))}
+                  </div>
+                  <div className="text-sm font-bold text-white/70">
+                    <span className="text-white block text-2xl font-black tracking-tighter">10,000+ Active Users</span>
+                    Trusted across all 8 divisions
                   </div>
                 </div>
               </div>
 
-              {/* Interactive Hero Preview */}
-              <div className="relative animate-in fade-in zoom-in duration-1000 delay-200 hidden lg:block">
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-20">
-                   <div className="bg-secondary text-primary px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl border-2 border-white/20 animate-pulse">
-                     Live Feature Preview
-                   </div>
-                </div>
-
-                <div className="relative z-10 rounded-[4rem] overflow-hidden shadow-[0_48px_96px_-12px_rgba(0,0,0,0.5)] border-8 border-white/10 bg-white/5 backdrop-blur-md aspect-square max-w-lg mx-auto">
+              {/* Auto-cycling Preview */}
+              <div className="relative animate-in fade-in zoom-in duration-1000 delay-300 hidden lg:block">
+                <div className="relative z-10 rounded-[4rem] overflow-hidden shadow-[0_64px_128px_-12px_rgba(0,0,0,0.6)] border-[12px] border-white/10 bg-white/5 backdrop-blur-xl aspect-square max-w-lg mx-auto group">
                   {previews.map((item, idx) => (
                     <div 
                       key={idx} 
                       className={cn(
                         "absolute inset-0 transition-all duration-1000 ease-in-out",
-                        previewIndex === idx ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95 pointer-events-none"
+                        previewIndex === idx ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95 pointer-events-none"
                       )}
                     >
                       {item.image && (
@@ -279,139 +237,75 @@ export default function Home() {
                           src={item.image}
                           alt={item.title}
                           fill
-                          className="object-cover opacity-90"
+                          className="object-cover opacity-80"
                           priority={idx === 0}
-                          data-ai-hint={item.hint}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                      <div className="absolute bottom-12 left-10 right-10 text-white glass-card p-8 rounded-[2.5rem] border-white/20 bg-white/10 backdrop-blur-xl">
-                        <div className="flex items-center gap-3 mb-3">
-                          <item.icon className="w-6 h-6 text-secondary" />
-                          <span className="text-xs font-black uppercase tracking-[0.2em] text-secondary">{item.label}</span>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-12 left-10 right-10 p-10 rounded-[3rem] glass-card border-white/20 bg-white/10 backdrop-blur-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-2xl bg-secondary/20 flex items-center justify-center text-secondary">
+                            <item.icon className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-[0.3em] text-secondary">{item.label}</span>
                         </div>
-                        <h4 className="text-3xl font-black mb-2">{item.title}</h4>
-                        <p className="text-white/70 font-medium">{item.desc}</p>
+                        <h4 className="text-4xl font-black mb-3">{item.title}</h4>
+                        <p className="text-white/70 font-medium text-lg">{item.desc}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="absolute -top-20 -right-20 w-96 h-96 bg-secondary/30 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-                <div className="absolute -bottom-20 -left-20 w-[30rem] h-[30rem] bg-primary/30 rounded-full blur-[140px] -z-10 animate-pulse delay-700"></div>
+                <div className="absolute -top-20 -right-20 w-96 h-96 bg-secondary/30 rounded-full blur-[140px] -z-10 animate-pulse"></div>
+                <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-primary/30 rounded-full blur-[140px] -z-10 animate-pulse delay-700"></div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Live Countdown Section */}
+        {/* Global Stats Bar */}
         <section className="relative -mt-16 z-20 px-4">
-          <div className="max-w-5xl mx-auto bg-white rounded-[3rem] p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] border border-primary/5">
-             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="flex items-center gap-4">
-                   <div className="w-16 h-16 rounded-2xl emerald-gradient flex items-center justify-center text-white shadow-lg">
-                      <Timer className="w-8 h-8" />
-                   </div>
-                   <div>
-                      <h3 className="text-2xl font-black text-primary">Eid-ul-Fitr Countdown</h3>
-                      <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Stay Excited • Stay Blessed</p>
-                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-4">
-                  <div className="grid grid-cols-4 gap-4 md:gap-8 perspective-1000">
-                    {[
-                      { label: "Days", value: countdown.days },
-                      { label: "Hours", value: countdown.hours },
-                      { label: "Mins", value: countdown.minutes },
-                      { label: "Secs", value: countdown.seconds }
-                    ].map((t) => (
-                      <div key={t.label} className="text-center group">
-                          <div key={t.value} className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums animate-flip-number">
-                            {t.value.toString().padStart(2, '0')}
-                          </div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
-                            {t.label}
-                          </div>
-                      </div>
-                    ))}
+          <div className="max-w-6xl mx-auto glass-card dark:bg-slate-900/80 rounded-[3rem] p-8 shadow-2xl border-4 border-white/50 dark:border-white/10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              {stats.map((s, i) => (
+                <div key={i} className="flex flex-col items-center text-center space-y-2 group">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-white/5 flex items-center justify-center text-primary dark:text-secondary group-hover:scale-110 transition-transform">
+                    <s.icon className="w-6 h-6" />
                   </div>
-                  
-                  <div className="flex flex-col items-center gap-3 w-full">
-                    <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
-                      <CalendarDays className="w-3 h-3" />
-                      <span>Expected Eid-ul-Fitr: March 20, 2026 (Bangladesh)</span>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={toggleTakbir}
-                        className={cn(
-                          "rounded-full h-10 px-6 font-bold gap-2 transition-all border-2",
-                          isPlayingTakbir ? "bg-primary text-white border-primary" : "text-primary border-primary/20 hover:bg-primary/5"
-                        )}
-                      >
-                        {isPlayingTakbir ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        {isPlayingTakbir ? "Stop Takbir" : "Play Eid Takbir"}
-                      </Button>
-
-                      <div className="flex items-center gap-2 border-l pl-4 border-slate-200">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
-                          onClick={() => shareCountdown('facebook')}
-                        >
-                          <Facebook className="w-4 h-4 fill-current" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="w-9 h-9 rounded-full bg-green-50 text-green-600 hover:bg-green-100"
-                          onClick={() => shareCountdown('whatsapp')}
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="w-9 h-9 rounded-full bg-slate-900 text-white hover:bg-slate-800"
-                          onClick={() => shareCountdown('twitter')}
-                        >
-                          <Twitter className="w-4 h-4 fill-current" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-3xl font-black text-primary dark:text-white">{s.value}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{s.label}</p>
                 </div>
-             </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Tools Section */}
-        <section id="tools" className="py-32 relative bg-white/50">
+        {/* Tools Grid */}
+        <section id="tools" className="py-32 relative bg-white/50 dark:bg-slate-950/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-24 space-y-6">
-              <h2 className="text-4xl lg:text-7xl font-black text-primary tracking-tight">Powerful Tools for Your Eid</h2>
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 text-primary dark:text-secondary text-xs font-black uppercase tracking-widest border border-primary/10">
+                <Sparkles className="w-4 h-4" />
+                <span>Modern Studio Tools</span>
+              </div>
+              <h2 className="text-5xl lg:text-[80px] font-black text-primary dark:text-white tracking-tighter leading-none">Designed for Eid</h2>
               <p className="text-xl text-muted-foreground font-medium">Everything you need for a blessed celebration in one beautiful place.</p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
               {tools.map((tool, index) => (
                 <Link key={tool.title} href={tool.href} className="group">
-                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.15)] transition-all duration-200 ease-in-out rounded-[3rem] overflow-hidden group-hover:-translate-y-2 active:scale-95 border-2 border-transparent hover:border-primary/5">
+                  <Card className="h-full border-none shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(6,95,70,0.15)] dark:hover:shadow-[0_40px_80px_rgba(0,0,0,0.5)] transition-all duration-300 ease-in-out rounded-[3.5rem] overflow-hidden hover:-translate-y-3 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-transparent hover:border-primary/10">
                     <CardHeader className="p-12 pb-0">
-                      <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-10 transition-transform duration-200 ease-in-out group-hover:scale-110 shadow-lg", tool.color)}>
-                        <tool.icon className="w-10 h-10" />
+                      <div className={cn("w-24 h-24 rounded-[2.5rem] flex items-center justify-center mb-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-xl", tool.color, tool.darkColor)}>
+                        <tool.icon className="w-12 h-12" />
                       </div>
-                      <CardTitle className="text-3xl font-black group-hover:text-primary transition-colors">{tool.title}</CardTitle>
-                      <CardDescription className="text-lg mt-6 leading-relaxed font-medium">{tool.description}</CardDescription>
+                      <CardTitle className="text-3xl font-black group-hover:text-primary dark:group-hover:text-secondary transition-colors">{tool.title}</CardTitle>
+                      <CardDescription className="text-lg mt-6 leading-relaxed font-medium line-clamp-2">{tool.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-12 pt-8 flex justify-end">
-                      <div className="w-14 h-14 rounded-full border-2 border-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:scale-110 group-hover:translate-x-2 transition-all duration-200 ease-in-out">
-                        <ArrowRight className="w-7 h-7" />
+                      <div className="w-16 h-16 rounded-full border-2 border-primary/10 dark:border-white/10 flex items-center justify-center text-primary dark:text-white group-hover:bg-primary dark:group-hover:bg-secondary group-hover:text-white dark:group-hover:text-primary group-hover:scale-110 group-hover:translate-x-2 transition-all duration-300">
+                        <ArrowRight className="w-8 h-8" />
                       </div>
                     </CardContent>
                   </Card>
@@ -421,189 +315,152 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Jamaat Finder Highlight */}
-        <section className="py-24 px-4">
-          <div className="max-w-7xl mx-auto emerald-gradient rounded-[4rem] p-12 lg:p-24 relative overflow-hidden shadow-2xl">
-            <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
-               <div className="space-y-8 text-white">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest">
+        {/* Feature Focus Section */}
+        <section className="py-32 px-4">
+          <div className="max-w-7xl mx-auto emerald-gradient dark:from-emerald-950 dark:to-slate-950 rounded-[5rem] p-12 lg:p-24 relative overflow-hidden shadow-2xl border-b-8 border-secondary/20">
+            <div className="relative z-10 grid lg:grid-cols-2 gap-20 items-center">
+               <div className="space-y-10 text-white">
+                  <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-xs font-black uppercase tracking-widest backdrop-blur-md">
                     <MapPin className="w-4 h-4 text-secondary" />
-                    <span>Explore Bangladesh</span>
+                    <span>Real-time Network</span>
                   </div>
-                  <h2 className="text-5xl lg:text-7xl font-black tracking-tight leading-tight">Live Eid Jamaat Finder 🕌</h2>
-                  <p className="text-xl text-white/80 font-medium max-w-lg">
-                    Discover and contribute Eid prayer times for local mosques across Bangladesh. Real-time updates and community verification.
+                  <h2 className="text-5xl lg:text-[90px] font-black tracking-tighter leading-[0.9]">Live Jamaat <br />Finder 🕌</h2>
+                  <p className="text-2xl text-white/80 font-medium max-w-xl">
+                    Discover and contribute Eid prayer times for local mosques across Bangladesh. Real-time community verification and instant directions.
                   </p>
-                  <Button size="lg" className="bg-secondary text-primary font-black px-12 h-16 rounded-2xl text-xl hover:scale-105 transition-all shadow-xl" asChild>
-                    <Link href="/tools/jamaat-finder">Open Jamaat Finder</Link>
+                  <Button size="lg" className="bg-secondary text-primary font-black px-12 h-20 rounded-[2.5rem] text-2xl hover:scale-105 transition-all shadow-2xl" asChild>
+                    <Link href="/tools/jamaat-finder">Launch Finder</Link>
                   </Button>
                </div>
                
                <div className="relative hidden lg:block">
-                  <div className="aspect-[4/3] bg-white/10 rounded-[3rem] border-8 border-white/10 backdrop-blur-md relative overflow-hidden group animate-float">
+                  <div className="aspect-[4/3] bg-white/10 rounded-[4rem] border-[12px] border-white/10 backdrop-blur-2xl relative overflow-hidden group shadow-2xl animate-float">
                      <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
-                     <MapIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 text-white/20" />
-                     {/* Floating marker simulations */}
-                     <div className="absolute top-[20%] left-[30%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-pulse">
-                        <MapPin className="w-5 h-5 text-primary" />
+                     <MapIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 text-white/10" />
+                     {/* Marker Simulations */}
+                     <div className="absolute top-[25%] left-[35%] w-12 h-12 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-4 border-white animate-pulse">
+                        <MapPin className="w-6 h-6 text-primary" />
                      </div>
-                     <div className="absolute top-[60%] left-[70%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-pulse delay-700">
-                        <MapPin className="w-5 h-5 text-primary" />
+                     <div className="absolute top-[60%] left-[75%] w-12 h-12 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-4 border-white animate-pulse delay-700">
+                        <MapPin className="w-6 h-6 text-primary" />
                      </div>
                   </div>
                </div>
             </div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
-          </div>
-        </section>
-
-        {/* Feature Highlights Section */}
-        <section className="py-32 bg-accent/30 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-secondary/5 -skew-x-12 transform translate-x-1/2"></div>
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-             <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-                <h2 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Everything You Need for Eid in One Place</h2>
-                <p className="text-lg text-muted-foreground font-medium">Smart, intuitive, and built for the community.</p>
-             </div>
-
-             <div className="grid md:grid-cols-3 gap-12">
-               {highlights.map((item, idx) => (
-                 <div key={idx} className="space-y-6 group">
-                   <div className={cn("w-20 h-20 rounded-[2.5rem] bg-white shadow-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:-rotate-3", item.color)}>
-                     <item.icon className="w-10 h-10" />
-                   </div>
-                   <h3 className="text-2xl font-black text-primary">{item.title}</h3>
-                   <p className="text-muted-foreground font-medium leading-relaxed">
-                     {item.description}
-                   </p>
-                 </div>
-               ))}
-             </div>
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-32">
+        <section className="py-40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="emerald-gradient rounded-[4rem] p-20 lg:p-32 relative overflow-hidden shadow-[0_64px_128px_-12px_rgba(6,95,70,0.3)]">
+            <div className="bg-slate-900 dark:bg-emerald-950 rounded-[5rem] p-20 lg:p-32 relative overflow-hidden shadow-[0_64px_128px_-12px_rgba(6,95,70,0.4)]">
               <div className="relative z-10 grid lg:grid-cols-2 gap-20 items-center text-white">
-                <div className="space-y-10 text-center lg:text-left">
-                  <h2 className="text-5xl lg:text-7xl font-black leading-tight">Ready to Spark Your Eid?</h2>
+                <div className="space-y-12 text-center lg:text-left">
+                  <h2 className="text-6xl lg:text-[90px] font-black leading-tight tracking-tighter">Ready to Spark?</h2>
                   <p className="text-white/80 text-2xl font-medium max-w-md mx-auto lg:mx-0">
-                    Join thousands of Bangladeshi families making their Eid more organized and joyful.
+                    Join thousands of families making their Eid more organized, connected, and joyful.
                   </p>
                   <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-                    <Button size="lg" className="bg-secondary text-primary font-black px-12 h-20 rounded-3xl text-2xl hover:scale-105 transition-transform shadow-2xl" asChild>
-                      <Link href="/login">Get Started Free</Link>
+                    <Button size="lg" className="bg-secondary text-primary font-black px-12 h-20 rounded-[2.5rem] text-2xl hover:scale-105 transition-all shadow-2xl" asChild>
+                      <Link href="/login">Join Free Today</Link>
                     </Button>
-                    <Button size="lg" variant="outline" className="border-2 border-white/30 text-white font-black px-12 h-20 rounded-3xl text-2xl hover:bg-white/10 transition-all backdrop-blur-sm shadow-xl" asChild>
-                      <Link href="#tools">Explore Eid Tools</Link>
+                    <Button size="lg" variant="outline" className="border-4 border-white/30 text-white font-black px-12 h-20 rounded-[2.5rem] text-2xl hover:bg-white/10 transition-all backdrop-blur-xl shadow-2xl" asChild>
+                      <Link href="#tools">Explore Studio</Link>
                     </Button>
                   </div>
                 </div>
-                <div className="hidden lg:block relative">
-                   <div className="relative aspect-square w-full max-w-md mx-auto">
-                     <div className="absolute inset-0 bg-white/10 rounded-full animate-pulse blur-3xl"></div>
-                     <Star className="absolute top-0 right-0 w-32 h-32 text-secondary fill-secondary animate-float shadow-secondary/50" />
-                     <Star className="absolute bottom-12 left-0 w-20 h-20 text-secondary/30 fill-secondary/30 animate-float delay-700" />
+                <div className="hidden lg:block relative group">
+                   <div className="relative aspect-square w-full max-w-md mx-auto animate-float-slow">
+                     <Star className="absolute top-0 right-0 w-40 h-40 text-secondary fill-secondary drop-shadow-[0_0_30px_rgba(233,190,36,0.5)]" />
+                     <Star className="absolute bottom-12 left-0 w-24 h-24 text-secondary/30 fill-secondary/30" />
                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-64 h-64 rounded-full border-[12px] border-white/10 flex items-center justify-center animate-spin-slow">
-                           <Sparkles className="w-24 h-24 text-secondary/40 drop-shadow-[0_0_20px_rgba(233,190,36,0.5)]" />
+                        <div className="w-80 h-80 rounded-full border-[16px] border-white/10 flex items-center justify-center animate-spin-slow">
+                           <Sparkles className="w-32 h-32 text-secondary/40" />
                         </div>
                      </div>
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-secondary/20 rounded-full blur-[80px]"></div>
                    </div>
                 </div>
               </div>
               
-              <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-[40rem] h-[40rem] bg-secondary/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
+              <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-white border-t border-border py-24">
+      {/* Modern SaaS Footer */}
+      <footer className="bg-white dark:bg-slate-950 border-t border-border py-32 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-16 mb-20">
-            <div className="col-span-1 space-y-8">
-              <Link href="/" className="flex items-center gap-4">
-                <div className="relative w-14 h-14 overflow-hidden flex items-center justify-center">
+          <div className="grid md:grid-cols-4 gap-20 mb-24">
+            <div className="col-span-1 space-y-10">
+              <Link href="/" className="flex items-center gap-4 group">
+                <div className="relative w-16 h-16 transition-transform group-hover:scale-110">
                   {logo?.imageUrl && (
                     <Image 
                       src={logo.imageUrl} 
-                      alt="EidSpark Official Logo" 
-                      width={56} 
-                      height={56} 
+                      alt="EidSpark Logo" 
+                      width={64} 
+                      height={64} 
                       className="object-contain"
                     />
                   )}
                 </div>
-                <span className="text-3xl font-black tracking-tight text-primary">EidSpark</span>
+                <span className="text-4xl font-black tracking-tighter text-primary dark:text-secondary">EidSpark</span>
               </Link>
-              <div className="space-y-4">
-                <h4 className="text-lg font-black text-primary uppercase tracking-widest">About EidSpark</h4>
-                <p className="text-muted-foreground font-medium leading-relaxed">
-                  Empowering Eid celebrations with modern technology. Built for the Muslim community of Bangladesh.
+              <div className="space-y-6">
+                <p className="text-muted-foreground font-medium text-lg leading-relaxed">
+                  Empowering Eid celebrations with modern technology. Built for the community, by the community.
                 </p>
+                <div className="flex gap-6">
+                  <Link href="https://github.com/ahemon369" target="_blank" className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-white/5 flex items-center justify-center text-primary dark:text-secondary hover:bg-primary hover:text-white dark:hover:bg-secondary dark:hover:text-primary transition-all shadow-xl">
+                    <Github className="w-7 h-7" />
+                  </Link>
+                  <Link href="mailto:ahemon0156@gmail.com" className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-white/5 flex items-center justify-center text-primary dark:text-secondary hover:bg-primary hover:text-white dark:hover:bg-secondary dark:hover:text-primary transition-all shadow-xl">
+                    <Mail className="w-7 h-7" />
+                  </Link>
+                </div>
               </div>
             </div>
             
             <div>
-              <h4 className="font-black text-primary uppercase tracking-widest mb-8">Tools</h4>
-              <ul className="space-y-5 text-muted-foreground font-bold">
-                <li><Link href="/tools/zakat" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Zakat Calculator</Link></li>
-                <li><Link href="/tools/greeting" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Greeting Generator</Link></li>
-                <li><Link href="/tools/selfie" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Selfie Frame</Link></li>
-                <li><Link href="/tools/salami" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Salami Tracker</Link></li>
+              <h4 className="font-black text-primary dark:text-secondary uppercase tracking-[0.2em] text-xs mb-10">Studio Tools</h4>
+              <ul className="space-y-6 text-muted-foreground font-bold text-lg">
+                <li><Link href="/tools/jamaat-finder" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Jamaat Finder</Link></li>
+                <li><Link href="/tools/zakat" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Zakat Assistant</Link></li>
+                <li><Link href="/tools/greeting" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Greeting Designer</Link></li>
+                <li><Link href="/tools/selfie" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Selfie Frame AI</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-black text-primary uppercase tracking-widest mb-8">Platform</h4>
-              <ul className="space-y-5 text-muted-foreground font-bold">
-                <li><Link href="/tools/countdown" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Eid Countdown</Link></li>
-                <li><Link href="/tools/jamaat-finder" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Mosque Finder</Link></li>
-                <li><Link href="/about" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> About Us</Link></li>
+              <h4 className="font-black text-primary dark:text-secondary uppercase tracking-[0.2em] text-xs mb-10">Platform</h4>
+              <ul className="space-y-6 text-muted-foreground font-bold text-lg">
+                <li><Link href="/tools/moon-sighting" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Moon Sight Tracker</Link></li>
+                <li><Link href="/tools/salami" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Salami Center</Link></li>
+                <li><Link href="/tools/countdown" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Live Countdown</Link></li>
+                <li><Link href="/about" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> About Us</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-black text-primary uppercase tracking-widest mb-8">Contact</h4>
-              <ul className="space-y-6 text-muted-foreground font-bold">
-                <li className="flex items-start gap-3">
-                   <MapPin className="w-5 h-5 text-primary shrink-0" />
-                   <span>Dhaka, Bangladesh</span>
-                </li>
-                <li className="flex items-center gap-3">
-                   <Mail className="w-5 h-5 text-primary shrink-0" />
-                   <Link href="mailto:ahemon0156@gmail.com" className="hover:text-primary transition-colors">ahemon0156@gmail.com</Link>
-                </li>
-                <li className="pt-4 flex gap-6">
-                  <Link href="https://github.com/ahemon369" target="_blank" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                    <Github className="w-6 h-6" />
-                  </Link>
-                  <Link href="#" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                    <Facebook className="w-6 h-6" />
-                  </Link>
-                  <Link href="#" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                    <Instagram className="w-6 h-6" />
-                  </Link>
-                </li>
+              <h4 className="font-black text-primary dark:text-secondary uppercase tracking-[0.2em] text-xs mb-10">Legal</h4>
+              <ul className="space-y-6 text-muted-foreground font-bold text-lg">
+                <li><Link href="#" className="hover:text-primary dark:hover:text-secondary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="#" className="hover:text-primary dark:hover:text-secondary transition-colors">Terms of Service</Link></li>
+                <li><Link href="#" className="hover:text-primary dark:hover:text-secondary transition-colors">Cookie Policy</Link></li>
+                <li><Link href="#" className="hover:text-primary dark:hover:text-secondary transition-colors">Community Rules</Link></li>
               </ul>
             </div>
           </div>
           
-          <div className="pt-12 border-t border-border text-center space-y-4">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-muted-foreground font-bold text-sm">
-                © 2026 EidSpark Bangladesh. All rights reserved.
-              </p>
-              <div className="flex gap-10 text-sm font-black text-primary uppercase tracking-widest">
-                <Link href="#" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-                <Link href="#" className="hover:opacity-70 transition-opacity">Terms of Service</Link>
-              </div>
+          <div className="pt-16 border-t border-border flex flex-col md:flex-row justify-between items-center gap-8">
+            <p className="text-muted-foreground font-bold text-sm">
+              © 2026 EidSpark Bangladesh. Crafted with ❤️ for the community.
+            </p>
+            <div className="flex items-center gap-4 text-primary dark:text-secondary font-black uppercase tracking-widest text-xs">
+              <ShieldCheck className="w-5 h-5" /> Secured by Firebase Cloud
             </div>
           </div>
         </div>
