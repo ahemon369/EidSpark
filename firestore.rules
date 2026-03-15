@@ -16,6 +16,11 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Saved Excuses
+    match /users/{userId}/savedExcuses/{excuseId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // User Notifications
     match /users/{userId}/notifications/{notificationId} {
       allow read, write: if isOwner(userId);
@@ -33,7 +38,7 @@ service cloud.firestore {
     match /salamiCards/{cardId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow delete: if false; // Cards are immutable for safety
+      allow delete: if false;
     }
 
     // Global Registry (Mosques, Sightings)

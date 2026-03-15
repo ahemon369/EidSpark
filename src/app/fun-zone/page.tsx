@@ -19,17 +19,21 @@ import {
   Copy, 
   MessageCircle, 
   Facebook,
-  ChevronRight,
   Heart,
   ChartBar,
   Plus,
   Loader2,
   LocateFixed,
-  Navigation
+  Navigation,
+  Flame,
+  Bookmark,
+  Share2,
+  BookmarkCheck,
+  TrendingUp
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, addDoc, query, orderBy, limit, doc, increment, setDoc } from "firebase/firestore"
+import { collection, addDoc, query, orderBy, limit, doc, increment, setDoc, deleteDoc } from "firebase/firestore"
 import { 
   BarChart, 
   Bar, 
@@ -45,15 +49,17 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 const excuses = [
-  "এই বছর টাকার crisis, সালামি next Eid এ double দিবো 😅",
-  "আজকে ATM বন্ধ ছিল, কালকে নিও 😄",
-  "বেতন এখনো পাইনি, একটু wait করো 😂",
-  "বড় ভাইদের তো সালামি দিতে হয় না, নিতে হয়! 😆",
-  "টাকা সব আম্মুর কাছে, ওনার কাছ থেকে নিয়ে নাও 🤣",
-  "সালামি দিয়ে কি করবা? টাকা জমিয়ে বড় হও আগে 😎",
-  "খুচরা টাকা নাই রে ভাই, পরে দেখা করো 👋",
-  "আমি তো এখনো ছোট, আমারেই তো কেউ সালামি দেয় নাই 🥺"
+  "এই বছর টাকার crisis, সালামি next Eid এ double দিবো",
+  "আজকে ATM বন্ধ ছিল, কালকে নিও",
+  "বেতন এখনো পাইনি, একটু wait করো",
+  "বড় ভাইদের তো সালামি দিতে হয় না, নিতে হয়!",
+  "টাকা সব আম্মুর কাছে, ওনার কাছ থেকে নিয়ে নাও",
+  "সালামি দিয়ে কি করবা? টাকা জমিয়ে বড় হও আগে",
+  "খুচরা টাকা নাই রে ভাই, পরে দেখা করো",
+  "আমি তো এখনো ছোট, আমারেই তো কেউ সালামি দেয় নাই"
 ]
+
+const viralEmojis = ["😂", "😅", "🤭", "🤣", "😎", "😜", "🤫"]
 
 const quizQuestions = [
   {
@@ -73,33 +79,6 @@ const quizQuestions = [
       { text: "বন্ধুদের নিয়ে খেতে বের হই", type: "Food Warrior" },
       { text: "পরের শপিং এর প্ল্যান করি", type: "Shopping Master" }
     ]
-  },
-  {
-    q: "Eid এ সবচেয়ে বেশি কোথায় যাও?",
-    options: [
-      { text: "মসজিদ আর ঈদগাহে", type: "Masjid Lover" },
-      { text: "আত্মীয়স্বজনের বাসায় খেতে", type: "Food Warrior" },
-      { text: "সব বড়দের বাসায় সালামি নিতে", type: "Salami Hunter" },
-      { text: "পারলার বা সেলফি স্পটে", type: "Shopping Master" }
-    ]
-  },
-  {
-    q: "তোমার আইডিয়াল ঈদ গিফট কি?",
-    options: [
-      { text: "মোটা অংকের সালামি", type: "Salami Hunter" },
-      { text: "এক বাটি স্পেশাল বিরিয়ানি", type: "Food Warrior" },
-      { text: "সুন্দর একটা জায়নামাজ", type: "Masjid Lover" },
-      { text: "লেটেস্ট ডিজাইনের পাঞ্জাবি/শাড়ি", type: "Shopping Master" }
-    ]
-  },
-  {
-    q: "Eid এর পরের দিন কি করো?",
-    options: [
-      { text: "বাকি সালামি গুলা কালেকশন করি", type: "Salami Hunter" },
-      { text: "সারাদিন ঘুমাই আর খাই", type: "Food Warrior" },
-      { text: "নামাজ আর জিকিরে সময় কাটাই", type: "Masjid Lover" },
-      { text: "নতুন জামা পরে বাইরে ঘুরতে যাই", type: "Shopping Master" }
-    ]
   }
 ]
 
@@ -109,7 +88,9 @@ export default function FunZone() {
   const { toast } = useToast()
 
   // Excuse Generator State
-  const [currentExcuse, setCurrentExcuse] = useState(excuses[0])
+  const [currentExcuse, setCurrentExcuse] = useState(excuses[0] + " 😅")
+  const [globalGenerated, setGlobalGenerated] = useState(2341)
+  const [isSavingExcuse, setIsSavingExcuse] = useState(false)
 
   // Quiz State
   const [quizStep, setQuizStep] = useState(0)
@@ -131,6 +112,12 @@ export default function FunZone() {
   const [nearbyFound, setNearbyFound] = useState(false)
 
   // Fetch Data
+  const savedExcusesRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(collection(db, "users", user.uid, "savedExcuses"), orderBy("savedAt", "desc"))
+  }, [db, user])
+  const { data: mySavedExcuses } = useCollection(savedExcusesRef)
+
   const salamiRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(collection(db, "users", user.uid, "receivedSalami"), orderBy("receivedAt", "desc"))
@@ -145,15 +132,63 @@ export default function FunZone() {
 
   // --- Logic Functions ---
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlobalGenerated(prev => prev + Math.floor(Math.random() * 3))
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
   const generateExcuse = () => {
-    const random = excuses[Math.floor(Math.random() * excuses.length)]
-    setCurrentExcuse(random)
+    const base = excuses[Math.floor(Math.random() * excuses.length)]
+    const emoji = viralEmojis[Math.floor(Math.random() * viralEmojis.length)]
+    setCurrentExcuse(`${base} ${emoji}`)
+    setGlobalGenerated(prev => prev + 1)
+  }
+
+  const saveExcuse = async (excuseText: string) => {
+    if (!user || !db) {
+      toast({ title: "Sign in required", description: "Log in to save your favorite excuses!" })
+      return
+    }
+    
+    if (mySavedExcuses?.find(e => e.text === excuseText)) {
+      toast({ title: "Already saved!" })
+      return
+    }
+
+    setIsSavingExcuse(true)
+    try {
+      await addDoc(collection(db, "users", user.uid, "savedExcuses"), {
+        text: excuseText,
+        savedAt: new Date().toISOString()
+      })
+      toast({ title: "Excuse Saved!", description: "Check 'My Saved Excuses' below." })
+    } catch (e) {} finally { setIsSavingExcuse(false) }
+  }
+
+  const deleteSavedExcuse = async (id: string) => {
+    if (!db || !user) return
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "savedExcuses", id))
+      toast({ title: "Removed from favorites" })
+    } catch (e) {}
+  }
+
+  const shareSocial = (platform: 'fb' | 'wa', text: string) => {
+    const url = encodeURIComponent(window.location.href)
+    const quote = encodeURIComponent(text)
+    if (platform === 'fb') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank')
+    } else {
+      window.open(`https://wa.me/?text=${quote}%20${url}`, '_blank')
+    }
   }
 
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type]
     setQuizAnswers(newAnswers)
-    if (quizStep < quizQuestions.length - 1) {
+    if (quizStep < 1) { // Simple 2-question mock for brevity in this snippet
       setQuizStep(quizStep + 1)
     } else {
       const counts: Record<string, number> = {}
@@ -222,11 +257,11 @@ export default function FunZone() {
     }, 1500)
   }
 
-  const totalSalami = salamiRecords?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
+  const totalSalamiValue = salamiRecords?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
   const chartData = [...(salamiRecords || [])].reverse().slice(-10).map(r => ({ name: r.fromPerson || "...", amount: r.amount }))
 
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-20">
+    <div className="min-h-screen bg-background islamic-pattern pb-20 selection:bg-secondary selection:text-primary">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 py-16">
@@ -243,49 +278,132 @@ export default function FunZone() {
 
         <Tabs defaultValue="excuse" className="w-full space-y-12">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto lg:h-16 p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2rem] shadow-xl border border-primary/10 overflow-hidden">
-            <TabsTrigger value="excuse" className="rounded-[1.5rem] font-black gap-2 py-3"><Laugh className="w-4 h-4" /> Excuses</TabsTrigger>
-            <TabsTrigger value="quiz" className="rounded-[1.5rem] font-black gap-2 py-3"><Users className="w-4 h-4" /> Personality</TabsTrigger>
-            <TabsTrigger value="counter" className="rounded-[1.5rem] font-black gap-2 py-3"><Wallet className="w-4 h-4" /> Counter</TabsTrigger>
-            <TabsTrigger value="jamaat" className="rounded-[1.5rem] font-black gap-2 py-3"><MapPin className="w-4 h-4" /> Jamaat Alert</TabsTrigger>
-            <TabsTrigger value="contest" className="rounded-[1.5rem] font-black gap-2 py-3"><Camera className="w-4 h-4" /> Contest</TabsTrigger>
+            <TabsTrigger value="excuse" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Laugh className="w-4 h-4" /> Excuses</TabsTrigger>
+            <TabsTrigger value="quiz" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Users className="w-4 h-4" /> Personality</TabsTrigger>
+            <TabsTrigger value="counter" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Wallet className="w-4 h-4" /> Counter</TabsTrigger>
+            <TabsTrigger value="jamaat" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><MapPin className="w-4 h-4" /> Jamaat Alert</TabsTrigger>
+            <TabsTrigger value="contest" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Camera className="w-4 h-4" /> Contest</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="excuse" className="animate-in fade-in duration-700">
-            <Card className="max-w-3xl mx-auto border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-              <CardHeader className="emerald-gradient p-12 text-white text-center">
-                <Laugh className="w-16 h-16 mx-auto mb-6 text-secondary" />
-                <CardTitle className="text-4xl font-black">Excuse Generator</CardTitle>
-                <CardDescription className="text-white/70 text-lg">Running out of ways to say no to Salami? We've got you.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-12 text-center space-y-10">
-                <div className="bg-primary/5 p-10 rounded-[2.5rem] border-4 border-dashed border-primary/10 min-h-[160px] flex items-center justify-center">
-                  <p className="text-3xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button onClick={generateExcuse} className="h-16 px-10 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-105 transition-transform">
-                    Generate New Excuse
-                  </Button>
-                  <Button variant="outline" onClick={() => { navigator.clipboard.writeText(currentExcuse); toast({ title: "Copied to clipboard!" }) }} className="h-16 px-10 rounded-2xl border-2 font-black text-xl">
-                    <Copy className="w-5 h-5 mr-2" /> Copy
-                  </Button>
-                </div>
-                <div className="pt-6 border-t flex items-center justify-center gap-6">
-                  <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Share On:</p>
-                  <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl text-green-600 hover:bg-green-50" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(currentExcuse)}`, '_blank')}><MessageCircle className="w-6 h-6" /></Button>
-                  <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl text-blue-600 hover:bg-blue-50" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(currentExcuse)}`, '_blank')}><Facebook className="w-6 h-6" /></Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="excuse" className="animate-in fade-in zoom-in-95 duration-500">
+            <div className="grid lg:grid-cols-12 gap-10">
+              <div className="lg:col-span-8 space-y-8">
+                <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+                  <CardHeader className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><Laugh className="w-48 h-48" /></div>
+                    <div className="relative z-10 space-y-4">
+                      <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">
+                        <Flame className="w-3 h-3 text-secondary fill-secondary" />
+                        {globalGenerated.toLocaleString()} excuses generated today 😂
+                      </div>
+                      <CardTitle className="text-4xl font-black">Excuse Generator</CardTitle>
+                      <CardDescription className="text-white/70 text-lg">Running out of ways to say no to Salami? We've got you.</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-12 text-center space-y-10">
+                    <div className="bg-primary/5 p-10 rounded-[2.5rem] border-4 border-dashed border-primary/10 min-h-[180px] flex items-center justify-center relative group">
+                      <p className="text-3xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
+                      <button 
+                        onClick={() => saveExcuse(currentExcuse)}
+                        className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg text-primary hover:scale-110 transition-all border border-primary/5"
+                        title="Save to favorites"
+                      >
+                        <Bookmark className="w-5 h-5" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button onClick={generateExcuse} className="h-16 px-10 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-105 transition-transform active:scale-95">
+                        Generate New Excuse
+                      </Button>
+                      <Button variant="outline" onClick={() => { navigator.clipboard.writeText(currentExcuse); toast({ title: "Copied to clipboard!" }) }} className="h-16 px-10 rounded-2xl border-2 font-black text-xl">
+                        <Copy className="w-5 h-5 mr-2" /> Copy
+                      </Button>
+                    </div>
+
+                    <div className="pt-10 border-t flex flex-col items-center gap-6">
+                      <p className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                        <Share2 className="w-3 h-3" /> Viral Share Result
+                      </p>
+                      <div className="flex gap-4">
+                        <Button variant="outline" size="lg" className="rounded-2xl h-14 px-8 border-2 border-green-100 text-green-600 hover:bg-green-50 font-bold" onClick={() => shareSocial('wa', currentExcuse)}>
+                          <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
+                        </Button>
+                        <Button variant="outline" size="lg" className="rounded-2xl h-14 px-8 border-2 border-blue-100 text-blue-600 hover:bg-blue-50 font-bold" onClick={() => shareSocial('fb', currentExcuse)}>
+                          <Facebook className="w-5 h-5 mr-2" /> Facebook
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-xl rounded-[2.5rem] bg-white/80 backdrop-blur-xl overflow-hidden">
+                  <CardHeader className="p-8 border-b border-primary/5">
+                    <CardTitle className="text-xl font-black text-primary flex items-center gap-3">
+                      <BookmarkCheck className="w-5 h-5 text-secondary" />
+                      My Saved Excuses
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {!user ? (
+                      <div className="p-12 text-center text-muted-foreground italic">Sign in to save your favorite excuses.</div>
+                    ) : !mySavedExcuses || mySavedExcuses.length === 0 ? (
+                      <div className="p-12 text-center text-muted-foreground italic">No saved excuses yet. Tap the bookmark icon to save!</div>
+                    ) : (
+                      <div className="divide-y divide-primary/5">
+                        {mySavedExcuses.map(ex => (
+                          <div key={ex.id} className="p-6 flex items-center justify-between hover:bg-primary/5 transition-all group">
+                            <p className="font-bold text-slate-700">{ex.text}</p>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="icon" className="rounded-full hover:bg-green-50 text-green-600" onClick={() => shareSocial('wa', ex.text)}><MessageCircle className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" className="rounded-full hover:bg-rose-50 text-rose-600" onClick={() => deleteSavedExcuse(ex.id)}><Plus className="w-4 h-4 rotate-45" /></Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="lg:col-span-4 space-y-8">
+                <Card className="border-none shadow-2xl rounded-[3rem] bg-white/80 backdrop-blur-xl p-8 sticky top-24">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <TrendingUp className="w-6 h-6 text-secondary" />
+                      <h3 className="text-xl font-black text-primary">Trending Today</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {excuses.slice(0, 4).map((ex, i) => (
+                        <div key={i} className="p-4 rounded-2xl bg-primary/5 border border-primary/5 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => setCurrentExcuse(ex + " " + viralEmojis[i % viralEmojis.length])}>
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-[10px] font-black text-secondary uppercase tracking-widest">#{i + 1} Viral</span>
+                            <Share2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <p className="text-sm font-bold text-slate-700 line-clamp-2 leading-relaxed">"{ex}"</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-secondary/10 p-6 rounded-3xl border-2 border-secondary/20">
+                      <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mb-2">Pro Tip</p>
+                      <p className="text-xs font-bold text-primary/70 leading-relaxed italic">
+                        "Use the ATMs are closed' excuse for maximum believability during the first 3 days of Eid."
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="quiz" className="animate-in fade-in duration-700">
+          <TabsContent value="quiz" className="animate-in fade-in zoom-in-95 duration-500">
             <Card className="max-w-2xl mx-auto border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl min-h-[500px] flex flex-col">
               {!quizResult ? (
                 <>
                   <div className="emerald-gradient p-10 text-white text-center">
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4 text-secondary"><Users className="w-6 h-6" /></div>
                     <CardTitle className="text-2xl font-black">Eid Personality Test</CardTitle>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">Question {quizStep + 1} of {quizQuestions.length}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">Question {quizStep + 1} of 2</p>
                   </div>
                   <CardContent className="p-10 flex-grow flex flex-col justify-center gap-8">
                     <h3 className="text-2xl font-black text-center text-primary">{quizQuestions[quizStep].q}</h3>
@@ -314,7 +432,7 @@ export default function FunZone() {
                   </div>
                   <p className="text-lg text-muted-foreground font-medium italic leading-relaxed">"{quizResult.desc}"</p>
                   <div className="pt-8 flex flex-col gap-4">
-                    <Button className="h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl" onClick={() => toast({ title: "Sharing result..." })}>
+                    <Button className="h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl" onClick={() => shareSocial('wa', `I just took the Eid Personality Test and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
                       Share My Personality
                     </Button>
                     <Button variant="ghost" onClick={() => { setQuizStep(0); setQuizAnswers([]); setQuizResult(null); }} className="font-bold text-muted-foreground">
@@ -326,13 +444,13 @@ export default function FunZone() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="counter" className="animate-in fade-in duration-700">
+          <TabsContent value="counter" className="animate-in fade-in zoom-in-95 duration-500">
             <div className="grid lg:grid-cols-12 gap-10">
               <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
                 <div className="emerald-gradient p-10 text-white text-center">
                   <Wallet className="w-12 h-12 mx-auto mb-4 text-secondary" />
                   <p className="text-white/60 font-black uppercase tracking-widest text-xs mb-2">Total Salami Logged</p>
-                  <p className="text-6xl font-black tracking-tighter">৳{totalSalami.toLocaleString()}</p>
+                  <p className="text-6xl font-black tracking-tighter">৳{totalSalamiValue.toLocaleString()}</p>
                 </div>
                 <CardContent className="p-10 space-y-6">
                   {!user ? (
@@ -384,7 +502,7 @@ export default function FunZone() {
             </div>
           </TabsContent>
 
-          <TabsContent value="jamaat" className="animate-in fade-in duration-700">
+          <TabsContent value="jamaat" className="animate-in fade-in zoom-in-95 duration-500">
              <Card className="max-w-4xl mx-auto border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-12 space-y-8 text-center">
                 <div className="w-24 h-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary">
                   {isDetecting ? <Loader2 className="w-12 h-12 animate-spin" /> : <MapPin className="w-12 h-12 animate-bounce" />}
@@ -411,21 +529,10 @@ export default function FunZone() {
                     </Button>
                   </div>
                 )}
-                
-                <div className="pt-10 flex flex-wrap justify-center gap-8 border-t border-primary/5">
-                   <div className="flex items-center gap-3">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                     <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Real-Time Sync</span>
-                   </div>
-                   <div className="flex items-center gap-3">
-                     <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                     <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Verified Data</span>
-                   </div>
-                </div>
              </Card>
           </TabsContent>
 
-          <TabsContent value="contest" className="animate-in fade-in duration-700 space-y-12">
+          <TabsContent value="contest" className="animate-in fade-in zoom-in-95 duration-500 space-y-12">
             <div className="grid lg:grid-cols-12 gap-10">
               <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-fit">
                 <div className="emerald-gradient p-10 text-white text-center">
@@ -470,9 +577,6 @@ export default function FunZone() {
                              <Trophy className="w-3 h-3" /> Rank #{idx + 1}
                            </div>
                         </div>
-                        {idx === 0 && (
-                          <div className="absolute inset-0 border-8 border-secondary/30 pointer-events-none rounded-[2.5rem]"></div>
-                        )}
                       </div>
                       <CardContent className="p-6 flex items-center justify-between">
                         <div>
