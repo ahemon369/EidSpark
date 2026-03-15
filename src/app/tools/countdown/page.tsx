@@ -81,14 +81,14 @@ export default function EidCountdown() {
             <Star className="absolute top-1/4 right-0 w-4 h-4 text-secondary/50 animate-pulse delay-500" />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 w-full max-w-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 w-full max-w-5xl perspective-1000">
             {Object.entries(timeLeft).map(([label, value]) => (
               <Card key={label} className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[2.5rem] overflow-hidden group hover:bg-white/10 transition-all duration-500 hover:scale-105 border-2">
                 <CardContent className="p-10 text-center">
-                  <div className="text-6xl lg:text-8xl font-black text-white group-hover:text-secondary transition-colors duration-500 drop-shadow-md">
+                  <div key={value} className="text-6xl lg:text-8xl font-black text-white group-hover:text-secondary transition-colors duration-500 drop-shadow-md animate-flip-number">
                     {value.toString().padStart(2, "0")}
                   </div>
-                  <div className="text-xs lg:text-sm font-black text-white/40 uppercase tracking-[0.3em] mt-4">{label}</div>
+                  <div className="text-xs lg:sm font-black text-white/40 uppercase tracking-[0.3em] mt-4">{label}</div>
                 </CardContent>
               </Card>
             ))}

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -110,7 +109,7 @@ export default function Home() {
       desc: "AI-generated trilingual blessings.",
       icon: Send,
       image: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageUrl || "",
-      hint: PlaceHolderImages.find(img => img.id === "preview-greeting")?.imageHint || "eid greeting"
+      hint: "eid greeting"
     },
     {
       label: "Selfie Studio",
@@ -118,7 +117,7 @@ export default function Home() {
       desc: "AI background replacement active.",
       icon: Camera,
       image: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageUrl || "",
-      hint: PlaceHolderImages.find(img => img.id === "preview-selfie")?.imageHint || "eid selfie"
+      hint: "eid selfie"
     },
     {
       label: "Mosque Finder",
@@ -126,7 +125,7 @@ export default function Home() {
       desc: "Real-time markers in Dhaka.",
       icon: MapIcon,
       image: PlaceHolderImages.find(img => img.id === "preview-map")?.imageUrl || "",
-      hint: PlaceHolderImages.find(img => img.id === "preview-map")?.imageHint || "mosque map"
+      hint: "mosque map"
     }
   ]
 
@@ -285,7 +284,7 @@ export default function Home() {
                    </div>
                 </div>
                 
-                <div className="grid grid-cols-4 gap-4 md:gap-8">
+                <div className="grid grid-cols-4 gap-4 md:gap-8 perspective-1000">
                    {[
                      { label: "Days", value: countdown.days },
                      { label: "Hours", value: countdown.hours },
@@ -293,7 +292,7 @@ export default function Home() {
                      { label: "Secs", value: countdown.seconds }
                    ].map((t) => (
                      <div key={t.label} className="text-center group">
-                        <div className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums">
+                        <div key={t.value} className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums animate-flip-number">
                           {t.value.toString().padStart(2, '0')}
                         </div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
