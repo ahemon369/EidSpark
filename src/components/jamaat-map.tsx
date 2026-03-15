@@ -88,6 +88,8 @@ export default function JamaatMap({
     if (typeof window !== "undefined") {
       import("react-leaflet-cluster").then((mod) => {
         setClusterGroup(() => mod.default);
+      }).catch(err => {
+        console.warn("Failed to load MarkerClusterGroup:", err);
       });
     }
   }, []);
