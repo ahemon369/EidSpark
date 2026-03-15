@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -25,7 +24,7 @@ const getMosqueIcon = (isApproved: boolean, name: string) => {
   const bgColor = isBigGround ? "#3b82f6" : (isApproved ? "#065f46" : "#eab308");
   const borderColor = "#E9BE24";
 
-  // Using the requested icon from icons8 with white color filter
+  // Using the white version of the mosque icon for better visibility on dark backgrounds
   const iconUrl = "https://img.icons8.com/ios-filled/50/ffffff/mosque.png";
 
   return L.divIcon({
@@ -200,16 +199,6 @@ export default function JamaatMap({
           box-shadow: 0 10px 20px rgba(0,0,0,0.1);
           font-family: 'Hind Siliguri', sans-serif;
           font-weight: 800;
-        }
-
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-          background-color: rgba(6, 95, 70, 0.2) !important;
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-          background-color: #065f46 !important;
-          color: white !important;
-          font-weight: 900 !important;
-          border: 2px solid #fbbf24;
         }
       `}</style>
     </div>

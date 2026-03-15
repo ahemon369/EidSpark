@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
@@ -11,7 +10,7 @@ import { cn } from "@/lib/utils"
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Premium Green Mosque Marker Icon using icons8 URL as requested
+// Premium Green Mosque Marker Icon using white mosque silhouette
 const getStandardMosqueIcon = () => {
   const iconUrl = "https://img.icons8.com/ios-filled/50/ffffff/mosque.png";
   
@@ -357,18 +356,6 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           z-index: 2;
         }
 
-        .custom-popup .leaflet-popup-content-wrapper {
-          border-radius: 2.5rem;
-          padding: 0;
-          overflow: hidden;
-          box-shadow: 0 32px 64px -12px rgba(6, 95, 70, 0.25);
-        }
-
-        .custom-popup .leaflet-popup-content {
-          margin: 0;
-          width: 280px !important;
-        }
-
         .leaflet-tooltip {
           background: white;
           border: 2px solid #065f46;
@@ -377,16 +364,6 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           box-shadow: 0 10px 20px rgba(0,0,0,0.1);
           font-family: 'Hind Siliguri', sans-serif;
           font-weight: 800;
-        }
-
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-          background-color: rgba(16, 185, 129, 0.2) !important;
-        }
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-          background-color: #10b981 !important;
-          color: white !important;
-          font-weight: 900 !important;
-          border: 2px solid #fbbf24;
         }
       `}</style>
     </div>
