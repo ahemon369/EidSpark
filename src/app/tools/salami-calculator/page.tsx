@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -21,8 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info } from "lucide-react"
+import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 const salamiList = [
   { id: 1, category: "Very Close Junior", amount: 25 },
@@ -37,21 +39,48 @@ const salamiList = [
 ]
 
 export default function SalamiCalculatorPage() {
+  const { toast } = useToast()
   const [selectedId, setSelectedId] = useState<string>("")
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<{ amount: number; category: string } | null>(null)
 
   const handleCalculate = () => {
     const item = salamiList.find((s) => s.id.toString() === selectedId)
     if (item) {
-      setResult(`You should give ${item.amount} BDT Eid Salami 😄`)
+      setResult({ amount: item.amount, category: item.category })
     }
+  }
+
+  const getSalamiLevel = (amount: number) => {
+    if (amount < 10) return { label: "Low", icon: "💸", color: "text-slate-400" }
+    if (amount < 50) return { label: "Medium", icon: "💰", color: "text-amber-500" }
+    return { label: "High", icon: "🤑", color: "text-emerald-500" }
+  }
+
+  const shareSocial = (platform: 'fb' | 'wa') => {
+    if (!result) return
+    const text = `EidSpark বলছে আমাকে ${result.amount} টাকা সালামি দিতে হবে 😂`
+    const url = encodeURIComponent(window.location.href)
+    const quote = encodeURIComponent(text)
+    
+    if (platform === 'fb') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank')
+    } else {
+      window.open(`https://wa.me/?text=${quote}%20${url}`, '_blank')
+    }
+  }
+
+  const copyResult = () => {
+    if (!result) return
+    const text = `EidSpark বলছে আমাকে ${result.amount} টাকা সালামি দিতে হবে 😂`
+    navigator.clipboard.writeText(text)
+    toast({ title: "Result copied to clipboard!" })
   }
 
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-0 selection:bg-secondary selection:text-primary">
       <Navbar />
       
-      <main className="max-w-5xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-[0.2em] border border-secondary/20 shadow-sm backdrop-blur-md">
             <Laugh className="w-4 h-4 text-secondary fill-secondary" />
@@ -77,7 +106,7 @@ export default function SalamiCalculatorPage() {
                 </CardTitle>
                 <CardDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Market rates for 2026</CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-none bg-slate-50 dark:bg-slate-800/50">
@@ -90,7 +119,7 @@ export default function SalamiCalculatorPage() {
                     {salamiList.map((item) => (
                       <TableRow key={item.id} className="border-secondary/5 hover:bg-secondary/5 transition-colors group">
                         <TableCell className="font-bold text-muted-foreground pl-10">{item.id.toString().padStart(2, '0')}</TableCell>
-                        <TableCell className="font-black text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors">{item.category}</TableCell>
+                        <TableCell className="font-black text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors whitespace-nowrap">{item.category}</TableCell>
                         <TableCell className="text-right font-black text-secondary pr-10">৳{item.amount}</TableCell>
                       </TableRow>
                     ))}
@@ -152,13 +181,51 @@ export default function SalamiCalculatorPage() {
                 </Button>
 
                 {result && (
-                  <div className="animate-in zoom-in duration-500 bg-secondary/10 border-2 border-secondary/20 p-8 rounded-[2.5rem] text-center space-y-4">
-                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto text-primary shadow-lg animate-bounce">
-                      <Gift className="w-8 h-8" />
+                  <div className="animate-in zoom-in duration-500 space-y-6">
+                    <div className="bg-secondary/10 border-2 border-secondary/20 p-8 rounded-[2.5rem] text-center space-y-4 relative overflow-hidden">
+                      <Coins className="absolute -left-4 -top-4 w-16 h-16 text-secondary/20 animate-bounce" />
+                      <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto text-primary shadow-lg animate-bounce">
+                        <Gift className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-3xl font-black text-primary leading-tight">৳{result.amount}</p>
+                        <p className="text-xs font-bold text-primary/60 uppercase tracking-widest">Recommended Amount</p>
+                      </div>
+                      
+                      {/* Fun Meter */}
+                      <div className="pt-4 border-t border-secondary/10">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2">Salami Level</p>
+                        <div className="flex justify-center gap-4">
+                          {["Low", "Medium", "High"].map((lvl) => {
+                            const current = getSalamiLevel(result.amount)
+                            const isActive = current.label === lvl
+                            return (
+                              <div key={lvl} className={cn(
+                                "flex flex-col items-center gap-1 transition-all",
+                                isActive ? "opacity-100 scale-110" : "opacity-30 scale-90 grayscale"
+                              )}>
+                                <span className="text-xl">{lvl === "Low" ? "💸" : lvl === "Medium" ? "💰" : "🤑"}</span>
+                                <span className={cn("text-[8px] font-black uppercase tracking-tighter", isActive ? current.color : "")}>{lvl}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-2xl font-black text-primary leading-tight">{result}</p>
-                    <div className="flex justify-center gap-2">
-                      {[1,2,3].map(i => <Star key={i} className="w-4 h-4 fill-secondary text-secondary animate-pulse" style={{ animationDelay: `${i*0.2}s` }} />)}
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase text-center text-muted-foreground tracking-[0.3em]">Share Your Result</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50" onClick={() => shareSocial('fb')}>
+                          <Facebook className="w-4 h-4 mr-2" /> FB
+                        </Button>
+                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 border-green-100 text-green-600 font-bold hover:bg-green-50" onClick={() => shareSocial('wa')}>
+                          <MessageCircle className="w-4 h-4 mr-2" /> WA
+                        </Button>
+                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 font-bold" onClick={copyResult}>
+                          <Copy className="w-4 h-4 mr-2" /> Copy
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
