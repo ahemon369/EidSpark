@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -13,18 +12,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { 
   Moon, 
   Sparkles, 
-  MapPin, 
   Navigation, 
   Send, 
   Clock, 
   Loader2, 
   Info, 
-  Share2, 
   Globe,
   Trash2,
   CheckCircle2,
   XCircle,
-  Eye,
   EyeOff
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -179,7 +175,6 @@ export default function MoonSightingTrackerPage() {
 
         <div className="grid lg:grid-cols-12 gap-10">
           
-          {/* Left: Form Column */}
           <div className="lg:col-span-3 space-y-8 animate-in fade-in slide-in-from-left duration-700">
             <Card className="bg-white/5 border-white/10 backdrop-blur-2xl rounded-[3rem] shadow-2xl overflow-hidden border-2">
               <CardHeader className="p-8 pb-4">
@@ -188,7 +183,7 @@ export default function MoonSightingTrackerPage() {
                     <Navigation className="w-6 h-6 text-secondary" /> New Report
                   </CardTitle>
                   <Button variant="ghost" size="icon" onClick={detectLocation} className="rounded-full bg-white/5 hover:bg-secondary/20 hover:text-secondary border border-white/10">
-                    <LocateFixed className="w-5 h-5" />
+                    <Globe className="w-5 h-5" />
                   </Button>
                 </div>
                 <CardDescription className="text-slate-400 font-medium pt-2">Help the community by reporting your observation.</CardDescription>
@@ -247,7 +242,7 @@ export default function MoonSightingTrackerPage() {
                           {seen ? "YES - Spotted" : "NO - Not visible"}
                         </p>
                       </div>
-                      <Switch checked={seen} onCheckedChange={setSeen} className="data-[state=checked]:bg-emerald-500" />
+                      <Switch checked={seen} onCheckedChange={setSeen} />
                     </div>
 
                     <div className="space-y-2">
@@ -260,7 +255,7 @@ export default function MoonSightingTrackerPage() {
                       />
                     </div>
 
-                    <Button type="submit" disabled={isSubmitting} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl shadow-secondary/10 hover:scale-[1.02] transition-transform">
+                    <Button type="submit" disabled={isSubmitting} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-[1.02] transition-transform">
                       {isSubmitting ? <Loader2 className="animate-spin" /> : <><Send className="w-6 h-6 mr-3" /> Post Report</>}
                     </Button>
                   </form>
@@ -273,18 +268,16 @@ export default function MoonSightingTrackerPage() {
               <div className="space-y-2">
                 <p className="text-xs font-black text-secondary uppercase tracking-widest">Official Notice</p>
                 <p className="text-[11px] text-slate-400 font-bold leading-relaxed">
-                  Community reports are for guidance only. Please wait for the official moon sighting announcement from the National Moon Sighting Committee of Bangladesh.
+                  Community reports are for guidance only. Please wait for the official moon sighting announcement from the National Moon Sighting Committee.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Center: Map Column */}
           <div className="lg:col-span-6 h-[600px] lg:h-[850px] animate-in fade-in duration-1000 delay-200">
             <MoonMap sightings={sightings || []} />
           </div>
 
-          {/* Right: Feed Column */}
           <div className="lg:col-span-3 space-y-6 animate-in fade-in slide-in-from-right duration-700">
             <Card className="bg-white/5 border-white/10 backdrop-blur-2xl rounded-[3rem] shadow-2xl h-[850px] flex flex-col border-2">
               <CardHeader className="p-8 pb-4">
@@ -321,7 +314,6 @@ export default function MoonSightingTrackerPage() {
                         </div>
                         {s.notes && <p className="text-[11px] text-slate-400 italic pl-13 line-clamp-2 leading-relaxed">"{s.notes}"</p>}
                         
-                        {/* Admin/Owner Deletion Control */}
                         {user && user.uid === s.userId && (
                           <button 
                             onClick={() => handleDelete(s.id)}
@@ -346,29 +338,5 @@ export default function MoonSightingTrackerPage() {
         </div>
       </main>
     </div>
-  )
-}
-
-function LocateFixed(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="2" x2="5" y1="12" y2="12" />
-      <line x1="19" x2="22" y1="12" y2="12" />
-      <line x1="12" x2="12" y1="2" y2="5" />
-      <line x1="12" x2="12" y1="19" y2="22" />
-      <circle cx="12" cy="12" r="7" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
   )
 }

@@ -1,11 +1,10 @@
-
 "use client"
 
 import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import { format } from "date-fns"
-import { Moon, Star, MapPin, User, Clock, CheckCircle2, XCircle } from "lucide-react"
+import { User, Clock, CheckCircle2, XCircle, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Custom Glowing Marker Icons
@@ -76,8 +75,8 @@ export default function MoonSightingMap({ sightings }: { sightings: Sighting[] }
             position={[s.lat, s.lng]}
             icon={s.seen ? seenIcon : notSeenIcon}
           >
-            <Popup className="custom-popup rounded-[2.5rem] overflow-hidden">
-              <div className="p-6 space-y-5 min-w-[260px] bg-white">
+            <Popup className="custom-popup">
+              <div className="p-6 space-y-5 min-w-[260px] bg-white rounded-2xl">
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border-2",
@@ -128,12 +127,6 @@ export default function MoonSightingMap({ sightings }: { sightings: Sighting[] }
             <span className="text-[10px] font-black uppercase text-rose-400 tracking-widest">Not Visible</span>
           </div>
         </div>
-      </div>
-
-      <div className="absolute top-8 right-8 z-[1000] lg:hidden">
-         <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-           <MapPin className="w-3 h-3 text-secondary" /> Zoom to explore
-         </div>
       </div>
     </div>
   )
