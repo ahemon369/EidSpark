@@ -83,7 +83,7 @@
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-20px); }
 }
 
 @keyframes flip-number {
@@ -91,13 +91,33 @@
   100% { transform: rotateX(0deg); opacity: 1; }
 }
 
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes slow-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
 .animate-flip-number {
   animation: flip-number 0.3s ease-out;
   transform-origin: center;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-slow-gradient {
+  background-size: 400% 400%;
+  animation: slow-gradient 15s ease infinite;
 }
 
 .glow-hover:hover {
