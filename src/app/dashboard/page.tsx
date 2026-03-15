@@ -5,6 +5,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, limit, orderBy } from "firebase/firestore"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import { 
   Send, 
   Camera, 
@@ -134,7 +135,12 @@ export default function DashboardOverview() {
               {selfies && selfies.length > 0 ? (
                 <div className="p-6 space-y-4">
                   <div className="aspect-square relative rounded-2xl overflow-hidden border">
-                    <img src={selfies[0].imageUrl} className="object-cover w-full h-full" alt="Latest" />
+                    <Image 
+                      src={selfies[0].imageUrl} 
+                      fill
+                      className="object-cover" 
+                      alt="Latest" 
+                    />
                   </div>
                   <Button variant="ghost" className="w-full font-black text-primary text-xs uppercase tracking-widest" asChild>
                     <Link href="/dashboard/selfies">View Gallery</Link>
