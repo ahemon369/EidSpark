@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -16,7 +17,7 @@ service cloud.firestore {
      * - /users/{userId}/...: Subcollections containing private user activity (salami, greetings, progress).
      * - /levels, /badges, /dailyChallenges: Global read-only configurations managed by admins.
      * - /mosques: Publicly readable directory of locations.
-     * - /_config/roles_admin: Internal collection for defining administrative UIDs.
+     * - /roles_admin: Internal collection for defining administrative UIDs.
      *
      * KEY SECURITY DECISIONS:
      * 1. Path-Based Authorization: We rely on the {userId} wildcard in the path to 
@@ -27,11 +28,6 @@ service cloud.firestore {
      *    user to support the "EidSpark Leaderboard" feature.
      * 4. Relational Integrity: On document creation within user paths, we enforce 
      *    that the internal data matches the path to prevent data spoofing.
-     *
-     * DENORMALIZATION FOR AUTHORIZATION:
-     * To maintain "Authorization Independence," documents include relevant IDs 
-     * (e.g., creatorUserId) directly. This ensures rules remain fast and 
-     * do not require expensive cross-collection lookups.
      */
 
     // --- GLOBAL HELPER FUNCTIONS ---
@@ -53,7 +49,7 @@ service cloud.firestore {
 
     /** @description Checks if the authenticated user is registered as an administrator. */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/_config/roles_admin/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     // --- COLLECTION RULES ---
@@ -61,9 +57,6 @@ service cloud.firestore {
     /**
      * @description User profile and gamification totals.
      * @path /users/{userId}
-     * @allow (create) if auth.uid matches path and data.id matches path.
-     * @deny (update) if user attempts to modify a profile they do not own.
-     * @principle Enforces strict ownership for identity while allowing public reads for leaderboard functionality.
      */
     match /users/{userId} {
       allow get, list: if isSignedIn();
@@ -74,10 +67,6 @@ service cloud.firestore {
 
     /**
      * @description Global definitions for levels, badges, and challenges.
-     * @path /levels/{id}, /badges/{id}, /dailyChallenges/{id}
-     * @allow (get) if any user is signed in.
-     * @deny (create, update, delete) if user is not an administrator.
-     * @principle System-wide configurations use DBAC for management and are read-only for participants.
      */
     match /levels/{levelId} {
       allow get, list: if isSignedIn();
@@ -96,10 +85,6 @@ service cloud.firestore {
 
     /**
      * @description Tracks a user's progress toward daily challenge completion.
-     * @path /users/{userId}/dailyChallengeProgress/{progressId}
-     * @allow (create) if owner and userId field matches path.
-     * @deny (read) if user tries to view another user's progress.
-     * @principle Scoped subcollection access ensures privacy of daily activity.
      */
     match /users/{userId}/dailyChallengeProgress/{progressId} {
       allow get, list: if isOwner(userId);
@@ -110,10 +95,6 @@ service cloud.firestore {
 
     /**
      * @description Personalized data for Salami, Greetings, and Zakat.
-     * @path /users/{userId}/[salamiEntries|eidGreetings|zakatCalculations]/{id}
-     * @allow (write) if the authenticated user owns the parent path.
-     * @deny (list) if the user is not the owner.
-     * @principle Uses path-based ownership to secure private financial and social records.
      */
     match /users/{userId}/salamiEntries/{id} {
       allow get, list: if isOwner(userId);
@@ -138,10 +119,6 @@ service cloud.firestore {
 
     /**
      * @description User contributions for mosque information (Jamaat times).
-     * @path /users/{userId}/mosqueContributions/{id}
-     * @allow (get) if owner OR admin (for verification).
-     * @deny (update) if modifying a contribution owned by another user.
-     * @principle Ownership-based writes with administrative review capability.
      */
     match /users/{userId}/mosqueContributions/{id} {
       allow get, list: if isOwner(userId) || isAdmin();
@@ -152,10 +129,6 @@ service cloud.firestore {
 
     /**
      * @description Publicly accessible directory of mosque locations.
-     * @path /mosques/{mosqueId}
-     * @allow (get, list) for any visitor (including anonymous).
-     * @deny (write) if user is not an administrator.
-     * @principle Public consumption of shared community data.
      */
     match /mosques/{mosqueId} {
       allow get, list: if true;
@@ -164,12 +137,12 @@ service cloud.firestore {
 
     /**
      * @description Internal administrative roles configuration.
-     * @path /_config/roles_admin/{adminUid}
-     * @allow (read, write) if false (strictly for manual DB management or backend).
-     * @principle Prevents unauthorized users from escalating their own privileges.
+     * @path /roles_admin/{userId}
+     * @allow (get) if owner (to check status in UI).
      */
-    match /_config/roles_admin/{adminUid} {
-      allow read, write: if false;
+    match /roles_admin/{userId} {
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
     }
   }
 }
