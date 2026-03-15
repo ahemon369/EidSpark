@@ -19,7 +19,8 @@ import {
   Maximize,
   X,
   Check,
-  Save
+  Save,
+  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -70,8 +71,6 @@ export default function SelfieFrameGenerator() {
   const [fontColor, setFontColor] = useState("#ffffff")
   const [textPosition, setTextPosition] = useState<'top' | 'center' | 'bottom'>('bottom')
 
-  const [showLanterns, setShowLanterns] = useState(true)
-
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const startCamera = async () => {
@@ -102,11 +101,24 @@ export default function SelfieFrameGenerator() {
     if (videoRef.current) {
       const video = videoRef.current;
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Limit capture size for AI processing optimization
+      const maxDim = 1024;
+      let w = video.videoWidth;
+      let h = video.videoHeight;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = (maxDim / w) * h;
+          w = maxDim;
+        } else {
+          w = (maxDim / h) * w;
+          h = maxDim;
+        }
+      }
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.drawImage(video, 0, 0);
+        ctx.drawImage(video, 0, 0, w, h);
         setOriginalImage(canvas.toDataURL('image/png'));
         setAiGeneratedImage(null);
         stopCamera();
@@ -127,7 +139,11 @@ export default function SelfieFrameGenerator() {
   }
 
   const handleGenerateAiBackground = async () => {
-    if (!originalImage) return
+    if (!originalImage) {
+      toast({ title: "No Image Found", description: "Please take or upload a photo first.", variant: "destructive" });
+      return;
+    }
+    
     setIsGenerating(true)
     try {
       const result = await generateSelfieBackground({
@@ -135,9 +151,14 @@ export default function SelfieFrameGenerator() {
         theme: selectedTheme.id as any
       })
       setAiGeneratedImage(result.generatedImageUrl)
-      toast({ title: "Backdrop Generated!" })
-    } catch (error) {
-      toast({ title: "Failed to generate background", variant: "destructive" })
+      toast({ title: "Poster Perfected!", description: "AI background successfully updated." })
+    } catch (error: any) {
+      console.error(error);
+      toast({ 
+        title: "Background generation failed. Please try again.", 
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive" 
+      })
     } finally {
       setIsGenerating(false)
     }
@@ -198,10 +219,12 @@ export default function SelfieFrameGenerator() {
       ctx.closePath()
       ctx.fill('evenodd')
 
+      // Arch Border
       ctx.strokeStyle = selectedFrame.secondary
       ctx.lineWidth = 15
       ctx.stroke()
 
+      // Content Rendering
       let textY = res - 120
       if (textPosition === 'top') textY = 320
       if (textPosition === 'center') textY = res / 2
@@ -233,6 +256,7 @@ export default function SelfieFrameGenerator() {
         ctx.translate(res / 2 + posX, res / 2 + posY)
         ctx.rotate((rotation * Math.PI) / 180)
         ctx.scale(zoom, zoom)
+        // Center the image properly
         ctx.drawImage(img, -res/2, -res/2, res, res)
         ctx.restore()
         drawFrame()
@@ -243,7 +267,7 @@ export default function SelfieFrameGenerator() {
   }, [
     originalImage, aiGeneratedImage, selectedFrame, name, textPosition, 
     zoom, rotation, posX, posY, brightness, contrast,
-    message, fontSize, fontColor, showLanterns
+    message, fontSize, fontColor
   ])
 
   useEffect(() => {
@@ -255,12 +279,17 @@ export default function SelfieFrameGenerator() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="text-center mb-12 space-y-4">
-          <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">AI Selfie Poster</h1>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary text-xs font-black uppercase tracking-widest border border-primary/10">
+            <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
+            <span>AI Powered Studio</span>
+          </div>
+          <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Selfie Poster AI</h1>
+          <p className="text-muted-foreground font-medium max-w-xl mx-auto">Create beautiful festive posters with automatic AI background replacement.</p>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-10 items-start">
           <div className="lg:col-span-5 space-y-6">
-            <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
+            <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20">
               <Tabs defaultValue="image" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-16 bg-primary/5 rounded-none border-b">
                   <TabsTrigger value="image"><Camera className="w-4 h-4" /></TabsTrigger>
@@ -274,79 +303,160 @@ export default function SelfieFrameGenerator() {
                       <div className="space-y-4">
                         <video ref={videoRef} className="w-full aspect-video rounded-2xl bg-black object-cover" autoPlay muted />
                         <div className="flex gap-2">
-                          <Button onClick={capturePhoto} className="flex-1 emerald-gradient">Capture</Button>
-                          <Button variant="outline" onClick={stopCamera}><X className="w-4 h-4" /></Button>
+                          <Button onClick={capturePhoto} className="flex-1 emerald-gradient text-white font-bold h-12 rounded-xl">Capture</Button>
+                          <Button variant="outline" onClick={stopCamera} className="h-12 w-12 rounded-xl"><X className="w-4 h-4" /></Button>
                         </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-4">
-                        <Button onClick={startCamera} variant="outline" className="h-24 rounded-2xl flex-col gap-2">
-                          <Camera className="w-6 h-6" />
-                          <span className="text-xs">Camera</span>
+                        <Button onClick={startCamera} variant="outline" className="h-24 rounded-2xl flex-col gap-2 border-2 border-primary/10 hover:bg-primary/5">
+                          <Camera className="w-6 h-6 text-primary" />
+                          <span className="text-xs font-bold uppercase tracking-widest">Live Camera</span>
                         </Button>
-                        <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-2xl cursor-pointer">
-                          <Upload className="w-6 h-6" />
-                          <span className="text-xs">Upload</span>
-                          <input type="file" className="hidden" onChange={handleImageUpload} />
+                        <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-primary/10 rounded-2xl cursor-pointer hover:bg-primary/5 transition-colors">
+                          <Upload className="w-6 h-6 text-primary" />
+                          <span className="text-xs font-bold uppercase tracking-widest mt-2">Upload Photo</span>
+                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                         </label>
                       </div>
                     )}
                   </TabsContent>
-                  <TabsContent value="adjust" className="space-y-6">
-                    <Label className="text-xs font-black uppercase">Zoom & Position</Label>
-                    <Slider value={[zoom]} onValueChange={([v]) => setZoom(v)} min={0.5} max={3} step={0.1} />
-                    <div className="grid grid-cols-2 gap-4 pt-4">
-                      <Slider value={[posX]} onValueChange={([v]) => setPosX(v)} min={-500} max={500} />
-                      <Slider value={[posY]} onValueChange={([v]) => setPosY(v)} min={-500} max={500} />
+                  
+                  <TabsContent value="adjust" className="space-y-6 mt-0">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-black uppercase tracking-widest">Zoom Level</Label>
+                        <span className="text-xs font-mono">{(zoom * 100).toFixed(0)}%</span>
+                      </div>
+                      <Slider value={[zoom]} onValueChange={([v]) => setZoom(v)} min={0.5} max={3} step={0.1} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest">Horizontal</Label>
+                        <Slider value={[posX]} onValueChange={([v]) => setPosX(v)} min={-500} max={500} />
+                      </div>
+                      <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase tracking-widest">Vertical</Label>
+                        <Slider value={[posY]} onValueChange={([v]) => setPosY(v)} min={-500} max={500} />
+                      </div>
                     </div>
                   </TabsContent>
-                  <TabsContent value="text" className="space-y-6">
-                    <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Main Message" />
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="From Name" />
-                    <div className="flex gap-2">
-                      {['top', 'center', 'bottom'].map(p => (
-                        <Button key={p} variant={textPosition === p ? "default" : "outline"} onClick={() => setTextPosition(p as any)} className="flex-1 capitalize">{p}</Button>
-                      ))}
+
+                  <TabsContent value="text" className="space-y-6 mt-0">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest">Main Greeting</Label>
+                      <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Eid Mubarak" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest">Sender Name</Label>
+                      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Name" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest">Text Placement</Label>
+                      <div className="flex gap-2">
+                        {['top', 'center', 'bottom'].map(p => (
+                          <Button key={p} variant={textPosition === p ? "default" : "outline"} onClick={() => setTextPosition(p as any)} className="flex-1 capitalize rounded-xl h-10">{p}</Button>
+                        ))}
+                      </div>
                     </div>
                   </TabsContent>
-                  <TabsContent value="theme" className="space-y-6">
-                    <div className="grid grid-cols-2 gap-2">
-                      {aiThemes.map(t => (
-                        <Button key={t.id} variant={selectedTheme.id === t.id ? "default" : "outline"} onClick={() => setSelectedTheme(t)} className="h-10 text-[10px]">{t.name}</Button>
-                      ))}
+
+                  <TabsContent value="theme" className="space-y-6 mt-0">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest">AI Backdrop Style</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {aiThemes.map(t => (
+                          <Button 
+                            key={t.id} 
+                            variant={selectedTheme.id === t.id ? "default" : "outline"} 
+                            onClick={() => setSelectedTheme(t)} 
+                            className="h-12 text-[10px] rounded-xl font-bold flex flex-col gap-0.5"
+                          >
+                            <span>{t.name}</span>
+                            <span className="opacity-50 text-[8px] font-medium hidden sm:inline">{t.description}</span>
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                    <Button onClick={handleGenerateAiBackground} disabled={isGenerating || !originalImage} className="w-full emerald-gradient">
-                      {isGenerating ? <Loader2 className="animate-spin" /> : "Generate AI Backdrop"}
+                    <Button 
+                      onClick={handleGenerateAiBackground} 
+                      disabled={isGenerating || !originalImage} 
+                      className="w-full h-14 emerald-gradient text-white font-black text-lg rounded-2xl shadow-xl shadow-primary/20"
+                    >
+                      {isGenerating ? <Loader2 className="animate-spin mr-3" /> : <Sparkles className="w-5 h-5 mr-3" />}
+                      Generate AI Backdrop
                     </Button>
                   </TabsContent>
                 </CardContent>
               </Tabs>
             </Card>
           </div>
+
           <div className="lg:col-span-7 flex flex-col items-center">
-            <div className="relative w-full aspect-square max-w-xl bg-white rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
+            <div className="relative w-full aspect-square max-w-xl bg-white rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white group">
               <canvas ref={canvasRef} className="w-full h-full object-cover" />
+              
+              {isGenerating && (
+                <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white text-center p-12 animate-in fade-in duration-500">
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-secondary rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                    <Loader2 className="w-16 h-16 animate-spin text-secondary relative z-10" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-2">Generating your Eid poster...</h3>
+                  <p className="text-white/60 font-medium max-w-xs">Our AI is meticulously crafting your festive backdrop. This usually takes under 5 seconds.</p>
+                </div>
+              )}
+
               {!(originalImage || aiGeneratedImage) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 p-12 text-center">
-                  <Camera className="w-16 h-16 text-primary/20 animate-float" />
-                  <p className="font-black text-primary/40 uppercase tracking-widest mt-6">Snap or Upload a Selfie</p>
+                  <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
+                    <Camera className="w-12 h-12 text-primary/20 animate-float" />
+                  </div>
+                  <p className="font-black text-primary/40 uppercase tracking-[0.2em]">Snap or Upload a Selfie</p>
+                  <p className="text-xs text-muted-foreground mt-2 font-medium">To begin your AI transformation</p>
                 </div>
               )}
             </div>
+
             <div className="flex gap-4 mt-10 w-full max-w-xl">
-              <Button onClick={() => {
-                const link = document.createElement('a')
-                link.download = `EidSpark-Poster.png`
-                link.href = canvasRef.current!.toDataURL('image/png')
-                link.click()
-              }} disabled={!(originalImage || aiGeneratedImage)} className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl">
-                <Download className="mr-3" /> Download
+              <Button 
+                onClick={() => {
+                  if (!canvasRef.current) return;
+                  const link = document.createElement('a')
+                  link.download = `EidSpark-Poster-${Date.now()}.png`
+                  link.href = canvasRef.current.toDataURL('image/png')
+                  link.click()
+                  toast({ title: "Poster Downloaded", description: "Enjoy your festive creation!" })
+                }} 
+                disabled={!(originalImage || aiGeneratedImage)} 
+                className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl hover:scale-[1.02] transition-transform active:scale-95"
+              >
+                <Download className="mr-3 w-6 h-6" /> Download
               </Button>
-              <Button onClick={handleSaveToGallery} disabled={isSaving || !(originalImage || aiGeneratedImage)} className="h-16 rounded-2xl border-2 px-8 flex items-center gap-2">
-                {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-5 h-5" />}
+              <Button 
+                onClick={handleSaveToGallery} 
+                disabled={isSaving || !(originalImage || aiGeneratedImage)} 
+                className="h-16 rounded-2xl border-2 px-8 flex items-center gap-3 bg-white font-bold hover:bg-slate-50 transition-colors"
+              >
+                {isSaving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
                 Save
               </Button>
-              <Button variant="outline" onClick={() => { setOriginalImage(null); setAiGeneratedImage(null); }} className="w-16 h-16 rounded-2xl border-2"><RefreshCcw /></Button>
+              <Button 
+                variant="outline" 
+                onClick={() => { 
+                  setOriginalImage(null); 
+                  setAiGeneratedImage(null); 
+                  toast({ title: "Studio Reset" })
+                }} 
+                className="w-16 h-16 rounded-2xl border-2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <RefreshCcw className="w-6 h-6" />
+              </Button>
+            </div>
+
+            <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
+              <AlertCircle className="w-3 h-3" />
+              AI Image Generation • Powered by Gemini 2.5
             </div>
           </div>
         </div>

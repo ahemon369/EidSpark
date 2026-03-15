@@ -54,28 +54,41 @@ const generateSelfieBackgroundFlow = ai.defineFlow(
   async input => {
     const themeDescription = themePrompts[input.theme];
     
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-image',
-      prompt: [
-        { media: { url: input.photoDataUri } },
-        { 
-          text: `Please edit this image. Keep the person in the foreground exactly as they are, but change the entire background to ${themeDescription}. 
-          The new background should be high-resolution, professional, and festive. 
-          Ensure the lighting on the person blends naturally with the new ${themeDescription} setting. 
-          The subject should remain the central focus of the image.` 
+    try {
+      const { media } = await ai.generate({
+        model: 'googleai/gemini-2.5-flash-image',
+        prompt: [
+          { media: { url: input.photoDataUri } },
+          { 
+            text: `You are a professional image editor. 
+            Step 1: Detect the main person in the foreground of this image.
+            Step 2: Carefully remove everything in the background while keeping the person exactly as they are.
+            Step 3: Generate and place a high-resolution, festive background of ${themeDescription} behind the person.
+            Ensure the lighting on the person blends naturally with the new ${themeDescription} setting. 
+            The subject should remain the central focus. Do not modify the subject's face or body.` 
+          },
+        ],
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          ]
         },
-      ],
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
+      });
 
-    if (!media || !media.url) {
-      throw new Error('Failed to generate image background');
+      if (!media || !media.url) {
+        throw new Error('AI failed to return an image. It might have been blocked by safety filters.');
+      }
+
+      return {
+        generatedImageUrl: media.url,
+      };
+    } catch (error: any) {
+      console.error("Selfie Background Flow Error:", error);
+      throw new Error(error.message || 'Background generation failed. Please try again.');
     }
-
-    return {
-      generatedImageUrl: media.url,
-    };
   }
 );
