@@ -1,25 +1,23 @@
 
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2, AlertCircle, Map as MapIcon, ExternalLink, MapPin, Heart, Landmark, CheckCircle2 } from "lucide-react"
+import { Navigation, Loader2, MapPin, Heart } from "lucide-react"
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Professional Mosque Marker Silhouette
-const getStandardMosqueIcon = (name: string) => {
-  const isBig = /ground|maidan|stadium|field|eidgah/i.test(name);
-  const bgColor = isBig ? "#3b82f6" : "#065f46";
-  
+// Premium Green Mosque Marker Icon
+const getStandardMosqueIcon = () => {
   return L.divIcon({
     html: `
       <div class="mosque-marker-wrapper">
-        <div class="mosque-marker-glow" style="background: ${isBig ? 'rgba(59, 130, 246, 0.3)' : 'rgba(6, 95, 70, 0.3)'}"></div>
-        <div class="mosque-marker-icon" style="background: ${bgColor}; border-color: #E9BE24">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <div class="mosque-marker-glow" style="background: rgba(16, 185, 129, 0.4)"></div>
+        <div class="mosque-marker-icon" style="background: #10b981; border-color: #E9BE24; border-width: 2px; border-style: solid; box-shadow: 0 4px 12px rgba(0,0,0,0.2)">
+          <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L10.5 4.5H13.5L12 2Z" />
             <path d="M12 4.5C8.686 4.5 6 7.186 6 10.5V13H18V10.5C18 7.186 15.314 4.5 12 4.5Z" />
             <path d="M4 12V22H5.5V12H4ZM18.5 12V22H20V12H18.5ZM6.5 14V22H17.5V14H6.5Z" />
@@ -29,8 +27,8 @@ const getStandardMosqueIcon = (name: string) => {
       </div>
     `,
     className: "custom-mosque-marker",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
   });
 }
 
@@ -69,65 +67,55 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
 function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null; onFetch: (mosques: Mosque[]) => void }) {
   const map = useMap()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3 // metres
+    const R = 6371e3 
     const φ1 = lat1 * Math.PI/180
     const φ2 = lat2 * Math.PI/180
     const Δφ = (lat2-lat1) * Math.PI/180
     const Δλ = (lon2-lon1) * Math.PI/180
-
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2)
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-
     return R * c
   }
 
   const fetchMosques = useCallback(async () => {
-    const bounds = map.getBounds()
-    const query = `[out:json];node["amenity"="place_of_worship"]["religion"="muslim"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});out;`
-    
-    const endpoints = [
-      "https://overpass-api.de/api/interpreter",
-      "https://lz4.overpass-api.de/api/interpreter",
-      "https://overpass.kumi.systems/api/interpreter"
-    ]
-
-    setLoading(true)
-    setError(false)
-    let success = false
-
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`, {
-          method: "GET",
-          headers: { 'Accept': 'application/json' },
-        })
-        
-        if (!response.ok) throw new Error("API response error")
-        
-        const data = await response.json()
-        const elements = (data.elements || []).map((m: any) => ({
-          ...m,
-          distance: userPos ? calculateDistance(userPos[0], userPos[1], m.lat, m.lon) : undefined
-        }))
-
-        if (userPos) {
-          elements.sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0))
-        }
-
-        onFetch(elements)
-        success = true
-        break
-      } catch (err) {
-        console.warn(`Failed to fetch from ${endpoint}, trying fallback...`)
-      }
+    if (map.getZoom() < 11) {
+      onFetch([]);
+      return;
     }
 
-    if (!success) setError(true)
+    const bounds = map.getBounds()
+    const query = `[out:json][timeout:25];
+      area["name"="Bangladesh"]->.searchArea;
+      (
+        node["amenity"="place_of_worship"]["religion"="muslim"](area.searchArea)(${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      );
+      out body;
+      >;
+      out skel qt;`
+    
+    const endpoint = "https://overpass-api.de/api/interpreter"
+
+    setLoading(true)
+    try {
+      const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`)
+      if (!response.ok) throw new Error("API response error")
+      
+      const data = await response.json()
+      const elements = (data.elements || []).map((m: any) => ({
+        ...m,
+        distance: userPos ? calculateDistance(userPos[0], userPos[1], m.lat, m.lon) : undefined
+      }))
+
+      if (userPos) {
+        elements.sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0))
+      }
+
+      onFetch(elements)
+    } catch (err) {
+      console.warn("Failed to fetch mosques from OSM")
+    }
     setLoading(false)
   }, [map, onFetch, userPos])
 
@@ -143,7 +131,7 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
     <>
       {loading && (
         <div className="absolute top-6 right-6 z-[1000] bg-white p-3 px-6 rounded-2xl shadow-2xl flex items-center gap-3 text-primary text-sm font-black border-2 border-primary/10 animate-in fade-in zoom-in">
-          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Fetching Global Registry...
+          <Loader2 className="w-5 h-5 animate-spin text-secondary" /> Syncing Local Registry...
         </div>
       )}
     </>
@@ -192,68 +180,77 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           <Marker position={userPos} icon={userLocationIcon}>
             <Popup className="custom-popup">
               <div className="p-2 font-black text-primary uppercase tracking-widest text-[10px]">
-                You are here
+                Your Current Position
               </div>
             </Popup>
           </Marker>
         )}
 
-        {mosques.map((mosque) => {
-          const name = mosque.tags.name || mosque.tags["name:en"] || "Unnamed Mosque";
-          return (
-            <Marker
-              key={mosque.id}
-              position={[mosque.lat, mosque.lon]}
-              icon={getStandardMosqueIcon(name)}
-            >
-              <Tooltip direction="top" offset={[0, -35]} opacity={1}>
-                <span className="font-black text-xs text-primary">{name}</span>
-              </Tooltip>
-              <Popup className="rounded-[2rem] overflow-hidden custom-popup">
-                <div className="p-0 space-y-0 min-w-[260px]">
-                  <div className="emerald-gradient p-5 text-white">
-                    <h3 className="font-black text-lg m-0 leading-tight">
-                      {name}
-                    </h3>
-                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">
-                      {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location Data Registry"}
-                    </p>
-                  </div>
-                  
-                  <div className="p-5 space-y-4">
-                    {mosque.distance !== undefined && (
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase text-secondary tracking-widest">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {(mosque.distance / 1000).toFixed(2)} km from you
+        <MarkerClusterGroup 
+          chunkedLoading 
+          maxClusterRadius={50}
+          showCoverageOnHover={false}
+        >
+          {mosques.map((mosque) => {
+            const name = mosque.tags.name || mosque.tags["name:en"] || "Local Mosque";
+            return (
+              <Marker
+                key={mosque.id}
+                position={[mosque.lat, mosque.lon]}
+                icon={getStandardMosqueIcon()}
+              >
+                <Tooltip direction="top" offset={[0, -35]} opacity={1}>
+                  <span className="font-black text-xs text-primary">{name}</span>
+                </Tooltip>
+                <Popup className="rounded-[2rem] overflow-hidden custom-popup">
+                  <div className="p-0 space-y-0 min-w-[260px]">
+                    <div className="emerald-gradient p-5 text-white">
+                      <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full inline-flex items-center gap-1 mb-2 border border-white/10">
+                        <span className="text-[8px] font-black uppercase tracking-widest">Type: Mosque</span>
                       </div>
-                    )}
+                      <h3 className="font-black text-lg m-0 leading-tight">
+                        {name}
+                      </h3>
+                      <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">
+                        {mosque.tags["addr:city"] || mosque.tags["addr:full"] || "Location Registry Entry"}
+                      </p>
+                    </div>
                     
-                    <div className="grid grid-cols-1 gap-2">
-                      <Button
-                        className="w-full h-11 rounded-xl emerald-gradient text-white font-black text-xs shadow-lg"
-                        onClick={() => {
-                          const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
-                          window.open(url, "_blank")
-                        }}
-                      >
-                        <Navigation className="w-4 h-4 mr-2" />
-                        Navigate
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 rounded-xl text-xs font-black border-2 border-secondary/10 hover:bg-secondary/5 text-secondary"
-                        onClick={() => onSaveMosque?.(mosque)}
-                      >
-                        <Heart className="w-4 h-4 mr-2" />
-                        Save to Favorites
-                      </Button>
+                    <div className="p-5 space-y-4">
+                      {mosque.distance !== undefined && (
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-secondary tracking-widest">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {(mosque.distance / 1000).toFixed(2)} km from you
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button
+                          className="w-full h-11 rounded-xl emerald-gradient text-white font-black text-xs shadow-lg"
+                          onClick={() => {
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lon}`
+                            window.open(url, "_blank")
+                          }}
+                        >
+                          <Navigation className="w-4 h-4 mr-2" />
+                          Open in Google Maps
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full h-11 rounded-xl text-xs font-black border-2 border-secondary/10 hover:bg-secondary/5 text-secondary"
+                          onClick={() => onSaveMosque?.(mosque)}
+                        >
+                          <Heart className="w-4 h-4 mr-2" />
+                          Save to Profile
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>
-          )
-        })}
+                </Popup>
+              </Marker>
+            )
+          })}
+        </MarkerClusterGroup>
       </MapContainer>
 
       <style jsx global>{`
@@ -271,8 +268,8 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
         
         .mosque-marker-wrapper {
           position: relative;
-          width: 36px;
-          height: 36px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -281,16 +278,16 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
 
         .mosque-marker-glow {
           position: absolute;
-          width: 28px;
-          height: 28px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           animation: marker-glow-pulse 2s infinite;
         }
 
         .mosque-marker-icon {
           position: relative;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           color: white;
           border-radius: 50%;
           border: 2px solid white;
@@ -299,11 +296,21 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           justify-content: center;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           transition: all 0.3s ease;
-          padding: 6px;
+          padding: 7px;
         }
 
         .mosque-marker-wrapper:hover .mosque-marker-icon {
           transform: scale(1.1) translateY(-5px);
+        }
+
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+          background-color: rgba(16, 185, 129, 0.2) !important;
+        }
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+          background-color: rgba(16, 185, 129, 0.8) !important;
+          color: white !important;
+          font-weight: 900 !important;
+          border: 2px solid white;
         }
       `}</style>
     </div>
