@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { collection, query, limit, orderBy, where, doc } from "firebase/firestore"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,12 +32,14 @@ export default function DashboardOverview() {
   const { user } = useUser()
   const db = useFirestore()
 
-  const { data: userData } = useCollection(useMemoFirebase(() => {
+  const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return query(collection(db, "users"), where("id", "==", user.uid))
-  }, [db, user]))
+    return doc(db, "users", user.uid)
+  }, [db, user])
+  
+  const { data: userData } = useDoc(userDocRef)
 
-  const fullUserData = userData?.[0] || { totalPoints: 0 }
+  const fullUserData = userData || { totalPoints: 0 }
   const levelInfo = getLevelInfo(fullUserData.totalPoints || 0)
 
   const greetingRef = useMemoFirebase(() => {

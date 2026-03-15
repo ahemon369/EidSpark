@@ -7,7 +7,7 @@ import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles,
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useUser, useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useAuth, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { collection, query, where } from "firebase/firestore"
+import { collection, query, where, doc } from "firebase/firestore"
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -44,13 +44,14 @@ export function Navbar() {
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
-  // Fetch points real-time
-  const userQuery = useMemoFirebase(() => {
+  // Fetch points real-time using direct doc ref
+  const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return query(collection(db, "users"), where("id", "==", user.uid))
+    return doc(db, "users", user.uid)
   }, [db, user])
-  const { data: userData } = useCollection(userQuery)
-  const totalPoints = userData?.[0]?.totalPoints || 0
+  
+  const { data: userData } = useDoc(userDocRef)
+  const totalPoints = userData?.totalPoints || 0
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)

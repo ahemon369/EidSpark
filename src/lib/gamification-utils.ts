@@ -48,17 +48,18 @@ export function getLevelInfo(points: number) {
 
 /**
  * Awards points to a user for a specific action.
- * Handles Firestore updates in a non-blocking way.
+ * Handles Firestore updates in a non-blocking way using setDoc with merge.
  */
 export function awardPoints(db: Firestore, userId: string, action: ActionType) {
   const points = POINTS_MAP[action];
   const userRef = doc(db, 'users', userId);
 
-  // Update total points
-  updateDoc(userRef, {
+  // Update total points using setDoc with merge to ensure doc exists
+  setDoc(userRef, {
+    id: userId,
     totalPoints: increment(points),
     updatedAt: new Date().toISOString()
-  }).then(() => {
+  }, { merge: true }).then(() => {
     // Notify user
     toast({
       title: `+${points} Eid Points! 🎉`,
@@ -94,7 +95,7 @@ export function awardPoints(db: Firestore, userId: string, action: ActionType) {
     const permissionError = new FirestorePermissionError({
       path: userRef.path,
       operation: 'update',
-      requestResourceData: { totalPoints: `increment(${points})` },
+      requestResourceData: { totalPoints: `increment(${points})`, id: userId },
     });
     errorEmitter.emit('permission-error', permissionError);
   });

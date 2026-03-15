@@ -35,7 +35,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
@@ -43,7 +43,7 @@ service cloud.firestore {
     match /users/{userId}/dailyChallengeProgress/{progressId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
@@ -54,28 +54,28 @@ service cloud.firestore {
     match /users/{userId}/salamiEntries/{id} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.trackerUserId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.trackerUserId == resource.data.trackerUserId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     match /users/{userId}/eidGreetings/{id} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.creatorUserId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.creatorUserId == resource.data.creatorUserId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     match /users/{userId}/zakatCalculations/{id} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     match /users/{userId}/mosqueContributions/{id} {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.contributorUserId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.contributorUserId == resource.data.contributorUserId;
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
