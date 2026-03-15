@@ -5,23 +5,39 @@ import { useEffect, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck } from "lucide-react"
+import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck, ExternalLink, Globe } from "lucide-react"
 import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
+import { cn } from "@/lib/utils"
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const MAPBOX_TOKEN = "pk.eyJ1IjoiYW1yYW5lbW9uIiwiYSI6ImNtN200bmc4dTBmMGIyanE1YnVzaTB3NXIifQ.2Gu9mCgIeRo9EqRt2viYhg";
 
-// Custom Mosque Icon
-const mosqueIcon = L.divIcon({
+// Confirmed Mosque Icon (Green)
+const confirmedIcon = L.divIcon({
   html: `
-    <div class="relative w-12 h-12 flex items-center justify-center">
-      <div class="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-40"></div>
-      <div class="absolute inset-1 bg-primary rounded-full shadow-[0_0_20px_rgba(6,95,70,0.5)] border-4 border-white flex items-center justify-center text-white">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/><path d="M9 16c-1 0-2 1-2 2v4"/><path d="M15 16c1 0 2 1 2 2v4"/></svg>
+    <div class="relative w-14 h-14 flex items-center justify-center group">
+      <div class="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping opacity-40"></div>
+      <div class="absolute inset-1.5 bg-emerald-500 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.6)] border-[5px] border-white flex items-center justify-center text-white transition-all group-hover:scale-110">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/></svg>
       </div>
     </div>
   `,
-  className: "custom-jamaat-icon",
+  className: "custom-jamaat-icon-confirmed",
+  iconSize: [56, 56],
+  iconAnchor: [28, 28],
+})
+
+// Pending Mosque Icon (Amber)
+const pendingIcon = L.divIcon({
+  html: `
+    <div class="relative w-12 h-12 flex items-center justify-center group">
+      <div class="absolute inset-0 bg-amber-400/20 rounded-full animate-pulse opacity-40"></div>
+      <div class="absolute inset-1.5 bg-amber-400 rounded-full shadow-[0_0_25px_rgba(251,191,36,0.6)] border-[4px] border-white flex items-center justify-center text-white transition-all group-hover:scale-110">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 1 0-4 0v4"/><path d="M4 12V8a2 2 0 0 1 4 0v4"/><path d="M12 4v8"/><path d="M3 12h18"/><path d="M12 12v10"/><path d="m12 12-4 10"/><path d="m12 12 4 10"/></svg>
+      </div>
+    </div>
+  `,
+  className: "custom-jamaat-icon-pending",
   iconSize: [48, 48],
   iconAnchor: [24, 24],
 })
@@ -29,14 +45,14 @@ const mosqueIcon = L.divIcon({
 // User Location Icon
 const userLocationIcon = L.divIcon({
   html: `
-    <div class="relative w-8 h-8 flex items-center justify-center">
+    <div class="relative w-10 h-10 flex items-center justify-center">
       <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-30"></div>
-      <div class="absolute inset-2 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
+      <div class="absolute inset-2 bg-blue-500 rounded-full border-4 border-white shadow-2xl"></div>
     </div>
   `,
   className: "custom-user-icon",
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
 })
 
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -68,25 +84,23 @@ export default function JamaatMap({
     }
   }, [userLocation])
 
-  const tileUrl = MAPBOX_TOKEN 
-    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
-    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
 
   return (
     <div className="w-full h-full relative">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="w-full h-full">
         <TileLayer
-          attribution={MAPBOX_TOKEN ? '© Mapbox & OpenStreetMap' : '&copy; OpenStreetMap contributors'}
+          attribution='© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url={tileUrl}
-          tileSize={MAPBOX_TOKEN ? 512 : 256}
-          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
+          tileSize={512}
+          zoomOffset={-1}
         />
         <ChangeView center={center} zoom={zoom} />
 
         {userLocation && (
           <Marker position={userLocation} icon={userLocationIcon}>
-            <Popup>
-              <div className="p-2 font-black text-blue-600 text-xs uppercase tracking-widest">You are here</div>
+            <Popup className="custom-popup-minimal">
+              <div className="p-3 font-black text-blue-600 text-[10px] uppercase tracking-[0.2em] text-center">Your Current Location</div>
             </Popup>
           </Marker>
         )}
@@ -95,12 +109,12 @@ export default function JamaatMap({
           <Marker
             key={mosque.id}
             position={[mosque.latitude, mosque.longitude]}
-            icon={mosqueIcon}
+            icon={mosque.isApprovedByAdmin ? confirmedIcon : pendingIcon}
             eventHandlers={{
               click: () => onSelectMosque(mosque.id),
             }}
           >
-            <Popup className="custom-popup">
+            <Popup className="custom-popup-mosque">
               <MosquePopupContent mosque={mosque} />
             </Popup>
           </Marker>
@@ -126,45 +140,52 @@ function MosquePopupContent({ mosque }: { mosque: any }) {
   }, [db, mosque.id])
 
   return (
-    <div className="p-4 space-y-4 min-w-[260px] bg-white rounded-2xl">
-      <div className="space-y-1">
-        <h3 className="font-black text-primary text-lg m-0 leading-tight flex items-center gap-2">
-          {mosque.name}
-          {mosque.isApprovedByAdmin && <ShieldCheck className="w-4 h-4 text-secondary fill-secondary" />}
-        </h3>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-          <MapPin className="w-3 h-3" /> {mosque.area}, {mosque.district}
+    <div className="p-6 space-y-6 min-w-[300px] bg-white rounded-[2rem] border-none shadow-none">
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <h3 className="font-black text-slate-800 text-xl m-0 leading-tight">
+            {mosque.name}
+          </h3>
+          {mosque.isApprovedByAdmin && <ShieldCheck className="w-5 h-5 text-emerald-500 fill-emerald-500" />}
+        </div>
+        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+          <MapPin className="w-3.5 h-3.5 text-primary" /> {mosque.area}, {mosque.district}
         </p>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 border-b pb-1">Eid Jamaat Schedule</p>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+          <Clock className="w-4 h-4 text-primary opacity-40" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Verified Jamaat Times</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           {times.length > 0 ? (
             times.map((t) => (
-              <div key={t.id} className="bg-primary/5 p-2 rounded-xl border border-primary/5 flex flex-col items-center">
-                <span className="text-sm font-black text-primary">{t.time}</span>
-                {t.communitySubmissionCount > 1 && <span className="text-[7px] font-bold text-emerald-600 uppercase">Verified</span>}
+              <div key={t.id} className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex flex-col items-center">
+                <span className="text-sm font-black text-emerald-700">{t.time}</span>
+                {t.communitySubmissionCount > 1 && <span className="text-[7px] font-bold text-emerald-600 uppercase mt-0.5">✔ Community Verified</span>}
               </div>
             ))
           ) : (
-            <p className="col-span-2 text-[10px] font-bold text-muted-foreground italic text-center py-2">No schedules verified yet.</p>
+            <p className="col-span-2 text-[10px] font-bold text-muted-foreground italic text-center py-4 bg-slate-50 rounded-2xl">Updating schedule...</p>
           )}
         </div>
       </div>
 
-      <Button 
-        className="w-full h-11 rounded-xl emerald-gradient font-black text-xs shadow-lg text-white"
-        onClick={() => {
-          if (mosque.googleMapsLink) {
-            window.open(mosque.googleMapsLink, "_blank")
-          } else {
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank")
-          }
-        }}
-      >
-        <Navigation className="w-4 h-4 mr-2" /> Start Navigation
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button 
+          className="w-full h-12 rounded-xl emerald-gradient font-black text-xs shadow-xl text-white border-none transition-transform hover:scale-[1.02] active:scale-95"
+          onClick={() => {
+            const url = mosque.googleMapsLink || `https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`;
+            window.open(url, "_blank");
+          }}
+        >
+          <Navigation className="w-4 h-4 mr-3" /> Open in Google Maps
+        </Button>
+        <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground h-8" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${mosque.latitude},${mosque.longitude}`, "_blank")}>
+          <ExternalLink className="w-3 h-3 mr-2" /> More Info
+        </Button>
+      </div>
     </div>
   )
 }
