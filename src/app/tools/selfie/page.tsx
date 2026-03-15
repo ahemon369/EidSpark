@@ -15,20 +15,17 @@ import {
   Download, 
   RefreshCcw, 
   Sparkles, 
-  Facebook,
-  MessageCircle,
   Loader2,
-  ImageIcon,
-  Type,
-  Sticker,
   Maximize,
   X,
   Check,
-  RotateCw
+  Save
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { generateSelfieBackground } from "@/ai/flows/generate-selfie-background"
+import { useUser, useFirestore } from "@/firebase"
+import { collection, addDoc } from "firebase/firestore"
 
 const frames = [
   { id: 'royal', name: 'Royal Islamic Arch', primary: '#0f172a', secondary: '#fbbf24', accent: '#f59e0b' },
@@ -46,19 +43,21 @@ const aiThemes = [
 ]
 
 export default function SelfieFrameGenerator() {
-  // Base state
+  const { user } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+
   const [selectedFrame, setSelectedFrame] = useState(frames[0])
   const [selectedTheme, setSelectedTheme] = useState(aiThemes[0])
   const [originalImage, setOriginalImage] = useState<string | null>(null)
   const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [name, setName] = useState("")
   
-  // Camera state
   const [showCamera, setShowCamera] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Editor transformations
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
   const [posX, setPosX] = useState(0)
@@ -66,20 +65,14 @@ export default function SelfieFrameGenerator() {
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
 
-  // Custom Text
   const [message, setMessage] = useState("Eid Mubarak")
   const [fontSize, setFontSize] = useState(80)
   const [fontColor, setFontColor] = useState("#ffffff")
-  const [fontFamily, setFontFamily] = useState("Hind Siliguri")
   const [textPosition, setTextPosition] = useState<'top' | 'center' | 'bottom'>('bottom')
 
-  // Stickers
   const [showLanterns, setShowLanterns] = useState(true)
-  const [showStars, setShowStars] = useState(true)
-  const [showCrescent, setShowCrescent] = useState(true)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { toast } = useToast()
 
   const startCamera = async () => {
     try {
@@ -89,11 +82,10 @@ export default function SelfieFrameGenerator() {
         setShowCamera(true);
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings to use this feature.',
+        description: 'Please enable camera permissions in your browser settings.',
       });
     }
   };
@@ -115,11 +107,9 @@ export default function SelfieFrameGenerator() {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0);
-        const dataUri = canvas.toDataURL('image/png');
-        setOriginalImage(dataUri);
+        setOriginalImage(canvas.toDataURL('image/png'));
         setAiGeneratedImage(null);
         stopCamera();
-        toast({ title: "Photo Captured", description: "Your selfie is ready for editing." });
       }
     }
   };
@@ -137,11 +127,7 @@ export default function SelfieFrameGenerator() {
   }
 
   const handleGenerateAiBackground = async () => {
-    if (!originalImage) {
-      toast({ title: "Photo required", description: "Please upload or capture a selfie first.", variant: "destructive" })
-      return
-    }
-
+    if (!originalImage) return
     setIsGenerating(true)
     try {
       const result = await generateSelfieBackground({
@@ -149,32 +135,36 @@ export default function SelfieFrameGenerator() {
         theme: selectedTheme.id as any
       })
       setAiGeneratedImage(result.generatedImageUrl)
-      toast({ title: "Poster Generated!", description: "Your AI Eid scene is ready." })
+      toast({ title: "Backdrop Generated!" })
     } catch (error) {
-      toast({ title: "Generation failed", description: "Could not generate background.", variant: "destructive" })
+      toast({ title: "Failed to generate background", variant: "destructive" })
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const drawLantern = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string) => {
-    ctx.save()
-    ctx.strokeStyle = color
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.moveTo(x, 0)
-    ctx.lineTo(x, y)
-    ctx.stroke()
-
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.moveTo(x - 20, y)
-    ctx.lineTo(x + 20, y)
-    ctx.lineTo(x + 15, y + 35)
-    ctx.lineTo(x - 15, y + 35)
-    ctx.closePath()
-    ctx.fill()
-    ctx.restore()
+  const handleSaveToGallery = async () => {
+    if (!user || !db || !canvasRef.current) {
+      toast({ title: "Login Required", description: "Please sign in to save your posters." });
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const imageUrl = canvasRef.current.toDataURL('image/png')
+      await addDoc(collection(db, "users", user.uid, "selfiePosters"), {
+        userId: user.uid,
+        imageUrl,
+        themeId: selectedTheme.id,
+        frameId: selectedFrame.id,
+        createdAt: new Date().toISOString()
+      })
+      toast({ title: "Saved to Gallery", description: "View this in your Dashboard." })
+    } catch (error) {
+      toast({ title: "Save Failed", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const renderPoster = useCallback(() => {
@@ -212,23 +202,18 @@ export default function SelfieFrameGenerator() {
       ctx.lineWidth = 15
       ctx.stroke()
 
-      if (showLanterns) {
-        drawLantern(ctx, 180, 250, selectedFrame.secondary)
-        drawLantern(ctx, res - 180, 250, selectedFrame.secondary)
-      }
-
       let textY = res - 120
       if (textPosition === 'top') textY = 320
       if (textPosition === 'center') textY = res / 2
 
       ctx.fillStyle = fontColor
-      ctx.font = `bold ${fontSize}px "${fontFamily}", sans-serif`
+      ctx.font = `bold ${fontSize}px "Hind Siliguri", sans-serif`
       ctx.textAlign = "center"
       ctx.fillText(message, res / 2, textY)
 
       if (name) {
         ctx.fillStyle = selectedFrame.secondary
-        ctx.font = `bold ${fontSize * 0.6}px "${fontFamily}", sans-serif`
+        ctx.font = `bold ${fontSize * 0.6}px "Hind Siliguri", sans-serif`
         ctx.fillText(`— From ${name}`, res / 2, textY + (fontSize * 0.8))
       }
 
@@ -258,23 +243,12 @@ export default function SelfieFrameGenerator() {
   }, [
     originalImage, aiGeneratedImage, selectedFrame, name, textPosition, 
     zoom, rotation, posX, posY, brightness, contrast,
-    message, fontSize, fontColor, fontFamily,
-    showLanterns, showStars, showCrescent
+    message, fontSize, fontColor, showLanterns
   ])
 
   useEffect(() => {
     renderPoster()
   }, [renderPoster])
-
-  const handleDownload = () => {
-    const canvas = canvasRef.current
-    if (!canvas || (!originalImage && !aiGeneratedImage)) return
-    const link = document.createElement('a')
-    link.download = `EidSpark-Poster-${Date.now()}.png`
-    link.href = canvas.toDataURL('image/png')
-    link.click()
-    toast({ title: "Poster Saved!" })
-  }
 
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-20">
@@ -291,8 +265,8 @@ export default function SelfieFrameGenerator() {
                 <TabsList className="grid w-full grid-cols-4 h-16 bg-primary/5 rounded-none border-b">
                   <TabsTrigger value="image"><Camera className="w-4 h-4" /></TabsTrigger>
                   <TabsTrigger value="adjust"><Maximize className="w-4 h-4" /></TabsTrigger>
-                  <TabsTrigger value="text"><Type className="w-4 h-4" /></TabsTrigger>
-                  <TabsTrigger value="stickers"><Sticker className="w-4 h-4" /></TabsTrigger>
+                  <TabsTrigger value="text"><Check className="w-4 h-4" /></TabsTrigger>
+                  <TabsTrigger value="theme"><Sparkles className="w-4 h-4" /></TabsTrigger>
                 </TabsList>
                 <CardContent className="p-8 space-y-8">
                   <TabsContent value="image" className="space-y-6 mt-0">
@@ -300,7 +274,7 @@ export default function SelfieFrameGenerator() {
                       <div className="space-y-4">
                         <video ref={videoRef} className="w-full aspect-video rounded-2xl bg-black object-cover" autoPlay muted />
                         <div className="flex gap-2">
-                          <Button onClick={capturePhoto} className="flex-1 emerald-gradient">Capture Photo</Button>
+                          <Button onClick={capturePhoto} className="flex-1 emerald-gradient">Capture</Button>
                           <Button variant="outline" onClick={stopCamera}><X className="w-4 h-4" /></Button>
                         </div>
                       </div>
@@ -317,62 +291,33 @@ export default function SelfieFrameGenerator() {
                         </label>
                       </div>
                     )}
-                    <div className="pt-6 border-t space-y-4">
-                      <Label className="text-xs font-black uppercase">AI Themes</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {aiThemes.map(t => (
-                          <Button key={t.id} variant={selectedTheme.id === t.id ? "default" : "outline"} onClick={() => setSelectedTheme(t)} className="h-10 text-[10px]">{t.name}</Button>
-                        ))}
-                      </div>
-                      <Button onClick={handleGenerateAiBackground} disabled={isGenerating || !originalImage} className="w-full emerald-gradient h-12">
-                        {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles className="mr-2" />} Generate AI Backdrop
-                      </Button>
-                    </div>
                   </TabsContent>
                   <TabsContent value="adjust" className="space-y-6">
-                    <div className="space-y-4">
-                      <Label className="text-xs font-black uppercase">Zoom & Position</Label>
-                      <Slider value={[zoom]} onValueChange={([v]) => setZoom(v)} min={0.5} max={3} step={0.1} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <Slider value={[posX]} onValueChange={([v]) => setPosX(v)} min={-500} max={500} />
-                        <Slider value={[posY]} onValueChange={([v]) => setPosY(v)} min={-500} max={500} />
-                      </div>
-                    </div>
-                    <div className="space-y-4 border-t pt-4">
-                      <Label className="text-xs font-black uppercase">Rotation</Label>
-                      <Slider value={[rotation]} onValueChange={([v]) => setRotation(v)} min={-180} max={180} />
-                    </div>
-                    <div className="space-y-4 border-t pt-4">
-                      <Label className="text-xs font-black uppercase">Filters</Label>
-                      <Slider value={[brightness]} onValueChange={([v]) => setBrightness(v)} min={50} max={150} />
-                      <Slider value={[contrast]} onValueChange={([v]) => setContrast(v)} min={50} max={150} />
+                    <Label className="text-xs font-black uppercase">Zoom & Position</Label>
+                    <Slider value={[zoom]} onValueChange={([v]) => setZoom(v)} min={0.5} max={3} step={0.1} />
+                    <div className="grid grid-cols-2 gap-4 pt-4">
+                      <Slider value={[posX]} onValueChange={([v]) => setPosX(v)} min={-500} max={500} />
+                      <Slider value={[posY]} onValueChange={([v]) => setPosY(v)} min={-500} max={500} />
                     </div>
                   </TabsContent>
                   <TabsContent value="text" className="space-y-6">
-                    <div className="space-y-4">
-                      <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message" />
-                      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="From Name" />
-                    </div>
-                    <div className="space-y-4 border-t pt-4">
-                      <Label className="text-xs font-black uppercase">Placement</Label>
-                      <div className="flex gap-2">
-                        {['top', 'center', 'bottom'].map(p => (
-                          <Button key={p} variant={textPosition === p ? "default" : "outline"} onClick={() => setTextPosition(p as any)} className="flex-1 capitalize">{p}</Button>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="stickers" className="space-y-6">
-                    <div className="space-y-4">
-                      {frames.map(f => (
-                        <Button key={f.id} variant={selectedFrame.id === f.id ? "default" : "outline"} onClick={() => setSelectedFrame(f)} className="w-full justify-between">{f.name} <div className="w-4 h-4 rounded-full" style={{background: f.primary}} /></Button>
+                    <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Main Message" />
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="From Name" />
+                    <div className="flex gap-2">
+                      {['top', 'center', 'bottom'].map(p => (
+                        <Button key={p} variant={textPosition === p ? "default" : "outline"} onClick={() => setTextPosition(p as any)} className="flex-1 capitalize">{p}</Button>
                       ))}
                     </div>
-                    <div className="pt-4 border-t grid grid-cols-1 gap-2">
-                      <Button variant={showLanterns ? "default" : "outline"} onClick={() => setShowLanterns(!showLanterns)}>Hanging Lanterns {showLanterns && <Check className="ml-2" />}</Button>
-                      <Button variant={showStars ? "default" : "outline"} onClick={() => setShowStars(!showStars)}>Magic Stars {showStars && <Check className="ml-2" />}</Button>
-                      <Button variant={showCrescent ? "default" : "outline"} onClick={() => setShowCrescent(!showCrescent)}>Crescent Moon {showCrescent && <Check className="ml-2" />}</Button>
+                  </TabsContent>
+                  <TabsContent value="theme" className="space-y-6">
+                    <div className="grid grid-cols-2 gap-2">
+                      {aiThemes.map(t => (
+                        <Button key={t.id} variant={selectedTheme.id === t.id ? "default" : "outline"} onClick={() => setSelectedTheme(t)} className="h-10 text-[10px]">{t.name}</Button>
+                      ))}
                     </div>
+                    <Button onClick={handleGenerateAiBackground} disabled={isGenerating || !originalImage} className="w-full emerald-gradient">
+                      {isGenerating ? <Loader2 className="animate-spin" /> : "Generate AI Backdrop"}
+                    </Button>
                   </TabsContent>
                 </CardContent>
               </Tabs>
@@ -382,15 +327,24 @@ export default function SelfieFrameGenerator() {
             <div className="relative w-full aspect-square max-w-xl bg-white rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
               <canvas ref={canvasRef} className="w-full h-full object-cover" />
               {!(originalImage || aiGeneratedImage) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm p-12 text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 p-12 text-center">
                   <Camera className="w-16 h-16 text-primary/20 animate-float" />
-                  <p className="font-black text-primary/40 uppercase tracking-widest mt-6">Snap or Upload a Selfie to Begin</p>
+                  <p className="font-black text-primary/40 uppercase tracking-widest mt-6">Snap or Upload a Selfie</p>
                 </div>
               )}
             </div>
             <div className="flex gap-4 mt-10 w-full max-w-xl">
-              <Button onClick={handleDownload} disabled={!(originalImage || aiGeneratedImage)} className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl">
-                <Download className="mr-3" /> Save Poster
+              <Button onClick={() => {
+                const link = document.createElement('a')
+                link.download = `EidSpark-Poster.png`
+                link.href = canvasRef.current!.toDataURL('image/png')
+                link.click()
+              }} disabled={!(originalImage || aiGeneratedImage)} className="flex-1 h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl">
+                <Download className="mr-3" /> Download
+              </Button>
+              <Button onClick={handleSaveToGallery} disabled={isSaving || !(originalImage || aiGeneratedImage)} className="h-16 rounded-2xl border-2 px-8 flex items-center gap-2">
+                {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-5 h-5" />}
+                Save
               </Button>
               <Button variant="outline" onClick={() => { setOriginalImage(null); setAiGeneratedImage(null); }} className="w-16 h-16 rounded-2xl border-2"><RefreshCcw /></Button>
             </div>

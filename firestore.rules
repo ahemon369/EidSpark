@@ -36,6 +36,12 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
+      match /selfiePosters/{id} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
       match /salamiEntries/{id} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -53,7 +59,7 @@ service cloud.firestore {
     match /salamiCards/{id} {
       allow get: if true;
       allow create: if isSignedIn();
-      allow list: if isSignedIn() && request.query.limit <= 50; // Basic protection
+      allow list: if isSignedIn() && request.query.limit <= 50;
     }
 
     match /leaderboard/{userId} {

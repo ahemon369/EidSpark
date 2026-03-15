@@ -40,7 +40,7 @@ import {
 const menuItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "My Greetings", href: "/dashboard/greetings", icon: Send },
-  { name: "Selfie Studio", href: "/tools/selfie", icon: Camera },
+  { name: "My Selfie Gallery", href: "/dashboard/selfies", icon: Camera },
   { name: "Salami History", href: "/dashboard/salami", icon: Wallet },
   { name: "Saved Mosques", href: "/dashboard/mosques", icon: MapPin },
   { name: "Zakat History", href: "/dashboard/zakat", icon: History },
@@ -81,7 +81,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex">
-      {/* Sidebar Mobile Toggle */}
       <Button 
         variant="ghost" 
         size="icon" 
@@ -91,13 +90,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-72 bg-white border-r transition-transform lg:relative lg:translate-x-0",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="p-8">
             <Link href="/" className="flex items-center gap-3">
               <div className="relative h-10 w-10 flex items-center justify-center">
@@ -115,7 +112,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </Link>
           </div>
 
-          {/* Nav Items */}
           <nav className="flex-grow px-4 space-y-2">
             {menuItems.map((item) => (
               <Link 
@@ -136,7 +132,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          {/* Footer User */}
           <div className="p-6 border-t">
             <Button 
               variant="ghost" 
@@ -150,9 +145,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex-grow flex flex-col h-screen overflow-hidden">
-        {/* Header */}
         <header className="h-20 bg-white border-b flex items-center justify-between px-8 shrink-0">
           <div className="hidden lg:block">
             <h1 className="text-xl font-black text-slate-800">
@@ -216,7 +209,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Content Scroll Area */}
         <main className="flex-grow overflow-y-auto p-8 custom-scrollbar">
           {children}
         </main>
