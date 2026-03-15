@@ -303,6 +303,41 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Social Proof Bar */}
+        <section className="py-16 relative bg-white/30 backdrop-blur-sm border-b border-primary/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 text-center lg:text-left">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
+                  <Users className="w-3 h-3" />
+                  <span>The Community Choice</span>
+                </div>
+                <h3 className="text-2xl lg:text-3xl font-black text-slate-800">Trusted by Muslims across Bangladesh</h3>
+              </div>
+              
+              <div className="flex flex-wrap justify-center items-center gap-12 lg:gap-20">
+                <div className="group">
+                  <div className="text-5xl font-black text-primary group-hover:text-secondary transition-colors duration-300">10,000+</div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Active Users</p>
+                </div>
+                
+                <div className="hidden lg:block w-px h-16 bg-slate-200"></div>
+
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center lg:text-left">Serving all major divisions</p>
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                    {['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi'].map((city) => (
+                      <span key={city} className="px-4 py-1.5 rounded-xl bg-white text-primary font-bold text-xs border-2 border-primary/5 shadow-sm hover:border-primary/20 transition-all cursor-default">
+                        {city}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Tools Section */}
         <section id="tools" className="py-32 relative bg-white/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
