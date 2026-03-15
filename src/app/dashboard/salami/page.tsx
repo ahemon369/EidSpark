@@ -21,22 +21,10 @@ export default function SalamiHistory() {
   // Tracker entries (Salami you received/tracked)
   const trackerRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return query(collection(db, "users", user.uid, "salamiEntries"), orderBy("entryDate", "desc"))
+    return query(collection(db, "users", user.uid, "salamiEntries"), orderBy("createdAt", "desc"))
   }, [db, user])
   const { data: trackerEntries, isLoading: loadingTracker } = useCollection(trackerRef)
 
-  // Sent cards (Digital envelopes you created)
-  const cardsRef = useMemoFirebase(() => {
-    if (!db || !user) return null
-    // Ideally we'd have senderId in backend, but we'll filter globally for now 
-    // or just show tracker entries as "History"
-    return query(collection(db, "salamiCards"), orderBy("createdAt", "desc"))
-  }, [db, user])
-  const { data: allCards, isLoading: loadingCards } = useCollection(cardsRef)
-  
-  // Filter cards where user might be the sender (if we added senderId)
-  // For now, let's just show tracker entries as the primary history
-  
   const handleDeleteEntry = async (id: string) => {
     if (!db || !user) return
     setIsDeleting(id)
@@ -45,12 +33,6 @@ export default function SalamiHistory() {
       toast({ title: "Record Deleted" })
     } catch (error) {}
     setIsDeleting(null)
-  }
-
-  const copyLink = (id: string) => {
-    const link = `${window.location.origin}/salami/${id}`
-    navigator.clipboard.writeText(link)
-    toast({ title: "Link Copied!" })
   }
 
   const totalSalami = trackerEntries?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
@@ -106,13 +88,13 @@ export default function SalamiHistory() {
                         <div className="flex items-center gap-6">
                           <Avatar className="h-14 w-14 border-4 border-white shadow-md">
                             <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
-                              {entry.personName?.[0]}
+                              {entry.giverName?.[0]}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-black text-slate-800 text-lg">{entry.personName}</p>
+                            <p className="font-black text-slate-800 text-lg">{entry.giverName}</p>
                             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                              {new Date(entry.entryDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                              {entry.receivedDate}
                             </p>
                           </div>
                         </div>

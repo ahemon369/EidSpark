@@ -9,55 +9,29 @@ service cloud.firestore {
      * CORE PHILOSOPHY:
      * This ruleset implements a strict User-Ownership model for personal data and a 
      * Database-Backed Access Control (DBAC) model for administrative configurations.
-     * The primary goal is to ensure users can only modify their own gamification 
-     * progress while allowing global visibility for social features like leaderboards.
-     *
-     * DATA STRUCTURE:
-     * - /users/{userId}: The root of user identity and gamification totals.
-     * - /users/{userId}/...: Subcollections containing private user activity (salami, greetings, progress).
-     * - /levels, /badges, /dailyChallenges: Global read-only configurations managed by admins.
-     * - /mosques: Publicly readable directory of locations.
-     * - /roles_admin: Internal collection for defining administrative UIDs.
-     *
-     * KEY SECURITY DECISIONS:
-     * 1. Path-Based Authorization: We rely on the {userId} wildcard in the path to 
-     *    match the request.auth.uid, providing high-performance authorization.
-     * 2. DBAC for Admins: Global write permissions for system-wide entities are 
-     *    granted by checking for the user's UID within the admin roles collection.
-     * 3. Public Profiles: Basic user profile data is readable by any authenticated 
-     *    user to support the "EidSpark Leaderboard" feature.
-     * 4. Relational Integrity: On document creation within user paths, we enforce 
-     *    that the internal data matches the path to prevent data spoofing.
      */
 
     // --- GLOBAL HELPER FUNCTIONS ---
 
-    /** @description Checks if the user is authenticated with Firebase Auth. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the provided UID matches the authenticated user. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Verifies ownership and ensures the document already exists for destructive/update actions. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
-    /** @description Checks if the authenticated user is registered as an administrator. */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     // --- COLLECTION RULES ---
 
-    /**
-     * @description User profile and gamification totals.
-     * @path /users/{userId}
-     */
+    /** @path /users/{userId} */
     match /users/{userId} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
@@ -65,27 +39,7 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Global definitions for levels, badges, and challenges.
-     */
-    match /levels/{levelId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /badges/{badgeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /dailyChallenges/{challengeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Tracks a user's progress toward daily challenge completion.
-     */
+    /** User subcollections */
     match /users/{userId}/dailyChallengeProgress/{progressId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -93,9 +47,10 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Personalized data for Salami, Greetings, and Zakat.
-     */
+    match /users/{userId}/savedExcuses/{id} {
+      allow get, list, create, delete: if isOwner(userId);
+    }
+
     match /users/{userId}/salamiEntries/{id} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.trackerUserId == userId;
@@ -117,9 +72,6 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description User contributions for mosque information (Jamaat times).
-     */
     match /users/{userId}/mosqueContributions/{id} {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.contributorUserId == userId;
@@ -127,19 +79,59 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Publicly accessible directory of mosque locations.
-     */
-    match /mosques/{mosqueId} {
-      allow get, list: if true;
+    match /users/{userId}/notifications/{id} {
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isSignedIn(); // Allow system to create notifications
+    }
+
+    match /users/{userId}/savedMosques/{id} {
+      allow get, list, create, delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/selfiePosters/{id} {
+      allow get, list, create, delete: if isOwner(userId);
+    }
+
+    /** Global collections */
+    match /levels/{levelId} {
+      allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Internal administrative roles configuration.
-     * @path /roles_admin/{userId}
-     * @allow (get) if owner (to check status in UI).
-     */
+    match /badges/{badgeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /dailyChallenges/{challengeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /mosques/{mosqueId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin() || isSignedIn();
+    }
+
+    match /eidSelfies/{id} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); 
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    match /salamiCards/{id} {
+      allow get: if true;
+      allow create: if isSignedIn();
+      allow list, update, delete: if false;
+    }
+
+    match /moonSightings/{id} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
     match /roles_admin/{userId} {
       allow get: if isOwner(userId);
       allow list, create, update, delete: if false;

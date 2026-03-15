@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Wallet, Plus, Trophy, Trash2, Lock, Crown, Send, Mail, Copy, Loader2, Gift, Sparkles } from "lucide-react"
+import { Wallet, Plus, Trophy, Trash2, Lock, Crown, Send, Mail, Copy, Loader2, Gift, Sparkles } from "lucide-center"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, setDoc, query, orderBy, limit } from "firebase/firestore"
@@ -33,7 +33,7 @@ export default function SalamiTracker() {
 
   const salamiQuery = useMemoFirebase(() => {
     if (!db || !user) return null
-    return query(collection(db, "users", user.uid, "receivedSalami"), orderBy("receivedAt", "desc"))
+    return query(collection(db, "users", user.uid, "salamiEntries"), orderBy("createdAt", "desc"))
   }, [db, user])
   const { data: salamiData } = useCollection(salamiQuery)
   const salamiEntries = salamiData || []
@@ -43,11 +43,12 @@ export default function SalamiTracker() {
     if (!name || !amount || !user || !db) return
     const giftAmount = parseFloat(amount)
     try {
-      await addDoc(collection(db, "users", user.uid, "receivedSalami"), {
-        userId: user.uid,
-        fromPerson: name,
+      await addDoc(collection(db, "users", user.uid, "salamiEntries"), {
+        trackerUserId: user.uid,
+        giverName: name,
         amount: giftAmount,
-        receivedAt: new Date().toISOString()
+        receivedDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
       })
       setName(""); setAmount("")
       toast({ title: "Salami Recorded!" })
@@ -127,8 +128,8 @@ export default function SalamiTracker() {
                     salamiEntries.map((entry) => (
                       <div key={entry.id} className="flex items-center justify-between p-6 hover:bg-primary/5 transition-colors">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.fromPerson?.[0]}</AvatarFallback></Avatar>
-                          <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.fromPerson}</p></div>
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.giverName?.[0]}</AvatarFallback></Avatar>
+                          <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.giverName}</p></div>
                         </div>
                         <p className="text-2xl font-black text-primary dark:text-secondary">৳{entry.amount}</p>
                       </div>

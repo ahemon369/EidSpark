@@ -122,7 +122,7 @@ export default function FunZone() {
 
   const salamiRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return query(collection(db, "users", user.uid, "receivedSalami"), orderBy("receivedAt", "desc"))
+    return query(collection(db, "users", user.uid, "salamiEntries"), orderBy("createdAt", "desc"))
   }, [db, user])
   const { data: salamiRecords } = useCollection(salamiRef)
 
@@ -221,11 +221,12 @@ export default function FunZone() {
     if (!user || !db || !amount) return
     setIsAddingSalami(true)
     try {
-      await addDoc(collection(db, "users", user.uid, "receivedSalami"), {
-        userId: user.uid,
+      await addDoc(collection(db, "users", user.uid, "salamiEntries"), {
+        trackerUserId: user.uid,
         amount: Number(amount),
-        fromPerson: from,
-        receivedAt: new Date().toISOString()
+        giverName: from,
+        receivedDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
       })
       toast({ title: "Salami Added! ৳" })
       setAmount(""); setFrom("")
@@ -264,8 +265,6 @@ export default function FunZone() {
       }, { merge: true })
       toast({ title: "Liked! ❤️" })
       
-      // Award points to the AUTHOR of the selfie
-      // In a real system, we'd fetch the selfie first to get the authorId
       awardPoints(db, user.uid, 'ReceiveLike')
     } catch (e) {}
   }
@@ -280,7 +279,7 @@ export default function FunZone() {
   }
 
   const totalSalamiValue = salamiRecords?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
-  const chartData = [...(salamiRecords || [])].reverse().slice(-10).map(r => ({ name: r.fromPerson || "...", amount: r.amount }))
+  const chartData = [...(salamiRecords || [])].reverse().slice(-10).map(r => ({ name: r.giverName || "...", amount: r.amount }))
 
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-20 selection:bg-secondary selection:text-primary">

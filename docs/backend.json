@@ -454,6 +454,49 @@
         "calculatedZakatAmount",
         "calculationDate"
       ]
+    },
+    "SavedExcuse": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavedExcuse",
+      "type": "object",
+      "description": "A funny Eid Salami excuse saved by the user.",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "text", "savedAt"]
+    },
+    "EidSelfie": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EidSelfie",
+      "type": "object",
+      "description": "A selfie submitted to the Eid contest.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "caption": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "uploadedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "imageUrl", "uploadedAt"]
+    },
+    "SalamiCard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalamiCard",
+      "type": "object",
+      "description": "A digital Eidi envelope shared between users.",
+      "properties": {
+        "id": { "type": "string" },
+        "senderName": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "message": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentLink": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderName", "recipientName", "createdAt"]
     }
   },
   "auth": {
@@ -471,80 +514,52 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores a user's profile and gamification progress, including total points, current level, and earned badges. Read access for basic profile info (username, avatar, points, level, badges) is public (e.g., for leaderboard), but full document read/write is restricted to the owner (userId from path == request.auth.uid).",
+          "description": "Stores a user's profile and gamification progress.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user, matching request.auth.uid."
+              "description": "The unique identifier of the user."
             }
           ]
         }
       },
       {
-        "path": "/levels/{levelId}",
+        "path": "/users/{userId}/savedExcuses/{id}",
         "definition": {
-          "entityName": "Level",
+          "entityName": "SavedExcuse",
           "schema": {
-            "$ref": "#/backend/entities/Level"
+            "$ref": "#/backend/entities/SavedExcuse"
           },
-          "description": "Defines the global progression levels in the EidSpark Rewards system. This collection is read-only for all authenticated users and writeable by administrators.",
+          "description": "Personalized saved funny excuses.",
           "params": [
-            {
-              "name": "levelId",
-              "description": "The unique identifier for a specific level."
-            }
+            { "name": "userId", "description": "The owner's UID." },
+            { "name": "id", "description": "Excuse document ID." }
           ]
         }
       },
       {
-        "path": "/badges/{badgeId}",
+        "path": "/eidSelfies/{id}",
         "definition": {
-          "entityName": "Badge",
+          "entityName": "EidSelfie",
           "schema": {
-            "$ref": "#/backend/entities/Badge"
+            "$ref": "#/backend/entities/EidSelfie"
           },
-          "description": "Defines the global badges that users can earn. This collection is read-only for all authenticated users and writeable by administrators.",
+          "description": "Global contest submissions.",
           "params": [
-            {
-              "name": "badgeId",
-              "description": "The unique identifier for a specific badge."
-            }
+            { "name": "id", "description": "Selfie document ID." }
           ]
         }
       },
       {
-        "path": "/dailyChallenges/{challengeId}",
+        "path": "/salamiCards/{id}",
         "definition": {
-          "entityName": "DailyChallenge",
+          "entityName": "SalamiCard",
           "schema": {
-            "$ref": "#/backend/entities/DailyChallenge"
+            "$ref": "#/backend/entities/SalamiCard"
           },
-          "description": "Defines the daily challenges available to all users. This collection is read-only for all authenticated users and writeable by administrators.",
+          "description": "Shared digital Eidi envelopes.",
           "params": [
-            {
-              "name": "challengeId",
-              "description": "The unique identifier for a specific daily challenge."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/dailyChallengeProgress/{challengeProgressId}",
-        "definition": {
-          "entityName": "UserChallengeProgress",
-          "schema": {
-            "$ref": "#/backend/entities/UserChallengeProgress"
-          },
-          "description": "Tracks a specific user's progress for a daily challenge on a given day. The `challengeProgressId` should be a composite of `challengeId` and `date` (e.g., 'challengeId_YYYY-MM-DD'). Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user whose challenge progress is being tracked."
-            },
-            {
-              "name": "challengeProgressId",
-              "description": "The unique identifier for a specific user's progress on a daily challenge for a given day (e.g., {challengeId}_{date})."
-            }
+            { "name": "id", "description": "Card document ID." }
           ]
         }
       },
@@ -555,7 +570,7 @@
           "schema": {
             "$ref": "#/backend/entities/SalamiEntry"
           },
-          "description": "Records individual 'salami' (gift money) entries received by a user as part of the Salami Tracker. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'trackerUserId' for authorization independence.",
+          "description": "Records individual 'salami' entries received by a user.",
           "params": [
             {
               "name": "userId",
@@ -575,11 +590,11 @@
           "schema": {
             "$ref": "#/backend/entities/EidGreeting"
           },
-          "description": "Stores details about a personalized Eid greeting generated by a user. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'creatorUserId' for authorization independence.",
+          "description": "Stores details about a personalized Eid greeting generated by a user.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who created this Eid greeting."
+              "description": "The unique identifier of the user."
             },
             {
               "name": "greetingId",
@@ -587,80 +602,7 @@
             }
           ]
         }
-      },
-      {
-        "path": "/mosques/{mosqueId}",
-        "definition": {
-          "entityName": "Mosque",
-          "schema": {
-            "$ref": "#/backend/entities/Mosque"
-          },
-          "description": "Stores general information about mosques, used by the Mosque Finder feature. This collection is publicly readable for all users and writeable by administrators.",
-          "params": [
-            {
-              "name": "mosqueId",
-              "description": "The unique identifier for a specific mosque."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/mosqueContributions/{contributionId}",
-        "definition": {
-          "entityName": "UserMosqueContribution",
-          "schema": {
-            "$ref": "#/backend/entities/UserMosqueContribution"
-          },
-          "description": "Records user-contributed information about mosques (e.g., Eid Jamaat times). Write access is restricted to the contributor (userId from path == request.auth.uid). Read access for the contributor and administrators. Includes denormalized 'contributorUserId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who made this mosque contribution."
-            },
-            {
-              "name": "contributionId",
-              "description": "The unique identifier for a specific mosque contribution."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/zakatCalculations/{recordId}",
-        "definition": {
-          "entityName": "ZakatCalculationRecord",
-          "schema": {
-            "$ref": "#/backend/entities/ZakatCalculationRecord"
-          },
-          "description": "Stores a historical record of a user's Zakat calculations. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who performed this Zakat calculation."
-            },
-            {
-              "name": "recordId",
-              "description": "The unique identifier for a specific Zakat calculation record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{adminUid}",
-        "definition": {
-          "entityName": "AdminRole",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Manages administrator roles for privileged operations (e.g., modifying global levels, badges, daily challenges). Authorization is based on existence of the authenticated user's UID in this collection (DBAC principle). Documents here would be very minimal, potentially just { 'uid': true }.",
-          "params": [
-            {
-              "name": "adminUid",
-              "description": "The unique identifier of a user who has administrator privileges."
-            }
-          ]
-        }
       }
-    ],
-    "reasoning": "The Firestore structure for EidSpark Rewards is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and mandates. \n\n**Authorization Independence (CRITICAL):** This design primarily achieves Authorization Independence through two key strategies:\n1.  **Path-Based Ownership:** For all user-specific data (e.g., `UserProfile`, `SalamiEntry`, `EidGreeting`, `UserMosqueContribution`, `ZakatCalculationRecord`, `UserChallengeProgress`), the data is structured under `/users/{userId}/...`. In this pattern, the `{userId}` wildcard in the path directly corresponds to `request.auth.uid` from Firebase Authentication. This means that authorization rules can directly check `request.auth.uid == userId` without needing any `get()` operations to fetch parent documents or other user-specific roles. This eliminates hierarchical authorization dependencies and allows for atomic operations (like creating a user profile and initial settings in a single batch) without rule complications. Each document within these subcollections also includes a `userId` or similar identifier (e.g., `creatorUserId`, `trackerUserId`), reinforcing ownership and enabling direct data integrity checks within the document itself.\n2.  **Global/Static Collections:** For entities like `Level`, `Badge`, `DailyChallenge`, and `Mosque`, these collections are global and primarily read-only for all authenticated users (or public), with write access restricted to administrative roles (managed via a separate `roles_admin/{uid}` collection). Since their access doesn't depend on any user-specific attributes or other documents, they inherently achieve authorization independence. There are no cross-collection `get()` calls in rules required for their authorization.\n\n**QAPs (Queries as Permissions):** The structure facilitates secure `list` operations (QAPs) by:\n1.  **Structural Segregation:** Data with different security postures is segregated into distinct collections or subcollections. For instance, public-facing definitions like `levels` and `badges` are top-level collections, allowing anyone to `list` them securely. User-owned private data is nested under `/users/{userId}`, ensuring that `list` queries for, say, `salamiEntries` must implicitly include the `userId` in the path, thereby restricting results to the authenticated user's data.\n2.  **Leaderboard Derivation:** The leaderboard (`EidSpark Leaderboard`) is designed to be derived directly from the `totalPoints` field in the `/users/{userId}` documents. A client-side query (e.g., `firestore.collection('users').orderBy('totalPoints', 'desc').limit(X)`) will be used. Security rules can then enforce that only public profile fields (`username`, `avatarUrl`, `totalPoints`, `levelId`, `earnedBadgeIds`) are readable for such `list` queries, while sensitive user data remains private. This avoids the need for a separate, denormalized `leaderboard` collection, which would introduce synchronization overhead.\n\n**Other Principles:**\n*   **DBAC (Database-Backed Access Control):** Global roles (e.g., for admin access to `levels` or `dailyChallenges`) will be managed via existence in a dedicated `roles_admin/{uid}` collection, relying solely on `request.auth.uid` for checks, not custom claims.\n*   **Data Clarity and Predictability:** Wildcards are descriptive (e.g., `{userId}`, `{challengeId}`). Fields like `ownerId`, `creatorUserId` are consistently used for explicit ownership within documents, supporting clear rules and efficient indexing. The `rank` is not stored, as it's a dynamic, derived value. `totalPoints` is managed within the `UserProfile` document, ensuring a single source of truth for gamification points."
+    ]
   }
 }

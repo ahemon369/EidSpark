@@ -19,21 +19,19 @@ import {
   Medal,
   Target,
   ArrowUpRight,
-  TrendingUp
+  TrendingUp,
+  Star
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { getLevelInfo } from "@/lib/gamification-utils"
+import { getLevelInfo, LEVELS } from "@/lib/gamification-utils"
 import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function DashboardOverview() {
   const { user } = useUser()
   const db = useFirestore()
 
-  const userDocRef = useMemoFirebase(() => {
-    if (!db || !user) return null
-    return doc(db, "users", user.uid)
-  }, [db, user])
   const { data: userData } = useCollection(useMemoFirebase(() => {
     if (!db || !user) return null
     return query(collection(db, "users"), where("id", "==", user.uid))
@@ -50,7 +48,7 @@ export default function DashboardOverview() {
 
   const salamiRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return collection(db, "users", user.uid, "receivedSalami")
+    return collection(db, "users", user.uid, "salamiEntries")
   }, [db, user])
   const { data: salami } = useCollection(salamiRef)
 
