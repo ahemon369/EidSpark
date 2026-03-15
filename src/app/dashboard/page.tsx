@@ -13,8 +13,6 @@ import {
   MapPin, 
   ArrowRight, 
   Sparkles,
-  Calculator,
-  Compass,
   Trophy,
   Medal,
   Target,
@@ -115,11 +113,11 @@ export default function DashboardOverview() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-black uppercase tracking-widest backdrop-blur-md">
                 <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
-                <span>EidSpark Rewards v1.0</span>
+                <span>EidSpark Rewards Active</span>
               </div>
               <h2 className="text-4xl font-black tracking-tight">Welcome back, {user?.displayName?.split(' ')[0]}! 🌙</h2>
               <p className="text-white/80 font-medium text-lg leading-relaxed">
-                You're officially an <span className="text-secondary font-black">{levelInfo.name}</span>. Keep engaging to reach Legend status!
+                You're currently an <span className="text-secondary font-black">{levelInfo.name}</span>. Keep participating to unlock exclusive rewards!
               </p>
             </div>
 
@@ -159,19 +157,19 @@ export default function DashboardOverview() {
                   {levelInfo.icon}
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Badge Earned</p>
-                  <p className="text-2xl font-black text-primary">{levelInfo.name}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Global Rank</p>
+                  <p className="text-2xl font-black text-primary">#{globalRank || '...'}</p>
                 </div>
               </div>
             </div>
             <div className="pt-8 border-t space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-muted-foreground">Rank Position</span>
-                <span className="text-lg font-black text-primary">#{globalRank || '...'}</span>
+                <span className="text-xs font-bold text-muted-foreground">Level Milestone</span>
+                <span className="text-sm font-black text-primary">{levelInfo.name}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-muted-foreground">Achievements</span>
-                <span className="text-lg font-black text-primary">{achievementCount} / 6</span>
+                <span className="text-sm font-black text-primary">{achievementCount} / 6 Unlocked</span>
               </div>
             </div>
           </Card>
@@ -186,7 +184,7 @@ export default function DashboardOverview() {
                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg", stat.color)}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Live</div>
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Activity</div>
               </div>
               <p className="text-3xl font-black text-slate-800 mb-1">{stat.value}</p>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
@@ -200,9 +198,9 @@ export default function DashboardOverview() {
           <div className="flex items-center justify-between px-2">
             <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
               <Target className="w-6 h-6 text-primary" />
-              Daily Challenges
+              Today's Eid Challenges
             </h3>
-            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Resets in 14h</span>
+            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Resets at Midnight</span>
           </div>
           
           <div className="space-y-4">
@@ -214,7 +212,7 @@ export default function DashboardOverview() {
 
         <section className="space-y-6">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-xl font-black text-slate-800">Trending Now</h3>
+            <h3 className="text-xl font-black text-slate-800">Trending Community</h3>
           </div>
           <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white p-8 space-y-6">
             <div className="flex items-center gap-4 group cursor-pointer">
@@ -224,14 +222,14 @@ export default function DashboardOverview() {
                 </div>
                 <div className="flex-grow">
                   <p className="text-sm font-black text-slate-800">Selfie Contest Live!</p>
-                  <p className="text-xs text-muted-foreground">Upload now for +10 points</p>
+                  <p className="text-xs text-muted-foreground">Participate for +10 points</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
             
             <div className="pt-6 border-t">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">Recent Top Player</p>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">Community Highlight</p>
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10 border-2 border-secondary">
                   <AvatarImage src="https://picsum.photos/seed/winner/100/100" />
@@ -263,7 +261,7 @@ function ChallengeCard({ title, reward, count, target, icon }: any) {
         <div className="flex-grow space-y-2">
           <div className="flex justify-between items-center">
             <h4 className="font-black text-slate-800">{title}</h4>
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-full">+{reward} XP</span>
+            <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-full">+{reward} Bonus XP</span>
           </div>
           <div className="space-y-1">
             <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">

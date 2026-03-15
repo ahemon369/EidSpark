@@ -54,29 +54,29 @@ export function getLevelInfo(points: number) {
 }
 
 /**
- * Awards points to a user for a specific action.
+ * Awards points to a user for a specific action and manages daily challenges.
  */
 export function awardPoints(db: Firestore, userId: string, action: ActionType) {
   const points = POINTS_MAP[action];
   const userRef = doc(db, 'users', userId);
 
-  // Update total points
+  // Update total points using setDoc with merge to ensure doc exists
   setDoc(userRef, {
     id: userId,
     totalPoints: increment(points),
     updatedAt: new Date().toISOString()
   }, { merge: true }).then(() => {
-    // Basic celebration
+    // Celebrity burst for earning points
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.7 },
       colors: ['#065f46', '#fbbf24', '#ffffff']
     });
 
     toast({
       title: `+${points} Eid Points! 🎉`,
-      description: `You earned points for ${action.replace(/([A-Z])/g, ' $1').trim()}.`,
+      description: `Action rewarded: ${action.replace(/([A-Z])/g, ' $1').trim()}.`,
     });
 
     // Handle Daily Challenge Progress
@@ -130,15 +130,16 @@ function awardBonus(db: Firestore, userId: string, action: string, reward: numbe
   updateDoc(userRef, {
     totalPoints: increment(reward)
   }).then(() => {
+    // Grand celebration for finishing a challenge
     confetti({
-      particleCount: 200,
-      spread: 100,
+      particleCount: 250,
+      spread: 120,
       origin: { y: 0.5 },
-      colors: ['#fbbf24', '#ffffff']
+      colors: ['#fbbf24', '#ffffff', '#059669']
     });
     toast({
       title: "Challenge Complete! 🏆",
-      description: `You earned a bonus of +${reward} XP!`,
+      description: `You earned a bonus of +${reward} XP for finishing Today's Challenge!`,
     });
   });
 }
