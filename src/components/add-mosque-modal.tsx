@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, MapPin, Loader2, Globe, Sparkles, LocateFixed } from "lucide-react"
+import { Plus, MapPin, Loader2, Globe, Sparkles, LocateFixed, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export function AddMosqueModal() {
@@ -33,7 +33,7 @@ export function AddMosqueModal() {
     area: "",
     latitude: "",
     longitude: "",
-    googleMapsLink: "",
+    eidPrayerTime: "",
     description: ""
   })
 
@@ -49,7 +49,9 @@ export function AddMosqueModal() {
         toast({ title: "Coordinates Locked!", description: "Location detection successful." })
       }, () => {
         toast({ variant: "destructive", title: "GPS Error", description: "Could not auto-detect location. Please enter manually." })
-      })
+      }, { enableHighAccuracy: true })
+    } else {
+      toast({ variant: "destructive", title: "Not Supported", description: "Geolocation is not supported by your browser." })
     }
   }
 
@@ -60,25 +62,29 @@ export function AddMosqueModal() {
       return
     }
 
-    if (!formData.name || !formData.district || !formData.latitude || !formData.longitude) {
-      toast({ variant: "destructive", title: "Missing Information", description: "Name, District, and GPS Coordinates are mandatory." })
+    if (!formData.name || !formData.district || !formData.latitude || !formData.longitude || !formData.eidPrayerTime) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Name, District, Prayer Time, and GPS Coordinates are mandatory." })
       return
     }
 
     setIsSubmitting(true)
     try {
       await addDoc(collection(db, "mosques"), {
-        ...formData,
+        name: formData.name,
+        district: formData.district,
+        area: formData.area,
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude),
+        eid_prayer_time: formData.eidPrayerTime,
+        description: formData.description,
         isApprovedByAdmin: false,
         submittedByUserId: user.uid,
         createdAt: new Date().toISOString()
       })
       
-      toast({ title: "Submission Received!", description: "Your mosque entry is now pending community verification." })
+      toast({ title: "Thank you!", description: "Your mosque has been added and is now live on the map." })
       setOpen(false)
-      setFormData({ name: "", district: "", area: "", latitude: "", longitude: "", googleMapsLink: "", description: "" })
+      setFormData({ name: "", district: "", area: "", latitude: "", longitude: "", eidPrayerTime: "", description: "" })
     } catch (error) {
       console.error(error)
     } finally {
@@ -99,12 +105,12 @@ export function AddMosqueModal() {
           <DialogHeader>
             <DialogTitle className="text-4xl font-black tracking-tight">Submit Mosque</DialogTitle>
             <DialogDescription className="text-emerald-50/80 font-medium text-lg mt-2">
-              Contribute to the Live Eid Jamaat Finder and help your community find prayer locations.
+              Add your local mosque to the real-time Eid Jamaat Finder.
             </DialogDescription>
           </DialogHeader>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-10 space-y-8">
+        <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
           <div className="space-y-6">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Mosque Identification</Label>
@@ -127,23 +133,36 @@ export function AddMosqueModal() {
                 />
               </div>
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Area / Neighborhood</Label>
-                <Input 
-                  value={formData.area} 
-                  onChange={e => setFormData({...formData, area: e.target.value})}
-                  placeholder="Paltan" 
-                  className="h-14 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all font-medium px-6"
-                />
+                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Eid Prayer Time</Label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    value={formData.eidPrayerTime} 
+                    onChange={e => setFormData({...formData, eidPrayerTime: e.target.value})}
+                    placeholder="e.g. 7:30 AM" 
+                    className="h-14 pl-10 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all font-medium"
+                  />
+                </div>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Area / Address</Label>
+              <Input 
+                value={formData.area} 
+                onChange={e => setFormData({...formData, area: e.target.value})}
+                placeholder="Area name or full address" 
+                className="h-14 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all font-medium px-6"
+              />
             </div>
 
             <div className="bg-primary/5 p-8 rounded-[2.5rem] space-y-6 border border-primary/5 relative">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-3">
-                  <MapPin className="w-4 h-4" /> Accurate GPS Location
+                  <MapPin className="w-4 h-4" /> GPS Coordinates
                 </Label>
                 <Button type="button" variant="ghost" size="sm" onClick={detectLocation} className="text-[10px] font-black uppercase text-secondary h-8 hover:bg-secondary/10 px-4 rounded-full">
-                  <LocateFixed className="w-3.5 h-3.5 mr-2" /> Auto-Detect
+                  <LocateFixed className="w-3.5 h-3.5 mr-2" /> Use My Location
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-6">
@@ -165,12 +184,12 @@ export function AddMosqueModal() {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Additional Information (Optional)</Label>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Notes (Optional)</Label>
               <Textarea 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})}
-                placeholder="Mosque capacity, specific entrance directions, or facilities..." 
-                className="rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all min-h-[100px] p-6"
+                placeholder="Facilities, parking info, etc..." 
+                className="rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all min-h-[80px] p-6"
               />
             </div>
           </div>

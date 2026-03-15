@@ -109,7 +109,7 @@ export default function JamaatFinderPage() {
     return mosques.filter(m => 
       m.name.toLowerCase().includes(q) ||
       m.district.toLowerCase().includes(q) ||
-      m.area.toLowerCase().includes(q)
+      (m.area && m.area.toLowerCase().includes(q))
     )
   }, [allMosques, searchQuery, userLocation])
 
@@ -130,11 +130,11 @@ export default function JamaatFinderPage() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 text-primary dark:text-secondary text-xs font-black uppercase tracking-widest border border-primary/10 backdrop-blur-md">
               <Sparkles className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
-              <span>Community-Driven Platform</span>
+              <span>Real-Time Community Network</span>
             </div>
             <h1 className="text-5xl lg:text-[90px] font-black text-primary dark:text-white tracking-tighter leading-[0.9]">Find Eid Prayers</h1>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed">
-              Discover verified Eid prayer times across Bangladesh. Join thousands of users contributing to the most accurate prayer map.
+              Discover verified Eid prayer times across Bangladesh. Contributed by the community and updated instantly.
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export default function JamaatFinderPage() {
             <div className="relative w-full sm:w-96 group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
               <Input 
-                placeholder="Mosque, District, or Area..." 
+                placeholder="Search mosque, district or area..." 
                 className="h-16 pl-14 rounded-[2rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl border-primary/5 focus:border-primary/20 transition-all text-lg font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,22 +171,11 @@ export default function JamaatFinderPage() {
             <TabsList className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-primary/5 p-1 rounded-[2.5rem] h-16 shadow-2xl">
               <TabsTrigger value="map" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Map View</TabsTrigger>
               <TabsTrigger value="list" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">List View</TabsTrigger>
-              {isAdmin && <TabsTrigger value="admin" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-secondary data-[state=active]:text-primary">Admin Control</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="admin" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-secondary data-[state=active]:text-primary">Moderation</TabsTrigger>}
             </TabsList>
-            
-            <div className="hidden lg:flex items-center gap-6">
-               <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
-                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Confirmed</span>
-               </div>
-               <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]"></div>
-                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Pending Verification</span>
-               </div>
-            </div>
           </div>
 
-          <TabsContent value="map" className="animate-in fade-in zoom-in duration-1000 h-[800px] rounded-[4rem] overflow-hidden border-[12px] border-white dark:border-slate-900 shadow-[0_64px_128px_-12px_rgba(0,0,0,0.1)]">
+          <TabsContent value="map" className="animate-in fade-in zoom-in duration-1000 h-[700px] rounded-[4rem] overflow-hidden border-[12px] border-white dark:border-slate-900 shadow-[0_64px_128px_-12px_rgba(0,0,0,0.1)]">
             <JamaatMap mosques={filteredMosques} onSelectMosque={setSelectedMosqueId} userLocation={userLocation} />
           </TabsContent>
 
@@ -199,16 +188,18 @@ export default function JamaatFinderPage() {
                   <div className="w-24 h-24 bg-primary/5 rounded-[3rem] flex items-center justify-center mx-auto">
                     <Globe className="w-12 h-12 text-primary/20" />
                   </div>
-                  <p className="text-2xl font-black text-muted-foreground">No mosques found matching "{searchQuery}"</p>
+                  <p className="text-2xl font-black text-muted-foreground">No mosques found matching your search</p>
                   <Button variant="ghost" onClick={() => setSearchQuery("")} className="font-bold">Clear Search</Button>
                 </div>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="admin" className="animate-in fade-in duration-700">
-            <AdminJamaatPanel />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="admin" className="animate-in fade-in duration-700">
+              <AdminJamaatPanel />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
       <Footer />
@@ -217,61 +208,39 @@ export default function JamaatFinderPage() {
 }
 
 function MosqueCard({ mosque, isAdmin }: { mosque: any, isAdmin: boolean }) {
-  const db = useFirestore()
-  const timesRef = useMemoFirebase(() => {
-    if (!db) return null
-    return collection(db, "mosques", mosque.id, "jamaatTimes")
-  }, [db, mosque.id])
-  const { data: times } = useCollection(timesRef)
-  
-  const approvedTimes = useMemo(() => 
-    times?.filter(t => t.isApprovedByAdmin || isAdmin).sort((a, b) => a.time.localeCompare(b.time)) || [], 
-  [times, isAdmin])
-
   return (
     <Card className="border-none shadow-xl rounded-[3.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl group hover:-translate-y-3 transition-all duration-500 hover:shadow-[0_48px_96px_-12px_rgba(6,95,70,0.15)] border border-transparent hover:border-primary/10">
-      <div className={cn(
-        "p-10 text-white relative overflow-hidden transition-all duration-500",
-        mosque.isApprovedByAdmin ? "emerald-gradient" : "bg-gradient-to-br from-amber-500 to-amber-600"
-      )}>
+      <div className="p-10 text-white relative overflow-hidden transition-all duration-500 emerald-gradient">
         <MapPin className="absolute -top-4 -right-4 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
         <div className="relative z-10 space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-black tracking-tight leading-tight">{mosque.name}</h3>
             {mosque.isApprovedByAdmin && <CheckCircle2 className="w-5 h-5 text-secondary fill-secondary" />}
           </div>
-          <p className="text-xs font-bold opacity-80 uppercase tracking-[0.2em]">{mosque.area}, {mosque.district}</p>
+          <p className="text-xs font-bold opacity-80 uppercase tracking-[0.2em]">{mosque.area || mosque.district}, {mosque.district}</p>
         </div>
       </div>
       <CardContent className="p-10 space-y-8">
         <div className="flex items-center justify-between border-b border-primary/5 pb-4">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-primary opacity-40" />
-            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Eid Jamaats</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Eid Jamaat</p>
           </div>
           <AddJamaatTimeModal mosqueId={mosque.id} mosqueName={mosque.name} />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          {approvedTimes.length > 0 ? approvedTimes.map((t) => (
-            <div key={t.id} className="bg-primary/5 p-4 rounded-[1.5rem] border border-primary/5 flex flex-col items-center group/time hover:bg-primary transition-all duration-300">
-              <span className="text-base font-black text-primary group-hover/time:text-white">{t.time}</span>
-              {t.communitySubmissionCount > 1 && (
-                <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 group-hover/time:text-emerald-200 uppercase tracking-tighter mt-1">
-                  <CheckCircle2 className="w-2.5 h-2.5" /> Verified
-                </div>
-              )}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-primary/5 p-4 rounded-[1.5rem] border border-primary/5 flex flex-col items-center group/time hover:bg-primary transition-all duration-300">
+            <span className="text-lg font-black text-primary group-hover/time:text-white">{mosque.eid_prayer_time || "Pending..."}</span>
+            <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 group-hover/time:text-emerald-200 uppercase tracking-tighter mt-1">
+              <CheckCircle2 className="w-2.5 h-2.5" /> Verified by Community
             </div>
-          )) : (
-            <div className="col-span-2 py-6 text-center bg-slate-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Waiting for community updates</p>
-            </div>
-          )}
+          </div>
         </div>
 
         <Button 
           className="w-full h-14 font-black emerald-gradient rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95 text-white" 
-          onClick={() => window.open(mosque.googleMapsLink || `https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank")}
+          onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank")}
         >
           <Navigation className="w-5 h-5 mr-3" /> Get Directions
         </Button>
