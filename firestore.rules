@@ -8,7 +8,7 @@
  * sub-resources (like prayer times) carry their own authorization state, minimizing expensive cross-document lookups.
  * 
  * Data Structure:
- * - /users/{userId}: Private user profiles, strictly owner-accessible.
+ * - /users/{userId}: Private user profiles and subcollections, strictly owner-accessible.
  * - /roles_admin/{userId}: Administrative role registry (DBAC).
  * - /mosques/{mosqueId}: Publicly viewable mosque registry (once approved) with contributor ownership.
  * - /mosques/{mosqueId}/jamaatTimes/{jamaatTimeId}: Individual prayer times linked to mosques.
@@ -54,10 +54,9 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description Rules for user profiles. Only the user themselves can read or write their profile.
+     * @description Rules for user profiles. Only the user themselves can read or write their profile and subcollections.
      * @path /users/{userId}
      * @allow get, list, create, update, delete: if isOwner(userId)
-     * @deny update: if request.auth.uid != userId (mismatched owner)
      * @principle Ownership: Restricts access to a user's own data tree.
      */
     match /users/{userId} {
@@ -65,13 +64,21 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isOwner(userId);
+
+      /**
+       * @description Rules for user-specific subcollections (e.g., zakatCalculations, eidGreetings).
+       *              Recursively allows access to all sub-documents if the user is the owner.
+       */
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     /**
      * @description Rules for the admin role registry. Read access is allowed for signed-in users 
      *              to facilitate rule checks; writes are strictly limited to existing admins.
      * @path /roles_admin/{userId}
-     * @allow get: if isSignedIn()
+     * @allow get: if isSignedIn();
      * @deny create: if !isAdmin() (only admins can promote others)
      * @principle Roles: Centralized DBAC (Database Access Control) for administrative privileges.
      */
@@ -120,6 +127,38 @@ service cloud.firestore {
                       
         allow delete: if isExistingOwnerOrAdmin(resource.data.submittedByUserId);
       }
+    }
+
+    /**
+     * @description Rules for Moon Sightings. Publicly readable for the interactive map.
+     *              Registered users can submit their sightings.
+     *              Only the original reporter or an admin can delete a report.
+     * @path /moonSightings/{sightingId}
+     */
+    match /moonSightings/{sightingId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    /**
+     * @description Rules for Salami Cards (Digital Envelopes).
+     *              Readable by anyone with the unique magic link (id).
+     *              Created by registered users.
+     */
+    match /salamiCards/{cardId} {
+      allow get: if true;
+      allow create: if isSignedIn();
+      allow list, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for the Global Leaderboard.
+     *              Publicly readable. Updated by users when they add a Salami entry.
+     */
+    match /leaderboard/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
     }
   }
 }
