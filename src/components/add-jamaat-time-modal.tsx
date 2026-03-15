@@ -1,0 +1,127 @@
+
+"use client"
+
+import { useState } from "react"
+import { useFirestore, useUser } from "@/firebase"
+import { collection, addDoc, getDocs, query, where, updateDoc, doc, increment } from "firebase/firestore"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Clock, Plus, Loader2, Sparkles } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string, mosqueName: string }) {
+  const { user } = useUser()
+  const db = useFirestore()
+  const { toast } = useToast()
+  
+  const [open, setOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [time, setTime] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !db) {
+      toast({ variant: "destructive", title: "Sign in required" })
+      return
+    }
+
+    if (!time) {
+      toast({ variant: "destructive", title: "Required", description: "Please enter a prayer time." })
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      // Check if this time already exists for this mosque
+      const q = query(
+        collection(db, "mosques", mosqueId, "jamaatTimes"),
+        where("time", "==", time)
+      )
+      const existing = await getDocs(q)
+      
+      if (!existing.empty) {
+        // Increment community count if same time reported
+        const timeDoc = existing.docs[0]
+        await updateDoc(doc(db, "mosques", mosqueId, "jamaatTimes", timeDoc.id), {
+          communitySubmissionCount: increment(1)
+        })
+        toast({ title: "Submission Verified!", description: "This time was already reported. We've added your verification." })
+      } else {
+        // Create new time entry
+        await addDoc(collection(db, "mosques", mosqueId, "jamaatTimes"), {
+          mosqueId,
+          eidDate: "2026-03-20", // Hardcoded for 2026 requirement or dynamic
+          time,
+          isApprovedByAdmin: false,
+          submittedByUserId: user.uid,
+          submittedAt: new Date().toISOString(),
+          communitySubmissionCount: 1
+        })
+        toast({ title: "Time Added!", description: "Will appear once approved." })
+      }
+      
+      setOpen(false)
+      setTime("")
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-primary/5 text-primary hover:bg-primary/10">
+          <Plus className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[400px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden">
+        <div className="emerald-gradient p-8 text-white relative">
+          <Sparkles className="absolute top-4 right-4 w-8 h-8 opacity-20" />
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Add Jamaat Time</DialogTitle>
+            <DialogDescription className="text-white/70 font-medium">
+              Schedule for {mosqueName}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Prayer Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input 
+                  type="text"
+                  value={time} 
+                  onChange={e => setTime(e.target.value)}
+                  placeholder="e.g. 7:30 AM" 
+                  className="h-14 pl-12 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground italic px-1">Note: Enter the exact time including AM/PM.</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-2xl emerald-gradient text-white font-black text-lg shadow-xl hover:scale-[1.02] transition-transform">
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Add Eid Jamaat"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

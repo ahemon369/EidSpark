@@ -24,6 +24,7 @@ import {
 
 const navItems = [
   { name: "Home", href: "/" },
+  { name: "Jamaat Finder", href: "/tools/jamaat-finder" },
   { name: "Zakat", href: "/tools/zakat" },
   { name: "Greeting", href: "/tools/greeting" },
   { name: "Selfie", href: "/tools/selfie" },
