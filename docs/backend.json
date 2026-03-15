@@ -1,30 +1,31 @@
+
 {
   "entities": {
     "ReceivedSalami": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ReceivedSalami",
       "type": "object",
-      "description": "Represents a record of salami money received by a user during Eid celebrations, as part of the Eid Salami Counter feature.",
+      "description": "Represents a record of salami money received by a user during Eid celebrations.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the ReceivedSalami entity."
+          "description": "Unique identifier."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who received this salami. (Relationship: User 1:N ReceivedSalami)"
+          "description": "Owner of the record."
         },
         "amount": {
           "type": "number",
-          "description": "The amount of salami received."
+          "description": "The amount received."
         },
         "fromPerson": {
           "type": "string",
-          "description": "The name of the person from whom the salami was received. This field is optional."
+          "description": "Who gave the salami."
         },
         "receivedAt": {
           "type": "string",
-          "description": "The date and time when this salami entry was logged.",
+          "description": "Timestamp.",
           "format": "date-time"
         }
       },
@@ -39,32 +40,26 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "EidSelfie",
       "type": "object",
-      "description": "Represents an Eid selfie photo uploaded by a user for the Eid Selfie Contest.",
+      "description": "An Eid selfie photo for the contest.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the EidSelfie entity."
+          "type": "string"
         },
         "userId": {
-          "type": "string",
-          "description": "Reference to the User who uploaded this selfie. (Relationship: User 1:N EidSelfie)"
+          "type": "string"
         },
         "imageUrl": {
           "type": "string",
-          "description": "The URL where the uploaded selfie image is stored.",
           "format": "uri"
         },
         "caption": {
-          "type": "string",
-          "description": "A user-provided caption for the Eid selfie. This field is optional."
+          "type": "string"
         },
         "likesCount": {
-          "type": "number",
-          "description": "The total number of likes this selfie has received. This count can be denormalized for performance or calculated from SelfieLike entities."
+          "type": "number"
         },
         "uploadedAt": {
           "type": "string",
-          "description": "The date and time when the selfie was uploaded.",
           "format": "date-time"
         }
       },
@@ -75,42 +70,79 @@
         "uploadedAt"
       ]
     },
-    "SelfieLike": {
+    "SalamiCard": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SelfieLike",
+      "title": "SalamiCard",
       "type": "object",
-      "description": "Represents a like given by a user to an Eid selfie, used for tracking likes and preventing duplicate likes in the Eid Selfie Contest.",
+      "description": "A digital Eidi envelope/card that can be shared via link.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the SelfieLike entity."
+          "type": "string"
         },
-        "selfieId": {
-          "type": "string",
-          "description": "Reference to the EidSelfie that was liked. (Relationship: EidSelfie 1:N SelfieLike)"
+        "senderName": {
+          "type": "string"
         },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who gave the like. (Relationship: User 1:N SelfieLike)"
+        "recipientName": {
+          "type": "string"
         },
-        "likedAt": {
+        "message": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "paymentLink": {
+          "type": "string"
+        },
+        "createdAt": {
           "type": "string",
-          "description": "The date and time when the like was recorded.",
           "format": "date-time"
         }
       },
       "required": [
-        "id",
-        "selfieId",
-        "userId",
-        "likedAt"
+        "senderName",
+        "recipientName",
+        "createdAt"
       ]
+    },
+    "AppNotification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AppNotification",
+      "type": "object",
+      "description": "An in-app notification for the user.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["greeting", "like", "mosque", "moon", "jamaat"]
+        },
+        "isRead": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "title", "isRead", "createdAt"]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "anonymous",
+      "google.com"
     ]
   },
   "firestore": {
@@ -122,17 +154,17 @@
           "schema": {
             "$ref": "#/backend/entities/ReceivedSalami"
           },
-          "description": "Stores individual records of salami money received by a specific user. This is private data, owned by the user specified in the path and the document's 'userId' field. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who received the salami."
-            },
-            {
-              "name": "salamiId",
-              "description": "The unique identifier for a specific received salami entry."
-            }
-          ]
+          "description": "User's personal salami records."
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "AppNotification",
+          "schema": {
+            "$ref": "#/backend/entities/AppNotification"
+          },
+          "description": "User's personal notifications."
         }
       },
       {
@@ -142,36 +174,19 @@
           "schema": {
             "$ref": "#/backend/entities/EidSelfie"
           },
-          "description": "Stores all submitted Eid selfies for the contest. Selfies are publicly viewable for the leaderboard, but write access is restricted to the uploading user. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "selfieId",
-              "description": "The unique identifier for a specific Eid selfie."
-            }
-          ]
+          "description": "Public selfie contest entries."
         }
       },
       {
-        "path": "/eidSelfies/{selfieId}/likes/{likeId}",
+        "path": "/salamiCards/{cardId}",
         "definition": {
-          "entityName": "SelfieLike",
+          "entityName": "SalamiCard",
           "schema": {
-            "$ref": "#/backend/entities/SelfieLike"
+            "$ref": "#/backend/entities/SalamiCard"
           },
-          "description": "Stores individual 'likes' given to a specific Eid selfie. Each like is owned by the user who created it. Includes denormalized 'userId' (the liker) and 'selfieId' for authorization independence.",
-          "params": [
-            {
-              "name": "selfieId",
-              "description": "The unique identifier of the Eid selfie being liked."
-            },
-            {
-              "name": "likeId",
-              "description": "The unique identifier for a specific like."
-            }
-          ]
+          "description": "Publicly accessible digital eidi envelopes."
         }
       }
-    ],
-    "reasoning": "The proposed Firestore structure prioritizes Authorization Independence and Structural Segregation to ensure secure, scalable, and easily debuggable security rules. For user-specific private data like `ReceivedSalami`, a hierarchical path-based ownership model (`/users/{userId}/receivedSalami/{salamiId}`) is used. Each `ReceivedSalami` document explicitly includes the `userId` field, denormalizing the owner's ID directly into the document. This eliminates the need for `get()` calls to parent documents in security rules, allowing atomic write operations and simplifying authorization checks to `request.auth.uid == resource.data.userId` or `request.auth.uid == userId` from the path. This structure directly supports QAPs by enabling secure list operations where users can only query their own salami records using a path like `/users/{request.auth.uid}/receivedSalami`.\n\nFor publicly viewable and collaborative data like `EidSelfie` entries, a top-level collection (`/eidSelfies/{selfieId}`) is employed. Each `EidSelfie` document contains the `userId` of the uploader, ensuring that ownership for modifications is self-contained without parent dependencies. This collection can be read by all authenticated users for the leaderboard, with write access restricted to the `userId` associated with the document. The `likesCount` field is denormalized to facilitate efficient leaderboard sorting. The `SelfieLike` entity, representing a user's 'like' on a selfie, is implemented as a subcollection (`/eidSelfies/{selfieId}/likes/{likeId}`). Each `SelfieLike` document includes both `userId` (the liker) and `selfieId` (the liked selfie). This denormalization ensures that a like document can be authorized independently, checking `request.auth.uid == resource.data.userId` to prevent unauthorized modification or deletion of other users' likes, while also explicitly linking it to the parent selfie without requiring a `get()` operation. This approach effectively handles QAPs for the selfie contest by allowing secure public reads of selfies for display and a clear, explicit path for users to create their own likes."
+    ]
   }
 }

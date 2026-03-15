@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -32,38 +33,24 @@ export default function SalamiTracker() {
 
   const salamiQuery = useMemoFirebase(() => {
     if (!db || !user) return null
-    return collection(db, "users", user.uid, "salamiEntries")
+    return query(collection(db, "users", user.uid, "receivedSalami"), orderBy("receivedAt", "desc"))
   }, [db, user])
   const { data: salamiData } = useCollection(salamiQuery)
   const salamiEntries = salamiData || []
-
-  const leaderboardQuery = useMemoFirebase(() => {
-    if (!db) return null
-    return query(collection(db, "leaderboard"), orderBy("totalSalami", "desc"), limit(10))
-  }, [db])
-  const { data: leaderboardData = [] } = useCollection(leaderboardQuery)
-  const leaderboard = leaderboardData || []
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name || !amount || !user || !db) return
     const giftAmount = parseFloat(amount)
     try {
-      await addDoc(collection(db, "users", user.uid, "salamiEntries"), {
+      await addDoc(collection(db, "users", user.uid, "receivedSalami"), {
         userId: user.uid,
-        personName: name,
+        fromPerson: name,
         amount: giftAmount,
-        entryDate: new Date().toISOString(),
-        createdAt: serverTimestamp()
+        receivedAt: new Date().toISOString()
       })
-      const currentTotal = salamiEntries.reduce((acc, curr) => acc + (curr.amount || 0), 0)
-      await setDoc(doc(db, "leaderboard", user.uid), {
-        displayName: user.displayName || "Anonymous",
-        photoURL: user.photoURL || "",
-        totalSalami: currentTotal + giftAmount
-      }, { merge: true })
       setName(""); setAmount("")
-      toast({ title: "Salami Added!" })
+      toast({ title: "Salami Recorded!" })
     } catch (error) {}
   }
 
@@ -112,14 +99,13 @@ export default function SalamiTracker() {
           </Card>
         ) : (
           <Tabs defaultValue="tracker" className="w-full">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-12 h-16 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md p-1 border border-primary/10 shadow-xl rounded-2xl">
-              <TabsTrigger value="tracker" className="rounded-xl font-bold">Tracker</TabsTrigger>
-              <TabsTrigger value="envelope" className="rounded-xl font-bold">Send Eidi</TabsTrigger>
-              <TabsTrigger value="leaderboard" className="rounded-xl font-bold">Top List</TabsTrigger>
+            <TabsList className="grid w-full max-w-xl mx-auto grid-cols-2 mb-12 h-16 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md p-1 border border-primary/10 shadow-xl rounded-2xl">
+              <TabsTrigger value="tracker" className="rounded-xl font-bold">Personal Tracker</TabsTrigger>
+              <TabsTrigger value="envelope" className="rounded-xl font-bold">Digital Envelope</TabsTrigger>
             </TabsList>
             
             <TabsContent value="tracker" className="grid lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
-              <Card className="shadow-2xl border-none rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+              <Card className="shadow-2xl border-none rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-fit">
                 <div className="emerald-gradient p-10 text-white text-center">
                   <Wallet className="w-12 h-12 mx-auto mb-4 opacity-80" />
                   <p className="text-white/80 font-black uppercase tracking-widest text-xs mb-2">Total Collected</p>
@@ -134,15 +120,15 @@ export default function SalamiTracker() {
                 </CardContent>
               </Card>
 
-              <Card className="lg:col-span-2 shadow-2xl border-none rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-full">
+              <Card className="lg:col-span-2 shadow-2xl border-none rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-full min-h-[500px]">
                 <CardHeader className="p-8 pb-4 border-b border-primary/5"><CardTitle className="text-2xl font-black">History</CardTitle></CardHeader>
                 <CardContent className="p-0 overflow-y-auto max-h-[600px] custom-scrollbar">
                   {salamiEntries.length > 0 ? (
                     salamiEntries.map((entry) => (
                       <div key={entry.id} className="flex items-center justify-between p-6 hover:bg-primary/5 transition-colors">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.personName?.[0]}</AvatarFallback></Avatar>
-                          <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.personName}</p></div>
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.fromPerson?.[0]}</AvatarFallback></Avatar>
+                          <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.fromPerson}</p></div>
                         </div>
                         <p className="text-2xl font-black text-primary dark:text-secondary">৳{entry.amount}</p>
                       </div>
@@ -159,7 +145,7 @@ export default function SalamiTracker() {
                 <CardHeader className="emerald-gradient p-10 text-white text-center relative">
                   <Sparkles className="absolute top-4 right-4 w-10 h-10 opacity-20" />
                   <Mail className="w-12 h-12 mx-auto mb-4 opacity-80" />
-                  <CardTitle className="text-3xl font-black">Digital Envelope</CardTitle>
+                  <CardTitle className="text-3xl font-black">Digital Eidi Envelope</CardTitle>
                 </CardHeader>
                 <CardContent className="p-10 space-y-8">
                   {!generatedLink ? (
@@ -168,13 +154,13 @@ export default function SalamiTracker() {
                         <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Your Name" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800" required />
                         <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Recipient Name" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800" required />
                       </div>
-                      <textarea className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 bg-slate-50 dark:bg-slate-800 outline-none" value={salamiMsg} onChange={(e) => setSalamiMsg(e.target.value)} placeholder="Eid Message..." required />
+                      <textarea className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 bg-slate-50 dark:bg-slate-800 outline-none" value={salamiMsg} onChange={(e) => setSalamiMsg(e.target.value)} placeholder="Festive Message..." required />
                       <div className="grid md:grid-cols-2 gap-6">
                         <Input type="number" value={salamiAmt} onChange={(e) => setSalamiAmt(e.target.value)} placeholder="Amount (Optional)" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800" />
-                        <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="Payment/Phone (Optional)" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800" />
+                        <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="Payment Info (Optional)" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800" />
                       </div>
                       <Button type="submit" disabled={isCreating} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl">
-                        {isCreating ? <Loader2 className="animate-spin" /> : "Generate Magic Link"}
+                        {isCreating ? <Loader2 className="animate-spin" /> : "Generate Shareable Link"}
                       </Button>
                     </form>
                   ) : (
@@ -189,31 +175,6 @@ export default function SalamiTracker() {
                       </div>
                       <Button variant="ghost" onClick={() => { setGeneratedLink(""); setRecipientName(""); setSalamiMsg(""); }} className="font-bold">Create Another</Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="leaderboard" className="max-w-2xl mx-auto animate-in fade-in duration-500">
-              <Card className="shadow-2xl border-none rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-                <CardHeader className="emerald-gradient p-10 text-white text-center">
-                  <Crown className="w-12 h-12 mx-auto mb-4 text-secondary fill-secondary" />
-                  <CardTitle className="text-3xl font-black">Top Receivers</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {leaderboard.length > 0 ? (
-                    leaderboard.map((player, index) => (
-                      <div key={player.id} className={cn("flex items-center justify-between p-8 border-b last:border-0", player.id === user.uid ? "bg-secondary/10" : "")}>
-                        <div className="flex items-center gap-6">
-                          <span className="text-2xl font-black opacity-30">{index + 1}</span>
-                          <Avatar className="h-16 w-16 border-4 border-white shadow-lg"><AvatarImage src={player.photoURL} /><AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback></Avatar>
-                          <div><p className="font-black text-xl text-primary dark:text-white">{player.displayName}</p></div>
-                        </div>
-                        <p className="text-3xl font-black text-primary dark:text-secondary">৳{player.totalSalami.toLocaleString()}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-20 text-center text-muted-foreground italic">Leaderboard is empty.</div>
                   )}
                 </CardContent>
               </Card>

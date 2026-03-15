@@ -31,7 +31,7 @@ export default function DashboardOverview() {
 
   const salamiRef = useMemoFirebase(() => {
     if (!db || !user) return null
-    return collection(db, "users", user.uid, "salamiEntries")
+    return collection(db, "users", user.uid, "receivedSalami")
   }, [db, user])
   const { data: salami } = useCollection(salamiRef)
 
@@ -69,7 +69,7 @@ export default function DashboardOverview() {
             <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
             <span>Celebrate with EidSpark</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tight">Welcome back to EidSpark, {user?.displayName?.split(' ')[0]}! 🌙</h2>
+          <h2 className="text-4xl font-black tracking-tight">Welcome back, {user?.displayName?.split(' ')[0]}! 🌙</h2>
           <p className="text-white/80 font-medium text-lg leading-relaxed">
             Your festive command center is ready. Let's make this Eid the most memorable one yet for you and your family.
           </p>
