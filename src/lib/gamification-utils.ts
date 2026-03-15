@@ -5,6 +5,7 @@ import { doc, updateDoc, increment, collection, setDoc, getDoc, serverTimestamp,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { toast } from '@/hooks/use-toast';
+import confetti from 'canvas-confetti';
 
 export type ActionType = 
   | 'GenerateExcuse' 
@@ -23,6 +24,12 @@ const POINTS_MAP: Record<ActionType, number> = {
   ReportMoon: 8,
   AddJamaat: 6,
   SalamiCalc: 2,
+};
+
+const CHALLENGE_BONUS: Record<string, { target: number; reward: number }> = {
+  GenerateExcuse: { target: 3, reward: 10 },
+  UploadSelfie: { target: 1, reward: 15 },
+  ReportMoon: { target: 1, reward: 20 },
 };
 
 export const LEVELS = [
@@ -48,19 +55,25 @@ export function getLevelInfo(points: number) {
 
 /**
  * Awards points to a user for a specific action.
- * Handles Firestore updates in a non-blocking way using setDoc with merge.
  */
 export function awardPoints(db: Firestore, userId: string, action: ActionType) {
   const points = POINTS_MAP[action];
   const userRef = doc(db, 'users', userId);
 
-  // Update total points using setDoc with merge to ensure doc exists
+  // Update total points
   setDoc(userRef, {
     id: userId,
     totalPoints: increment(points),
     updatedAt: new Date().toISOString()
   }, { merge: true }).then(() => {
-    // Notify user
+    // Basic celebration
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#065f46', '#fbbf24', '#ffffff']
+    });
+
     toast({
       title: `+${points} Eid Points! 🎉`,
       description: `You earned points for ${action.replace(/([A-Z])/g, ' $1').trim()}.`,
@@ -72,21 +85,32 @@ export function awardPoints(db: Firestore, userId: string, action: ActionType) {
     const progressRef = doc(db, 'users', userId, 'dailyChallengeProgress', progressId);
 
     getDoc(progressRef).then(snap => {
+      const bonusConfig = CHALLENGE_BONUS[action];
+      
       if (!snap.exists()) {
+        const isComplete = bonusConfig && bonusConfig.target === 1;
         setDoc(progressRef, {
           userId,
           challengeId: action,
           date: today,
           currentCount: 1,
-          isCompleted: false,
+          isCompleted: isComplete,
           createdAt: serverTimestamp()
         });
+        
+        if (isComplete) awardBonus(db, userId, action, bonusConfig.reward);
       } else {
         const data = snap.data();
         if (!data.isCompleted) {
+          const newCount = (data.currentCount || 0) + 1;
+          const isNowComplete = bonusConfig && newCount >= bonusConfig.target;
+          
           updateDoc(progressRef, {
-            currentCount: increment(1)
+            currentCount: newCount,
+            isCompleted: isNowComplete
           });
+
+          if (isNowComplete) awardBonus(db, userId, action, bonusConfig.reward);
         }
       }
     });
@@ -98,5 +122,23 @@ export function awardPoints(db: Firestore, userId: string, action: ActionType) {
       requestResourceData: { totalPoints: `increment(${points})`, id: userId },
     });
     errorEmitter.emit('permission-error', permissionError);
+  });
+}
+
+function awardBonus(db: Firestore, userId: string, action: string, reward: number) {
+  const userRef = doc(db, 'users', userId);
+  updateDoc(userRef, {
+    totalPoints: increment(reward)
+  }).then(() => {
+    confetti({
+      particleCount: 200,
+      spread: 100,
+      origin: { y: 0.5 },
+      colors: ['#fbbf24', '#ffffff']
+    });
+    toast({
+      title: "Challenge Complete! 🏆",
+      description: `You earned a bonus of +${reward} XP!`,
+    });
   });
 }

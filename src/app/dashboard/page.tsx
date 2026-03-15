@@ -2,7 +2,7 @@
 "use client"
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, query, limit, orderBy, where, doc } from "firebase/firestore"
+import { collection, query, limit, orderBy, where, doc, getCountFromServer } from "firebase/firestore"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
@@ -20,27 +20,40 @@ import {
   Target,
   ArrowUpRight,
   TrendingUp,
-  Star
+  Star,
+  Loader2
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { getLevelInfo, LEVELS } from "@/lib/gamification-utils"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from "react"
 
 export default function DashboardOverview() {
   const { user } = useUser()
   const db = useFirestore()
+  const [globalRank, setGlobalRank] = useState<number | null>(null)
 
   const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, "users", user.uid)
   }, [db, user])
   
-  const { data: userData } = useDoc(userDocRef)
+  const { data: userData, isLoading: userLoading } = useDoc(userDocRef)
 
   const fullUserData = userData || { totalPoints: 0 }
   const levelInfo = getLevelInfo(fullUserData.totalPoints || 0)
+
+  // Calculate Rank dynamically
+  useEffect(() => {
+    if (db && fullUserData.totalPoints !== undefined) {
+      const q = query(collection(db, "users"), where("totalPoints", ">", fullUserData.totalPoints))
+      getCountFromServer(q).then(snapshot => {
+        setGlobalRank(snapshot.data().count + 1)
+      })
+    }
+  }, [db, fullUserData.totalPoints])
 
   const greetingRef = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -73,6 +86,25 @@ export default function DashboardOverview() {
     { label: "Posters", value: selfies?.length || 0, icon: Camera, color: "bg-rose-500" },
     { label: "Salami Tracked", value: salami?.length || 0, icon: Wallet, color: "bg-emerald-500" },
   ]
+
+  // Achievement milestones
+  const achievementCount = [
+    (fullUserData.totalPoints || 0) >= 50,
+    (greetings?.length || 0) >= 5,
+    (selfies?.length || 0) >= 3,
+    (salami?.length || 0) >= 10,
+    (globalRank || 100) <= 50,
+    (dailyProgress?.filter(p => p.isCompleted).length || 0) >= 1
+  ].filter(Boolean).length
+
+  if (userLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Syncing Rewards Profile...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom duration-700">
@@ -135,11 +167,11 @@ export default function DashboardOverview() {
             <div className="pt-8 border-t space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-muted-foreground">Rank Position</span>
-                <span className="text-lg font-black text-primary">#12</span>
+                <span className="text-lg font-black text-primary">#{globalRank || '...'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-muted-foreground">Achievements</span>
-                <span className="text-lg font-black text-primary">4 / 12</span>
+                <span className="text-lg font-black text-primary">{achievementCount} / 6</span>
               </div>
             </div>
           </Card>
@@ -185,7 +217,7 @@ export default function DashboardOverview() {
             <h3 className="text-xl font-black text-slate-800">Trending Now</h3>
           </div>
           <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white p-8 space-y-6">
-            <div className="flex items-center gap-4 group cursor-pointer" asChild>
+            <div className="flex items-center gap-4 group cursor-pointer">
               <Link href="/fun-zone" className="flex items-center gap-4 w-full">
                 <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
                   <TrendingUp className="w-6 h-6" />
@@ -238,7 +270,7 @@ function ChallengeCard({ title, reward, count, target, icon }: any) {
               <span>{isCompleted ? 'Mission Accomplished' : 'Progress'}</span>
               <span>{count} / {target}</span>
             </div>
-            <Progress value={(count / target) * 100} className="h-1.5" />
+            <Progress value={Math.min(100, (count / target) * 100)} className="h-1.5" />
           </div>
         </div>
         {isCompleted && <Medal className="w-8 h-8 text-emerald-500 animate-in zoom-in duration-500" />}

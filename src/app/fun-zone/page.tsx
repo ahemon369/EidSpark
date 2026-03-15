@@ -40,7 +40,7 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  Tooltip as RechartTooltip, 
+  RechartTooltip, 
   ResponsiveContainer, 
   Cell 
 } from "recharts"
@@ -80,6 +80,33 @@ const quizQuestions = [
       { text: "আম্মুর কাছে জমা দিয়ে দেই", type: "Masjid Lover" },
       { text: "বন্ধুদের নিয়ে খেতে বের হই", type: "Food Warrior" },
       { text: "পরের শপিং এর প্ল্যান করি", type: "Shopping Master" }
+    ]
+  },
+  {
+    q: "Eid এর শপিং কবে করো?",
+    options: [
+      { text: "চাঁদ রাতে তাড়াহুড়ো করে", type: "Salami Hunter" },
+      { text: "এক মাস আগে শান্তিমতো", type: "Shopping Master" },
+      { text: "কিনি না, উপহার পাই", type: "Masjid Lover" },
+      { text: "পুরো শপিং মল ঘুরে কয়েকবার", type: "Shopping Master" }
+    ]
+  },
+  {
+    q: "ঈদে সেমাই খাওয়ার পর কি করো?",
+    options: [
+      { text: "সাথে সাথে ঘুম দেই", type: "Food Warrior" },
+      { text: "প্রতিবেশীর বাসায় ঘুরতে যাই", type: "Masjid Lover" },
+      { text: "বড়দের পা ছুয়ে সালামি খুঁজি", type: "Salami Hunter" },
+      { text: "১০০টা সেলফি তুলি", type: "Shopping Master" }
+    ]
+  },
+  {
+    q: "তোমার সেরা ঈদ গিফট কি হতে পারে?",
+    options: [
+      { text: "আইফোন ১৪ প্রো ম্যাক্স", type: "Salami Hunter" },
+      { text: "সবার ভালোবাসা ও দোয়া", type: "Masjid Lover" },
+      { text: "এক হাড়ি কাচ্চি বিরিয়ানি", type: "Food Warrior" },
+      { text: "ব্র্যান্ডেড ঘড়ি বা পাঞ্জাবি", type: "Shopping Master" }
     ]
   }
 ]
@@ -195,7 +222,7 @@ export default function FunZone() {
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type]
     setQuizAnswers(newAnswers)
-    if (quizStep < 1) { 
+    if (quizStep < quizQuestions.length - 1) { 
       setQuizStep(quizStep + 1)
     } else {
       const counts: Record<string, number> = {}
@@ -409,7 +436,7 @@ export default function FunZone() {
                     <div className="bg-secondary/10 p-6 rounded-3xl border-2 border-secondary/20">
                       <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mb-2">Pro Tip</p>
                       <p className="text-xs font-bold text-primary/70 leading-relaxed italic">
-                        "Use the ATMs are closed' excuse for maximum believability during the first 3 days of Eid."
+                        "Use the 'ATMs are closed' excuse for maximum believability during the first 3 days of Eid."
                       </p>
                     </div>
                   </div>
@@ -425,7 +452,7 @@ export default function FunZone() {
                   <div className="emerald-gradient p-10 text-white text-center">
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4 text-secondary"><Users className="w-6 h-6" /></div>
                     <CardTitle className="text-2xl font-black">Eid Personality Test</CardTitle>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">Question {quizStep + 1} of 2</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">Question {quizStep + 1} of {quizQuestions.length}</p>
                   </div>
                   <CardContent className="p-10 flex-grow flex flex-col justify-center gap-8">
                     <h3 className="text-2xl font-black text-center text-primary">{quizQuestions[quizStep].q}</h3>
