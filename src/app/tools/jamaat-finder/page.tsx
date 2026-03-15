@@ -19,7 +19,10 @@ import {
   LocateFixed,
   Sparkles,
   Info,
-  Clock
+  Clock,
+  Landmark,
+  ShieldCheck,
+  AlertTriangle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
@@ -35,7 +38,7 @@ const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   loading: () => (
     <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center space-y-4 animate-pulse rounded-[3rem]">
       <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-black text-primary/40 uppercase tracking-widest">Initialising Live Map...</p>
+      <p className="font-black text-primary/40 uppercase tracking-widest">Initialising Professional Registry...</p>
     </div>
   ),
 })
@@ -85,11 +88,11 @@ export default function JamaatFinderPage() {
         const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude]
         setUserLocation(loc)
         setIsDetecting(false)
-        toast({ title: "Location Found", description: "Showing nearest mosques." })
+        toast({ title: "Location Locked", description: "Filtering nearest verified mosques." })
       },
       () => {
         setIsDetecting(false)
-        toast({ variant: "destructive", title: "Location Error", description: "Please enable GPS access." })
+        toast({ variant: "destructive", title: "Location Error", description: "GPS access denied. Please enter area manually." })
       }
     )
   }, [toast])
@@ -117,24 +120,16 @@ export default function JamaatFinderPage() {
     <div className="min-h-screen bg-background islamic-pattern pb-0 transition-colors duration-500">
       <Navbar />
       
-      {/* Floating Status Indicator */}
-      <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-10 duration-1000">
-        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl px-6 py-3 rounded-full shadow-2xl border border-primary/10 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Live Updates Active</span>
-        </div>
-      </div>
-
       <main className="max-w-[1800px] mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-16 animate-in fade-in slide-in-from-top duration-1000">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 text-primary dark:text-secondary text-xs font-black uppercase tracking-widest border border-primary/10 backdrop-blur-md">
-              <Sparkles className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
-              <span>Real-Time Community Network</span>
+              <Landmark className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
+              <span>Professional Islamic Map Registry</span>
             </div>
             <h1 className="text-5xl lg:text-[90px] font-black text-primary dark:text-white tracking-tighter leading-[0.9]">Find Eid Prayers</h1>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed">
-              Discover verified Eid prayer times across Bangladesh. Contributed by the community and updated instantly.
+              Explore a multi-tiered registry of mosques, grounds, and stadiums verified for Eid-ul-Fitr celebrations across Bangladesh.
             </p>
           </div>
 
@@ -142,7 +137,7 @@ export default function JamaatFinderPage() {
             <div className="relative w-full sm:w-96 group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
               <Input 
-                placeholder="Search mosque, district or area..." 
+                placeholder="Search mosque, maidan or area..." 
                 className="h-16 pl-14 rounded-[2rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl border-primary/5 focus:border-primary/20 transition-all text-lg font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -166,16 +161,36 @@ export default function JamaatFinderPage() {
           </div>
         </div>
 
+        {/* Legend Panel */}
+        <div className="mb-10 flex flex-wrap gap-6 items-center bg-white/50 backdrop-blur-md p-6 rounded-[2rem] border border-primary/5">
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-lg shadow-emerald-500/20"></div>
+            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Verified Mosque</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow-lg shadow-amber-500/20"></div>
+            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Community Added</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg shadow-blue-500/20"></div>
+            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Big Jamaat Ground</span>
+          </div>
+          <div className="ml-auto flex items-center gap-3 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-[8px] font-black uppercase text-emerald-700 tracking-[0.2em]">Real-Time Sync Active</span>
+          </div>
+        </div>
+
         <Tabs defaultValue="map" className="w-full">
           <div className="flex justify-between items-center mb-10">
             <TabsList className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-primary/5 p-1 rounded-[2.5rem] h-16 shadow-2xl">
-              <TabsTrigger value="map" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Map View</TabsTrigger>
-              <TabsTrigger value="list" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">List View</TabsTrigger>
-              {isAdmin && <TabsTrigger value="admin" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-secondary data-[state=active]:text-primary">Moderation</TabsTrigger>}
+              <TabsTrigger value="map" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Map Interface</TabsTrigger>
+              <TabsTrigger value="list" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Registry View</TabsTrigger>
+              {isAdmin && <TabsTrigger value="admin" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-secondary data-[state=active]:text-primary">Admin Control</TabsTrigger>}
             </TabsList>
           </div>
 
-          <TabsContent value="map" className="animate-in fade-in zoom-in duration-1000 h-[700px] rounded-[4rem] overflow-hidden border-[12px] border-white dark:border-slate-900 shadow-[0_64px_128px_-12px_rgba(0,0,0,0.1)]">
+          <TabsContent value="map" className="animate-in fade-in zoom-in duration-1000 h-[750px] rounded-[4rem] overflow-hidden border-[12px] border-white dark:border-slate-900 shadow-[0_64px_128px_-12px_rgba(0,0,0,0.1)]">
             <JamaatMap mosques={filteredMosques} onSelectMosque={setSelectedMosqueId} userLocation={userLocation} />
           </TabsContent>
 
@@ -188,8 +203,8 @@ export default function JamaatFinderPage() {
                   <div className="w-24 h-24 bg-primary/5 rounded-[3rem] flex items-center justify-center mx-auto">
                     <Globe className="w-12 h-12 text-primary/20" />
                   </div>
-                  <p className="text-2xl font-black text-muted-foreground">No mosques found matching your search</p>
-                  <Button variant="ghost" onClick={() => setSearchQuery("")} className="font-bold">Clear Search</Button>
+                  <p className="text-2xl font-black text-muted-foreground">No records found matching your search</p>
+                  <Button variant="ghost" onClick={() => setSearchQuery("")} className="font-bold">Reset Filters</Button>
                 </div>
               )}
             </div>
@@ -208,15 +223,36 @@ export default function JamaatFinderPage() {
 }
 
 function MosqueCard({ mosque, isAdmin }: { mosque: any, isAdmin: boolean }) {
+  const isBigGround = /ground|maidan|stadium|field|eidgah/i.test(mosque.name);
+  
   return (
     <Card className="border-none shadow-xl rounded-[3.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl group hover:-translate-y-3 transition-all duration-500 hover:shadow-[0_48px_96px_-12px_rgba(6,95,70,0.15)] border border-transparent hover:border-primary/10">
-      <div className="p-10 text-white relative overflow-hidden transition-all duration-500 emerald-gradient">
-        <MapPin className="absolute -top-4 -right-4 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
+      <div className={cn(
+        "p-10 text-white relative overflow-hidden transition-all duration-500",
+        isBigGround ? "bg-blue-600" : (mosque.isApprovedByAdmin ? "emerald-gradient" : "bg-amber-500")
+      )}>
+        <Landmark className="absolute -top-4 -right-4 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
         <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-black tracking-tight leading-tight">{mosque.name}</h3>
-            {mosque.isApprovedByAdmin && <CheckCircle2 className="w-5 h-5 text-secondary fill-secondary" />}
+          <div className="flex items-center gap-2 mb-2">
+            {mosque.isApprovedByAdmin ? (
+              <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                <CheckCircle2 className="w-3 h-3 text-secondary fill-secondary" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Verified</span>
+              </div>
+            ) : (
+              <div className="bg-black/10 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                <AlertTriangle className="w-3 h-3 text-white" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Pending</span>
+              </div>
+            )}
+            {isBigGround && (
+              <div className="bg-blue-400/30 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                <Landmark className="w-3 h-3 text-white" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Ground</span>
+              </div>
+            )}
           </div>
+          <h3 className="text-2xl font-black tracking-tight leading-tight">{mosque.name}</h3>
           <p className="text-xs font-bold opacity-80 uppercase tracking-[0.2em]">{mosque.area || mosque.district}, {mosque.district}</p>
         </div>
       </div>
@@ -224,17 +260,19 @@ function MosqueCard({ mosque, isAdmin }: { mosque: any, isAdmin: boolean }) {
         <div className="flex items-center justify-between border-b border-primary/5 pb-4">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-primary opacity-40" />
-            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Eid Jamaat</p>
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Registry Jamaat</p>
           </div>
           <AddJamaatTimeModal mosqueId={mosque.id} mosqueName={mosque.name} />
         </div>
         
         <div className="grid grid-cols-1 gap-4">
           <div className="bg-primary/5 p-4 rounded-[1.5rem] border border-primary/5 flex flex-col items-center group/time hover:bg-primary transition-all duration-300">
-            <span className="text-lg font-black text-primary group-hover/time:text-white">{mosque.eid_prayer_time || "Pending..."}</span>
-            <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 group-hover/time:text-emerald-200 uppercase tracking-tighter mt-1">
-              <CheckCircle2 className="w-2.5 h-2.5" /> Verified by Community
-            </div>
+            <span className="text-lg font-black text-primary group-hover/time:text-white">{mosque.eid_prayer_time || "Registry Pending"}</span>
+            {mosque.isApprovedByAdmin && (
+              <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 group-hover/time:text-emerald-200 uppercase tracking-tighter mt-1">
+                <CheckCircle2 className="w-2.5 h-2.5" /> Registry Confirmed
+              </div>
+            )}
           </div>
         </div>
 
