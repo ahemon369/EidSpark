@@ -22,7 +22,9 @@ import {
   Layout,
   Map as MapIcon,
   Users,
-  Compass
+  Compass,
+  Github,
+  Mail
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -494,7 +496,7 @@ export default function Home() {
               <div className="space-y-4">
                 <h4 className="text-lg font-black text-primary uppercase tracking-widest">About EidSpark</h4>
                 <p className="text-muted-foreground font-medium leading-relaxed">
-                  Empowering the Bangladeshi community with smart Eid tools. Our mission is to blend tradition with modern technology for a more meaningful celebration.
+                  Empowering Eid celebrations with modern technology. Our mission is to blend tradition with modern convenience for every Bangladeshi family.
                 </p>
               </div>
             </div>
@@ -514,6 +516,7 @@ export default function Home() {
               <ul className="space-y-5 text-muted-foreground font-bold">
                 <li><Link href="/tools/countdown" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Eid Countdown</Link></li>
                 <li><Link href="/tools/mosque" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Mosque Finder</Link></li>
+                <li><Link href="/tools/qibla" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> Qibla Finder</Link></li>
                 <li><Link href="/about" className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-4 h-4" /> About Us</Link></li>
               </ul>
             </div>
@@ -526,32 +529,37 @@ export default function Home() {
                    <span>Dhaka, Bangladesh</span>
                 </li>
                 <li className="flex items-center gap-3">
-                   <MessageCircle className="w-5 h-5 text-primary shrink-0" />
-                   <Link href="mailto:hello@eidspark.bd" className="hover:text-primary transition-colors">hello@eidspark.bd</Link>
+                   <Mail className="w-5 h-5 text-primary shrink-0" />
+                   <Link href="mailto:ahemon0156@gmail.com" className="hover:text-primary transition-colors">ahemon0156@gmail.com</Link>
                 </li>
                 <li className="pt-4 flex gap-6">
+                  <Link href="https://github.com/ahemon369" target="_blank" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
+                    <Github className="w-6 h-6" />
+                  </Link>
                   <Link href="#" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
                     <Facebook className="w-6 h-6" />
                   </Link>
                   <Link href="#" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
                     <Instagram className="w-6 h-6" />
                   </Link>
-                  <Link href="#" className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                    <MessageCircle className="w-6 h-6" />
-                  </Link>
                 </li>
               </ul>
             </div>
           </div>
           
-          <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-muted-foreground font-bold text-sm">
-              © {new Date().getFullYear()} EidSpark Bangladesh. All rights reserved.
-            </p>
-            <div className="flex gap-10 text-sm font-black text-primary uppercase tracking-widest">
-              <Link href="#" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-              <Link href="#" className="hover:opacity-70 transition-opacity">Terms of Service</Link>
+          <div className="pt-12 border-t border-border text-center space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <p className="text-muted-foreground font-bold text-sm">
+                © 2026 EidSpark Bangladesh. All rights reserved.
+              </p>
+              <div className="flex gap-10 text-sm font-black text-primary uppercase tracking-widest">
+                <Link href="#" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
+                <Link href="#" className="hover:opacity-70 transition-opacity">Terms of Service</Link>
+              </div>
             </div>
+            <p className="text-muted-foreground/60 text-xs font-bold uppercase tracking-widest pt-4">
+              Built for the Muslim community of Bangladesh.
+            </p>
           </div>
         </div>
       </footer>
