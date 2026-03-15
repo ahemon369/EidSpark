@@ -353,14 +353,14 @@ export default function Home() {
                </div>
                
                <div className="relative hidden lg:block">
-                  <div className="aspect-[4/3] bg-white/10 rounded-[3rem] border-8 border-white/10 backdrop-blur-md relative overflow-hidden group">
+                  <div className="aspect-[4/3] bg-white/10 rounded-[3rem] border-8 border-white/10 backdrop-blur-md relative overflow-hidden group animate-float">
                      <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
                      <MapIcon className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 text-white/20" />
-                     {/* Floating marker simulations */}
-                     <div className="absolute top-[20%] left-[30%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-bounce">
+                     {/* Floating marker simulations with pulsing animation */}
+                     <div className="absolute top-[20%] left-[30%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-pulse">
                         <MapPin className="w-5 h-5 text-primary" />
                      </div>
-                     <div className="absolute top-[60%] left-[70%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-bounce delay-700">
+                     <div className="absolute top-[60%] left-[70%] w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-2xl border-2 border-white animate-pulse delay-700">
                         <MapPin className="w-5 h-5 text-primary" />
                      </div>
                   </div>
