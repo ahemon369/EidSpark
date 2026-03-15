@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -35,13 +34,15 @@ export default function SalamiTracker() {
     if (!db || !user) return null
     return collection(db, "users", user.uid, "salamiEntries")
   }, [db, user])
-  const { data: salamiEntries = [] } = useCollection(salamiQuery)
+  const { data: salamiData } = useCollection(salamiQuery)
+  const salamiEntries = salamiData || []
 
   const leaderboardQuery = useMemoFirebase(() => {
     if (!db) return null
     return query(collection(db, "leaderboard"), orderBy("totalSalami", "desc"), limit(10))
   }, [db])
-  const { data: leaderboard = [] } = useCollection(leaderboardQuery)
+  const { data: leaderboardData = [] } = useCollection(leaderboardQuery)
+  const leaderboard = leaderboardData || []
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,15 +137,19 @@ export default function SalamiTracker() {
               <Card className="lg:col-span-2 shadow-2xl border-none rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-full">
                 <CardHeader className="p-8 pb-4 border-b border-primary/5"><CardTitle className="text-2xl font-black">History</CardTitle></CardHeader>
                 <CardContent className="p-0 overflow-y-auto max-h-[600px] custom-scrollbar">
-                  {salamiEntries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-6 hover:bg-primary/5 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.personName?.[0]}</AvatarFallback></Avatar>
-                        <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.personName}</p></div>
+                  {salamiEntries.length > 0 ? (
+                    salamiEntries.map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between p-6 hover:bg-primary/5 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm"><AvatarFallback className="bg-primary text-white font-bold">{entry.personName?.[0]}</AvatarFallback></Avatar>
+                          <div><p className="font-black text-lg text-primary dark:text-secondary">{entry.personName}</p></div>
+                        </div>
+                        <p className="text-2xl font-black text-primary dark:text-secondary">৳{entry.amount}</p>
                       </div>
-                      <p className="text-2xl font-black text-primary dark:text-secondary">৳{entry.amount}</p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="p-20 text-center text-muted-foreground italic">No records found yet.</div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -196,16 +201,20 @@ export default function SalamiTracker() {
                   <CardTitle className="text-3xl font-black">Top Receivers</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  {leaderboard.map((player, index) => (
-                    <div key={player.id} className={cn("flex items-center justify-between p-8 border-b last:border-0", player.id === user.uid ? "bg-secondary/10" : "")}>
-                      <div className="flex items-center gap-6">
-                        <span className="text-2xl font-black opacity-30">{index + 1}</span>
-                        <Avatar className="h-16 w-16 border-4 border-white shadow-lg"><AvatarImage src={player.photoURL} /><AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback></Avatar>
-                        <div><p className="font-black text-xl text-primary dark:text-white">{player.displayName}</p></div>
+                  {leaderboard.length > 0 ? (
+                    leaderboard.map((player, index) => (
+                      <div key={player.id} className={cn("flex items-center justify-between p-8 border-b last:border-0", player.id === user.uid ? "bg-secondary/10" : "")}>
+                        <div className="flex items-center gap-6">
+                          <span className="text-2xl font-black opacity-30">{index + 1}</span>
+                          <Avatar className="h-16 w-16 border-4 border-white shadow-lg"><AvatarImage src={player.photoURL} /><AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback></Avatar>
+                          <div><p className="font-black text-xl text-primary dark:text-white">{player.displayName}</p></div>
+                        </div>
+                        <p className="text-3xl font-black text-primary dark:text-secondary">৳{player.totalSalami.toLocaleString()}</p>
                       </div>
-                      <p className="text-3xl font-black text-primary dark:text-secondary">৳{player.totalSalami.toLocaleString()}</p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="p-20 text-center text-muted-foreground italic">Leaderboard is empty.</div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
