@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet"
 import L from "leaflet"
-import MarkerClusterGroup from 'react-leaflet-cluster'
-import { Button } from "@/components/ui/button"
-import { MapPin, Navigation, Clock, CheckCircle2, ShieldCheck, ExternalLink, Globe, Info, AlertTriangle, Landmark } from "lucide-react"
+import { MapPin, Navigation, Clock, CheckCircle2, Globe, Info, AlertTriangle, Landmark } from "lucide-react"
 import { collection, query, where, onSnapshot } from "firebase/firestore"
 import { useFirestore } from "@/firebase"
 import { cn } from "@/lib/utils"
@@ -76,6 +74,7 @@ export default function JamaatMap({
 }) {
   const [center, setCenter] = useState<[number, number]>([23.6850, 90.3563]) // Center of Bangladesh
   const [zoom, setZoom] = useState(7)
+  const [ClusterGroup, setClusterGroup] = useState<any>(null)
 
   useEffect(() => {
     if (userLocation) {
@@ -84,7 +83,34 @@ export default function JamaatMap({
     }
   }, [userLocation])
 
+  // Load react-leaflet-cluster dynamically to avoid Module Factory errors in Turbopack
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("react-leaflet-cluster").then((mod) => {
+        setClusterGroup(() => mod.default);
+      });
+    }
+  }, []);
+
   const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
+
+  const markers = mosques.map((mosque) => (
+    <Marker
+      key={mosque.id}
+      position={[mosque.latitude, mosque.longitude]}
+      icon={getMosqueIcon(mosque.isApprovedByAdmin, mosque.name)}
+      eventHandlers={{
+        click: () => onSelectMosque(mosque.id),
+      }}
+    >
+      <Tooltip direction="top" offset={[0, -40]} opacity={1}>
+        <span className="font-black text-xs text-primary">{mosque.name}</span>
+      </Tooltip>
+      <Popup className="custom-popup-mosque">
+        <MosquePopupContent mosque={mosque} />
+      </Popup>
+    </Marker>
+  ));
 
   return (
     <div className="w-full h-full relative">
@@ -105,29 +131,17 @@ export default function JamaatMap({
           </Marker>
         )}
 
-        <MarkerClusterGroup 
-          chunkedLoading 
-          maxClusterRadius={50}
-          showCoverageOnHover={false}
-        >
-          {mosques.map((mosque) => (
-            <Marker
-              key={mosque.id}
-              position={[mosque.latitude, mosque.longitude]}
-              icon={getMosqueIcon(mosque.isApprovedByAdmin, mosque.name)}
-              eventHandlers={{
-                click: () => onSelectMosque(mosque.id),
-              }}
-            >
-              <Tooltip direction="top" offset={[0, -40]} opacity={1}>
-                <span className="font-black text-xs text-primary">{mosque.name}</span>
-              </Tooltip>
-              <Popup className="custom-popup-mosque">
-                <MosquePopupContent mosque={mosque} />
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
+        {ClusterGroup ? (
+          <ClusterGroup 
+            chunkedLoading 
+            maxClusterRadius={50}
+            showCoverageOnHover={false}
+          >
+            {markers}
+          </ClusterGroup>
+        ) : (
+          markers
+        )}
       </MapContainer>
 
       <style jsx global>{`
@@ -192,13 +206,14 @@ export default function JamaatMap({
         }
 
         .leaflet-tooltip {
-          background: white;
-          border: 2px solid #065f46;
-          border-radius: 12px;
-          padding: 6px 12px;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-          font-family: 'Hind Siliguri', sans-serif;
-          font-weight: 800;
+          background: white !important;
+          border: 2px solid #065f46 !important;
+          border-radius: 12px !important;
+          padding: 6px 12px !important;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+          font-family: 'Hind Siliguri', sans-serif !important;
+          font-weight: 800 !important;
+          color: #065f46 !important;
         }
       `}</style>
     </div>

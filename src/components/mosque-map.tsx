@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
-import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Button } from "@/components/ui/button"
 import { Navigation, Loader2, MapPin, Heart, Clock, Timer } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -242,6 +241,7 @@ function MosquePopup({ mosque, onSave }: { mosque: Mosque, onSave?: (m: Mosque) 
 export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpdate, onSaveMosque }: MapProps) {
   const [mosques, setMosques] = useState<Mosque[]>([])
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
+  const [ClusterGroup, setClusterGroup] = useState<any>(null)
 
   useEffect(() => {
     if (typeof window !== "undefined" && navigator.geolocation) {
@@ -258,12 +258,39 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
     }
   }, [onLocationFound])
 
+  // Load react-leaflet-cluster dynamically to avoid Module Factory errors in Turbopack
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("react-leaflet-cluster").then((mod) => {
+        setClusterGroup(() => mod.default);
+      });
+    }
+  }, []);
+
   const handleFetch = (fetched: Mosque[]) => {
     setMosques(fetched)
     if (onMosquesUpdate) onMosquesUpdate(fetched)
   }
 
   const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
+
+  const markers = mosques.map((mosque) => {
+    const name = mosque.tags.name || mosque.tags["name:en"] || "Local Mosque";
+    return (
+      <Marker
+        key={mosque.id}
+        position={[mosque.lat, mosque.lon]}
+        icon={getStandardMosqueIcon()}
+      >
+        <Tooltip direction="top" offset={[0, -35]} opacity={1}>
+          <span className="font-black text-xs text-primary">{name}</span>
+        </Tooltip>
+        <Popup className="rounded-[2.5rem] overflow-hidden custom-popup">
+          <MosquePopup mosque={mosque} onSave={onSaveMosque} />
+        </Popup>
+      </Marker>
+    )
+  });
 
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-slate-50">
@@ -287,29 +314,17 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
           </Marker>
         )}
 
-        <MarkerClusterGroup 
-          chunkedLoading 
-          maxClusterRadius={50}
-          showCoverageOnHover={false}
-        >
-          {mosques.map((mosque) => {
-            const name = mosque.tags.name || mosque.tags["name:en"] || "Local Mosque";
-            return (
-              <Marker
-                key={mosque.id}
-                position={[mosque.lat, mosque.lon]}
-                icon={getStandardMosqueIcon()}
-              >
-                <Tooltip direction="top" offset={[0, -35]} opacity={1}>
-                  <span className="font-black text-xs text-primary">{name}</span>
-                </Tooltip>
-                <Popup className="rounded-[2.5rem] overflow-hidden custom-popup">
-                  <MosquePopup mosque={mosque} onSave={onSaveMosque} />
-                </Popup>
-              </Marker>
-            )
-          })}
-        </MarkerClusterGroup>
+        {ClusterGroup ? (
+          <ClusterGroup 
+            chunkedLoading 
+            maxClusterRadius={50}
+            showCoverageOnHover={false}
+          >
+            {markers}
+          </ClusterGroup>
+        ) : (
+          markers
+        )}
       </MapContainer>
 
       <style jsx global>{`
@@ -357,13 +372,14 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
         }
 
         .leaflet-tooltip {
-          background: white;
-          border: 2px solid #065f46;
-          border-radius: 12px;
-          padding: 6px 12px;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-          font-family: 'Hind Siliguri', sans-serif;
-          font-weight: 800;
+          background: white !important;
+          border: 2px solid #065f46 !important;
+          border-radius: 12px !important;
+          padding: 6px 12px !important;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+          font-family: 'Hind Siliguri', sans-serif !important;
+          font-weight: 800 !important;
+          color: #065f46 !important;
         }
       `}</style>
     </div>
