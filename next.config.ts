@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  transpilePackages: ['react-leaflet-cluster', 'react-leaflet', 'leaflet'],
   images: {
     remotePatterns: [
       {
