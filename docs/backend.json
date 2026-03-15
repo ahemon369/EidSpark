@@ -1,185 +1,110 @@
-
 {
   "entities": {
-    "UserProfile": {
+    "ReceivedSalami": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserProfile",
+      "title": "ReceivedSalami",
       "type": "object",
-      "description": "Represents a user's public profile data within the EidSpark application, linked to their authentication system ID. This entity stores non-authentication-sensitive user information.",
+      "description": "Represents a record of salami money received by a user during Eid celebrations, as part of the Eid Salami Counter feature.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserProfile entity, corresponding to the external authentication system's user ID."
+          "description": "Unique identifier for the ReceivedSalami entity."
         },
-        "displayName": {
+        "userId": {
           "type": "string",
-          "description": "The user's preferred display name for public interaction."
+          "description": "Reference to the User who received this salami. (Relationship: User 1:N ReceivedSalami)"
         },
-        "email": {
-          "type": "string",
-          "description": "The user's email address, used for contact or non-authentication-critical purposes.",
-          "format": "email"
+        "amount": {
+          "type": "number",
+          "description": "The amount of salami received."
         },
-        "createdAt": {
+        "fromPerson": {
           "type": "string",
-          "description": "Timestamp indicating when the user profile was created.",
+          "description": "The name of the person from whom the salami was received. This field is optional."
+        },
+        "receivedAt": {
+          "type": "string",
+          "description": "The date and time when this salami entry was logged.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "displayName",
-        "createdAt"
+        "userId",
+        "amount",
+        "receivedAt"
       ]
     },
-    "Mosque": {
+    "EidSelfie": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Mosque",
+      "title": "EidSelfie",
       "type": "object",
-      "description": "Represents a mosque with its geographical location and core details for the EidSpark's Live Eid Jamaat Finder.",
+      "description": "Represents an Eid selfie photo uploaded by a user for the Eid Selfie Contest.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Mosque entity."
+          "description": "Unique identifier for the EidSelfie entity."
         },
-        "name": {
+        "userId": {
           "type": "string",
-          "description": "The official name of the mosque."
+          "description": "Reference to the User who uploaded this selfie. (Relationship: User 1:N EidSelfie)"
         },
-        "district": {
+        "imageUrl": {
           "type": "string",
-          "description": "The administrative district in Bangladesh where the mosque is located (e.g., 'Dhaka District')."
-        },
-        "area": {
-          "type": "string",
-          "description": "A more specific local area or neighborhood within the district (e.g., 'Gulshan', 'Mirpur')."
-        },
-        "latitude": {
-          "type": "number",
-          "description": "The geographical latitude coordinate of the mosque's location for map display."
-        },
-        "longitude": {
-          "type": "number",
-          "description": "The geographical longitude coordinate of the mosque's location for map display."
-        },
-        "googleMapsLink": {
-          "type": "string",
-          "description": "A URL to the mosque's location on Google Maps for directions.",
+          "description": "The URL where the uploaded selfie image is stored.",
           "format": "uri"
         },
-        "description": {
+        "caption": {
           "type": "string",
-          "description": "An optional note or additional details about the mosque, often submitted by users."
+          "description": "A user-provided caption for the Eid selfie. This field is optional."
         },
-        "isApprovedByAdmin": {
-          "type": "boolean",
-          "description": "Indicates whether the mosque's core data has been reviewed and approved by an administrator."
+        "likesCount": {
+          "type": "number",
+          "description": "The total number of likes this selfie has received. This count can be denormalized for performance or calculated from SelfieLike entities."
         },
-        "createdAt": {
+        "uploadedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the mosque entry was first submitted.",
+          "description": "The date and time when the selfie was uploaded.",
           "format": "date-time"
-        },
-        "submittedByUserId": {
-          "type": "string",
-          "description": "Reference to the UserProfile who initially submitted this mosque entry. (Relationship: UserProfile 1:N Mosque)"
         }
       },
       "required": [
         "id",
-        "name",
-        "district",
-        "area",
-        "latitude",
-        "longitude",
-        "isApprovedByAdmin",
-        "createdAt"
+        "userId",
+        "imageUrl",
+        "uploadedAt"
       ]
     },
-    "EidJamaatTime": {
+    "SelfieLike": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "EidJamaatTime",
+      "title": "SelfieLike",
       "type": "object",
-      "description": "Represents a specific Eid prayer (Jamaat) time slot for a given mosque on a particular Eid date, allowing for multiple times per mosque and community verification.",
+      "description": "Represents a like given by a user to an Eid selfie, used for tracking likes and preventing duplicate likes in the Eid Selfie Contest.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the EidJamaatTime entity."
+          "description": "Unique identifier for the SelfieLike entity."
         },
-        "mosqueId": {
+        "selfieId": {
           "type": "string",
-          "description": "Reference to the Mosque entity this prayer time belongs to. (Relationship: Mosque 1:N EidJamaatTime)"
+          "description": "Reference to the EidSelfie that was liked. (Relationship: EidSelfie 1:N SelfieLike)"
         },
-        "eidDate": {
+        "userId": {
           "type": "string",
-          "description": "The specific date of the Eid for which this prayer time is scheduled (e.g., '2023-04-21' for Eid al-Fitr).",
-          "format": "date"
+          "description": "Reference to the User who gave the like. (Relationship: User 1:N SelfieLike)"
         },
-        "time": {
+        "likedAt": {
           "type": "string",
-          "description": "The specific time of the Eid Jamaat (e.g., '07:00 AM', '08:30 AM')."
-        },
-        "submittedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when this specific prayer time entry was submitted.",
+          "description": "The date and time when the like was recorded.",
           "format": "date-time"
-        },
-        "submittedByUserId": {
-          "type": "string",
-          "description": "Reference to the UserProfile who submitted this prayer time. (Relationship: UserProfile 1:N EidJamaatTime)"
-        },
-        "isApprovedByAdmin": {
-          "type": "boolean",
-          "description": "Indicates whether this specific prayer time entry has been reviewed and approved by an administrator."
-        },
-        "communitySubmissionCount": {
-          "type": "number",
-          "description": "A count of how many distinct users have submitted this exact prayer time for this mosque and Eid date, contributing to community verification. A higher count implies more verification."
         }
       },
       "required": [
         "id",
-        "mosqueId",
-        "eidDate",
-        "time",
-        "submittedAt",
-        "isApprovedByAdmin",
-        "communitySubmissionCount"
+        "selfieId",
+        "userId",
+        "likedAt"
       ]
-    },
-    "MoonSighting": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MoonSighting",
-      "type": "object",
-      "description": "A community-submitted report of a moon sighting (Hilal) across Bangladesh.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "locationName": { "type": "string" },
-        "lat": { "type": "number" },
-        "lng": { "type": "number" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "seen": { "type": "boolean" },
-        "notes": { "type": "string" }
-      },
-      "required": ["id", "userId", "userName", "locationName", "lat", "lng", "timestamp", "seen"]
-    },
-    "Notification": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Notification",
-      "type": "object",
-      "description": "A user-specific notification for updates, activities, and alerts.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "message": { "type": "string" },
-        "type": { "type": "string", "enum": ["greeting", "like", "mosque", "moon", "jamaat"] },
-        "isRead": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "title", "message", "type", "isRead", "createdAt"]
     }
   },
   "auth": {
@@ -191,89 +116,62 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}",
+        "path": "/users/{userId}/receivedSalami/{salamiId}",
         "definition": {
-          "entityName": "UserProfile",
+          "entityName": "ReceivedSalami",
           "schema": {
-            "$ref": "#/backend/entities/UserProfile"
+            "$ref": "#/backend/entities/ReceivedSalami"
           },
-          "description": "Stores individual user profile data.",
+          "description": "Stores individual records of salami money received by a specific user. This is private data, owned by the user specified in the path and the document's 'userId' field. Includes denormalized 'userId' for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/notifications/{notificationId}",
-        "definition": {
-          "entityName": "Notification",
-          "schema": {
-            "$ref": "#/backend/entities/Notification"
-          },
-          "description": "User-specific notifications.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The user receiving the notification."
+              "description": "The unique identifier of the user who received the salami."
             },
             {
-              "name": "notificationId",
-              "description": "Unique notification ID."
+              "name": "salamiId",
+              "description": "The unique identifier for a specific received salami entry."
             }
           ]
         }
       },
       {
-        "path": "/roles_admin/{userId}",
+        "path": "/eidSelfies/{selfieId}",
         "definition": {
-          "entityName": "AdminRole",
+          "entityName": "EidSelfie",
           "schema": {
-            "$ref": "#/backend/entities/UserProfile"
+            "$ref": "#/backend/entities/EidSelfie"
           },
-          "description": "Identifies administrative users.",
+          "description": "Stores all submitted Eid selfies for the contest. Selfies are publicly viewable for the leaderboard, but write access is restricted to the uploading user. Includes denormalized 'userId' for authorization independence.",
           "params": [
             {
-              "name": "userId",
-              "description": "The unique identifier of the admin."
+              "name": "selfieId",
+              "description": "The unique identifier for a specific Eid selfie."
             }
           ]
         }
       },
       {
-        "path": "/mosques/{mosqueId}",
+        "path": "/eidSelfies/{selfieId}/likes/{likeId}",
         "definition": {
-          "entityName": "Mosque",
+          "entityName": "SelfieLike",
           "schema": {
-            "$ref": "#/backend/entities/Mosque"
+            "$ref": "#/backend/entities/SelfieLike"
           },
-          "description": "Stores mosque details.",
+          "description": "Stores individual 'likes' given to a specific Eid selfie. Each like is owned by the user who created it. Includes denormalized 'userId' (the liker) and 'selfieId' for authorization independence.",
           "params": [
             {
-              "name": "mosqueId",
-              "description": "The unique identifier for a specific mosque."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/moonSightings/{sightingId}",
-        "definition": {
-          "entityName": "MoonSighting",
-          "schema": {
-            "$ref": "#/backend/entities/MoonSighting"
-          },
-          "description": "Stores community moon sighting reports.",
-          "params": [
+              "name": "selfieId",
+              "description": "The unique identifier of the Eid selfie being liked."
+            },
             {
-              "name": "sightingId",
-              "description": "The unique identifier for a sighting report."
+              "name": "likeId",
+              "description": "The unique identifier for a specific like."
             }
           ]
         }
       }
-    ]
+    ],
+    "reasoning": "The proposed Firestore structure prioritizes Authorization Independence and Structural Segregation to ensure secure, scalable, and easily debuggable security rules. For user-specific private data like `ReceivedSalami`, a hierarchical path-based ownership model (`/users/{userId}/receivedSalami/{salamiId}`) is used. Each `ReceivedSalami` document explicitly includes the `userId` field, denormalizing the owner's ID directly into the document. This eliminates the need for `get()` calls to parent documents in security rules, allowing atomic write operations and simplifying authorization checks to `request.auth.uid == resource.data.userId` or `request.auth.uid == userId` from the path. This structure directly supports QAPs by enabling secure list operations where users can only query their own salami records using a path like `/users/{request.auth.uid}/receivedSalami`.\n\nFor publicly viewable and collaborative data like `EidSelfie` entries, a top-level collection (`/eidSelfies/{selfieId}`) is employed. Each `EidSelfie` document contains the `userId` of the uploader, ensuring that ownership for modifications is self-contained without parent dependencies. This collection can be read by all authenticated users for the leaderboard, with write access restricted to the `userId` associated with the document. The `likesCount` field is denormalized to facilitate efficient leaderboard sorting. The `SelfieLike` entity, representing a user's 'like' on a selfie, is implemented as a subcollection (`/eidSelfies/{selfieId}/likes/{likeId}`). Each `SelfieLike` document includes both `userId` (the liker) and `selfieId` (the liked selfie). This denormalization ensures that a like document can be authorized independently, checking `request.auth.uid == resource.data.userId` to prevent unauthorized modification or deletion of other users' likes, while also explicitly linking it to the parent selfie without requiring a `get()` operation. This approach effectively handles QAPs for the selfie contest by allowing secure public reads of selfies for display and a clear, explicit path for users to create their own likes."
   }
 }

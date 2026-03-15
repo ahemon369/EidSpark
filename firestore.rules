@@ -1,9 +1,35 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Global Helper Functions ---
+    /**
+     * EIDSPARK SECURITY RULES ANALYSIS & PHILOSOPHY
+     * 
+     * Core Philosophy:
+     * This ruleset implements a robust, multi-tier authorization model designed for the "Eid Fun Zone"
+     * interactive features. It prioritizes user privacy for personal financial logs (Salami Counter) 
+     * while enabling public participation and social proof for community features (Selfie Contest).
+     *
+     * Data Structure:
+     * 1. User-Centric Private Data: Records of received salami are nested under the owner's 
+     *    user path (/users/{userId}/receivedSalami) to ensure strict structural isolation.
+     * 2. Public Collaborative Data: Eid selfies are stored in a top-level collection (/eidSelfies)
+     *    to facilitate global leaderboard queries and social interactions.
+     * 3. Interaction Subcollections: User "likes" are stored as subcollections of the selfies 
+     *    they target, allowing for efficient counts and preventing duplicate entries.
+     *
+     * Key Security Decisions:
+     * - Authorization Independence: All documents denormalize the 'userId' of their owner/creator. 
+     *   This allows rules to perform fast, local checks without expensive get() lookups to other documents.
+     * - Relational Integrity: On document creation, rules enforce that the internal 'userId' field 
+     *   matches the authenticated user's UID and, where applicable, the path parameters.
+     * - Immutability: Critical ownership fields (userId) are marked as immutable during updates 
+     *   to prevent users from "transferring" data to other accounts.
+     * - Prototyping Flexibility: While authorization is strictly enforced, general data schemas 
+     *   (captions, amounts, URLs) are not validated to allow for rapid UI/UX iteration.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -13,63 +39,66 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
     }
 
-    function isExistingOwnerOrAdmin(ownerId) {
-      return resource != null && (isOwner(ownerId) || isAdmin());
+    function incomingData() {
+      return request.resource.data;
     }
 
-    // --- Collection Rules ---
+    function existingData() {
+      return resource.data;
+    }
 
-    match /users/{userId} {
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the Eid Salami Counter feature. Ensures users can only see and manage their own financial logs.
+     * @path /users/{userId}/receivedSalami/{salamiId}
+     * @allow (get) If the requesting user's UID matches the {userId} in the path.
+     * @deny (list) If a user attempts to query the salami records of another user.
+     * @principle Restricts access to a user's own data tree and validates relational integrity between path and data.
+     */
+    match /users/{userId}/receivedSalami/{salamiId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId) && incomingData().userId == userId;
+      allow update: if isExistingOwner(userId) && incomingData().userId == existingData().userId;
+      allow delete: if isExistingOwner(userId);
+    }
 
-      match /{allSubcollections=**} {
-        allow read, write: if isOwner(userId);
+    /**
+     * @description Rules for the Eid Selfie Contest. Allows public viewing for the leaderboard while restricting edits to the author.
+     * @path /eidSelfies/{selfieId}
+     * @allow (create) If the user is signed in and provides their own UID as the 'userId'.
+     * @deny (update) If a user attempts to modify a selfie uploaded by someone else.
+     * @principle Public Read with Owner-Only Writes; enforces ownership via denormalized userId field.
+     */
+    match /eidSelfies/{selfieId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && incomingData().userId == request.auth.uid;
+      allow update: if isExistingOwner(existingData().userId) && incomingData().userId == existingData().userId;
+      allow delete: if isExistingOwner(existingData().userId);
+      
+      /**
+       * @description Rules for 'likes' on selfies. Publicly readable, but only the specific user can create or remove their own like.
+       * @path /eidSelfies/{selfieId}/likes/{likeId}
+       * @allow (create) If the user is signed in and the document ID or userId matches their own.
+       * @deny (delete) If a user tries to remove a like they did not create.
+       * @principle Prevents spoofing of social interactions by binding 'likes' to the authenticated creator.
+       */
+      match /likes/{likeId} {
+        allow get, list: if true;
+        allow create: if isSignedIn() && incomingData().userId == request.auth.uid;
+        allow update: if false; // Likes are generally binary and immutable; users should delete and recreate if needed.
+        allow delete: if isExistingOwner(existingData().userId);
       }
     }
 
-    match /roles_admin/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /mosques/{mosqueId} {
-      allow list: if true;
-      allow get: if resource.data.isApprovedByAdmin == true || isExistingOwnerOrAdmin(resource.data.submittedByUserId);
-      allow create: if isSignedIn() && request.resource.data.submittedByUserId == request.auth.uid;
-      allow update: if isExistingOwnerOrAdmin(resource.data.submittedByUserId);
-      allow delete: if isExistingOwnerOrAdmin(resource.data.submittedByUserId);
-
-      match /jamaatTimes/{jamaatTimeId} {
-        allow list: if true;
-        allow get: if resource.data.isApprovedByAdmin == true || isExistingOwnerOrAdmin(resource.data.submittedByUserId);
-        allow create: if isSignedIn() && request.resource.data.submittedByUserId == request.auth.uid;
-        allow update, delete: if isExistingOwnerOrAdmin(resource.data.submittedByUserId);
-      }
-    }
-
-    match /moonSightings/{sightingId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-    }
-
-    match /salamiCards/{cardId} {
-      allow get: if true;
-      allow create: if isSignedIn();
-      allow list, update, delete: if isAdmin();
-    }
-
-    match /leaderboard/{userId} {
-      allow read: if true;
-      allow write: if isOwner(userId);
+    // --- DEFAULT DENY ---
+    // Explicitly deny access to any other collections not defined above.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
