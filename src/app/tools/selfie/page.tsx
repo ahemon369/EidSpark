@@ -265,9 +265,6 @@ export default function SelfiePosterStudio() {
       if (currentDisplayImage) {
         const img = new Image()
         img.src = currentDisplayImage
-        // We handle drawing inside image onload if it's external, 
-        // but since it's dataUri it's usually immediate.
-        // For reliability we wrap in img.onload
         img.onload = () => {
           ctx.save()
           ctx.translate(res / 2 + posX, res / 2 + posY)
@@ -276,7 +273,6 @@ export default function SelfiePosterStudio() {
           ctx.drawImage(img, -res/2, -res/2, res, res)
           ctx.restore()
           
-          // Continue drawing on top after image is loaded
           finishDrawing()
         }
       } else {
@@ -428,7 +424,7 @@ export default function SelfiePosterStudio() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Label className="text-[10px] font-black uppercase tracking-widest">Main Greeting</Label>
-                      <Button variant="ghost" size="sm" onClick={handleGenerateAiGenerate} disabled={isCaptioning} className="h-8 text-[10px] font-black text-secondary hover:bg-secondary/10 px-3 rounded-full">
+                      <Button variant="ghost" size="sm" onClick={handleGenerateCaption} disabled={isCaptioning} className="h-8 text-[10px] font-black text-secondary hover:bg-secondary/10 px-3 rounded-full">
                         {isCaptioning ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Sparkles className="w-3 h-3 mr-2" />}
                         Magic Caption
                       </Button>
