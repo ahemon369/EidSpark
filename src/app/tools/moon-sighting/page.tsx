@@ -267,16 +267,16 @@ export default function MoonSightingTrackerPage() {
                     </div>
 
                     <div className={cn(
-                      "flex items-center justify-between p-6 rounded-3xl border-2 transition-all cursor-pointer",
+                      "flex items-center justify-between p-6 rounded-3xl border-2 transition-all",
                       seen ? "bg-emerald-500/10 border-emerald-500/30" : "bg-rose-500/10 border-rose-500/30"
-                    )} onClick={() => setSeen(!seen)}>
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-black text-white">Moon Seen?</Label>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">
+                    )}>
+                      <Label htmlFor="seen-toggle" className="flex-grow cursor-pointer space-y-0.5">
+                        <span className="text-sm font-black text-white block">Moon Seen?</span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black block">
                           {seen ? "YES - Spotted" : "NO - Not visible"}
-                        </p>
-                      </div>
-                      <Switch checked={seen} onCheckedChange={setSeen} />
+                        </span>
+                      </Label>
+                      <Switch id="seen-toggle" checked={seen} onCheckedChange={setSeen} />
                     </div>
 
                     <div className="space-y-2">

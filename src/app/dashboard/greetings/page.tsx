@@ -5,10 +5,11 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, orderBy, deleteDoc, doc } from "firebase/firestore"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, Trash2, Download, ExternalLink, Sparkles, Loader2, Image as ImageIcon } from "lucide-react"
+import { Send, Trash2, ExternalLink, Sparkles, Loader2, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 export default function MyGreetings() {
   const { user } = useUser()
