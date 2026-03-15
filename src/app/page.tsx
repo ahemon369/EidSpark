@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -26,7 +27,9 @@ import {
   Mail,
   CalendarDays,
   Volume2,
-  VolumeX
+  VolumeX,
+  Share2,
+  Twitter
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -178,6 +181,19 @@ export default function Home() {
     setIsPlayingTakbir(!isPlayingTakbir)
   }
 
+  const shareCountdown = (platform: 'facebook' | 'whatsapp' | 'twitter') => {
+    const url = encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/tools/countdown' : '');
+    const text = encodeURIComponent("Check out the live Eid-ul-Fitr 2026 countdown on EidSpark! 🌙 #EidSpark #EidMubarak");
+    
+    const shares = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      whatsapp: `https://wa.me/?text=${text}%20${url}`,
+      twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`
+    };
+    
+    window.open(shares[platform], '_blank');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-white islamic-pattern">
       <Navbar />
@@ -322,24 +338,53 @@ export default function Home() {
                     ))}
                   </div>
                   
-                  <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col items-center gap-3 w-full">
                     <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
                       <CalendarDays className="w-3 h-3" />
                       <span>Expected Eid-ul-Fitr: March 20, 2026 (Bangladesh)</span>
                     </div>
                     
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={toggleTakbir}
-                      className={cn(
-                        "rounded-full h-10 px-6 font-bold gap-2 transition-all border-2",
-                        isPlayingTakbir ? "bg-primary text-white border-primary" : "text-primary border-primary/20 hover:bg-primary/5"
-                      )}
-                    >
-                      {isPlayingTakbir ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      {isPlayingTakbir ? "Stop Takbir" : "Play Eid Takbir"}
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleTakbir}
+                        className={cn(
+                          "rounded-full h-10 px-6 font-bold gap-2 transition-all border-2",
+                          isPlayingTakbir ? "bg-primary text-white border-primary" : "text-primary border-primary/20 hover:bg-primary/5"
+                        )}
+                      >
+                        {isPlayingTakbir ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                        {isPlayingTakbir ? "Stop Takbir" : "Play Eid Takbir"}
+                      </Button>
+
+                      <div className="flex items-center gap-2 border-l pl-4 border-slate-200">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+                          onClick={() => shareCountdown('facebook')}
+                        >
+                          <Facebook className="w-4 h-4 fill-current" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-9 h-9 rounded-full bg-green-50 text-green-600 hover:bg-green-100"
+                          onClick={() => shareCountdown('whatsapp')}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-9 h-9 rounded-full bg-slate-900 text-white hover:bg-slate-800"
+                          onClick={() => shareCountdown('twitter')}
+                        >
+                          <Twitter className="w-4 h-4 fill-current" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
              </div>
@@ -351,7 +396,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-10 text-center lg:text-left">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
+                <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
                   <Users className="w-3 h-3" />
                   <span>The Community Choice</span>
                 </div>
