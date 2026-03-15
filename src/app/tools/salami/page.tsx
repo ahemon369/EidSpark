@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Wallet, Plus, Trophy, Trash2, Lock, Crown, Send, Mail, Copy, Loader2 } from "lucide-react"
+import { Wallet, Plus, Trophy, Trash2, Lock, Crown, Send, Mail, Copy, Loader2, Gift, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, deleteDoc, doc, serverTimestamp, setDoc, query, orderBy, limit } from "firebase/firestore"
@@ -132,7 +132,12 @@ export default function SalamiTracker() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="text-center mb-12 space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20">
+            <Gift className="w-4 h-4 text-secondary" />
+            <span>Digital Eidi Center</span>
+          </div>
           <h1 className="text-4xl lg:text-6xl font-black text-primary tracking-tight">Salami & Eidi</h1>
+          <p className="text-muted-foreground font-medium max-w-xl mx-auto">Track your collection or send unique digital envelopes to your loved ones.</p>
         </div>
 
         {!user ? (
@@ -170,8 +175,14 @@ export default function SalamiTracker() {
                     </div>
                     <CardContent className="p-8">
                       <form onSubmit={handleAdd} className="space-y-4">
-                        <Input placeholder="From Person" value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl" required />
-                        <Input type="number" placeholder="Amount (৳)" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 rounded-xl" required min="0" />
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">From Person</Label>
+                          <Input placeholder="e.g. Uncle Karim" value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl" required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Amount (৳)</Label>
+                          <Input type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 rounded-xl" required min="0" />
+                        </div>
                         <Button type="submit" className="w-full h-14 emerald-gradient rounded-xl font-black text-lg shadow-lg">
                           <Plus className="w-5 h-5 mr-2" /> Add Record
                         </Button>
@@ -224,37 +235,75 @@ export default function SalamiTracker() {
 
             <TabsContent value="envelope" className="animate-in fade-in duration-500">
               <div className="max-w-3xl mx-auto">
-                <Card className="shadow-2xl border-none rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-                  <CardHeader className="emerald-gradient p-10 text-white text-center">
+                <Card className="shadow-2xl border-none rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl border-2 border-primary/5">
+                  <CardHeader className="emerald-gradient p-10 text-white text-center relative">
+                    <div className="absolute top-4 right-4"><Sparkles className="w-10 h-10 opacity-20 animate-pulse" /></div>
                     <Mail className="w-12 h-12 mx-auto mb-4 opacity-80" />
                     <CardTitle className="text-3xl font-black">Digital Eidi Envelope</CardTitle>
+                    <CardDescription className="text-white/70 font-medium">Send a beautiful animated card with a magic link.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-10 space-y-8">
                     {!generatedLink ? (
                       <form onSubmit={handleCreateEnvelope} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
-                          <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Your Name" className="h-12 rounded-xl" required />
-                          <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Recipient Name" className="h-12 rounded-xl" required />
+                          <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Your Name</Label>
+                            <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="e.g. Auntie" className="h-12 rounded-xl bg-slate-50" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Recipient Name</Label>
+                            <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="e.g. Abir" className="h-12 rounded-xl bg-slate-50" required />
+                          </div>
                         </div>
-                        <textarea className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 focus:border-primary/20 outline-none transition-all" value={salamiMsg} onChange={(e) => setSalamiMsg(e.target.value)} placeholder="Eid Message..."></textarea>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Eid Message</Label>
+                          <textarea 
+                            className="w-full h-32 rounded-xl border-2 border-primary/5 p-4 focus:border-primary/20 outline-none transition-all bg-slate-50" 
+                            value={salamiMsg} 
+                            onChange={(e) => setSalamiMsg(e.target.value)} 
+                            placeholder="Write something heartfelt..."
+                          ></textarea>
+                        </div>
                         <div className="grid md:grid-cols-2 gap-6">
-                          <Input type="number" value={salamiAmt} onChange={(e) => setSalamiAmt(e.target.value)} placeholder="Amount (৳)" className="h-12 rounded-xl" />
-                          <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="bKash/Nagad link" className="h-12 rounded-xl" />
+                          <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Amount (Optional)</Label>
+                            <Input type="number" value={salamiAmt} onChange={(e) => setSalamiAmt(e.target.value)} placeholder="৳" className="h-12 rounded-xl bg-slate-50" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Payment/Phone (Optional)</Label>
+                            <Input value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} placeholder="bKash number or link" className="h-12 rounded-xl bg-slate-50" />
+                          </div>
                         </div>
-                        <Button type="submit" disabled={isCreating} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl">
-                          {isCreating ? "Processing..." : "Generate Magic Link"}
+                        <Button type="submit" disabled={isCreating} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-[1.02] transition-transform">
+                          {isCreating ? <Loader2 className="animate-spin" /> : <><Send className="w-6 h-6 mr-3" /> Create & Generate Link</>}
                         </Button>
                       </form>
                     ) : (
-                      <div className="space-y-8 text-center">
-                        <div className="bg-primary/5 p-8 rounded-[2rem] border-2 border-dashed border-primary/20 space-y-4">
-                          <p className="text-primary font-black uppercase tracking-widest text-sm">Magic Link Ready!</p>
+                      <div className="space-y-8 text-center animate-in zoom-in duration-500">
+                        <div className="bg-primary/5 p-10 rounded-[2.5rem] border-4 border-dashed border-primary/10 space-y-6">
+                          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-xl ring-8 ring-primary/5">
+                            <Send className="w-10 h-10 text-primary" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-primary font-black uppercase tracking-[0.2em] text-sm">Magic Link Ready!</p>
+                            <p className="text-muted-foreground text-xs font-medium">Send this link to {recipientName} to surprise them.</p>
+                          </div>
                           <div className="flex gap-2">
-                            <Input value={generatedLink} readOnly className="h-12 rounded-xl bg-white font-mono text-xs" />
-                            <Button onClick={copyToClipboard} size="icon" className="h-12 w-12 rounded-xl emerald-gradient shrink-0"><Copy className="w-5 h-5" /></Button>
+                            <Input value={generatedLink} readOnly className="h-14 rounded-xl bg-white font-mono text-xs border-2 border-primary/10 shadow-sm" />
+                            <Button onClick={copyToClipboard} size="icon" className="h-14 w-14 rounded-xl emerald-gradient shrink-0 shadow-lg group">
+                              <Copy className="w-6 h-6 group-active:scale-90 transition-transform" />
+                            </Button>
                           </div>
                         </div>
-                        <Button variant="ghost" onClick={() => setGeneratedLink("")} className="text-muted-foreground hover:text-primary">Create Another</Button>
+                        
+                        <div className="flex flex-wrap items-center justify-center gap-4">
+                          <Button variant="outline" className="rounded-xl h-12 gap-2 border-2" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Eid Mubarak! Here is a digital surprise for you: ' + generatedLink)}`, '_blank')}>
+                            <Mail className="w-4 h-4" /> WhatsApp
+                          </Button>
+                          <Button variant="ghost" onClick={() => { setGeneratedLink(""); setRecipientName(""); setSalamiAmt(""); setSalamiMsg(""); }} className="text-muted-foreground hover:text-primary font-bold">
+                            Create Another
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -264,10 +313,12 @@ export default function SalamiTracker() {
 
             <TabsContent value="leaderboard" className="animate-in fade-in duration-500">
               <div className="max-w-2xl mx-auto">
-                <Card className="shadow-2xl border-none rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-                  <CardHeader className="emerald-gradient p-10 text-white text-center">
-                    <Crown className="w-12 h-12 mx-auto mb-4 text-secondary fill-secondary" />
+                <Card className="shadow-2xl border-none rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl border-2 border-primary/5">
+                  <CardHeader className="emerald-gradient p-10 text-white text-center relative">
+                    <div className="absolute top-4 right-4 rotate-12"><Crown className="w-12 h-12 text-secondary/30 fill-secondary/30" /></div>
+                    <Crown className="w-12 h-12 mx-auto mb-4 text-secondary fill-secondary drop-shadow-lg" />
                     <CardTitle className="text-3xl font-black">Top Receivers</CardTitle>
+                    <CardDescription className="text-white/70 font-medium">The most blessed collectors in the community.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="divide-y divide-primary/5">
@@ -275,15 +326,25 @@ export default function SalamiTracker() {
                         <div className="p-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>
                       ) : leaderboard.length > 0 ? (
                         leaderboard.map((player, index) => (
-                          <div key={player.id} className={cn("flex items-center justify-between p-8", player.id === user.uid && "bg-secondary/10 border-l-8 border-secondary")}>
+                          <div key={player.id} className={cn(
+                            "flex items-center justify-between p-8 transition-colors",
+                            player.id === user.uid ? "bg-secondary/10 border-l-8 border-secondary" : "hover:bg-slate-50"
+                          )}>
                             <div className="flex items-center gap-6">
-                              <span className="text-2xl font-black text-muted-foreground/40">{index + 1}</span>
-                              <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
-                                <AvatarImage src={player.photoURL} />
-                                <AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback>
-                              </Avatar>
+                              <span className={cn(
+                                "text-2xl font-black",
+                                index === 0 ? "text-secondary" : index === 1 ? "text-slate-400" : index === 2 ? "text-amber-600" : "text-muted-foreground/40"
+                              )}>{index + 1}</span>
+                              <div className="relative">
+                                <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
+                                  <AvatarImage src={player.photoURL} />
+                                  <AvatarFallback className="bg-secondary text-primary font-black text-xl">{player.displayName?.[0]}</AvatarFallback>
+                                </Avatar>
+                                {index === 0 && <Crown className="absolute -top-3 -right-3 w-8 h-8 text-secondary fill-secondary -rotate-12 drop-shadow-md" />}
+                              </div>
                               <div>
                                 <p className="font-black text-xl text-primary">{player.displayName}</p>
+                                {player.id === user.uid && <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Your Rank</p>}
                               </div>
                             </div>
                             <p className="text-3xl font-black text-primary">৳{player.totalSalami.toLocaleString()}</p>
