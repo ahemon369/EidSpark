@@ -62,6 +62,14 @@ export default function MoonSightingTrackerPage() {
 
   const { data: sightings, isLoading: loadingSightings } = useCollection(sightingsRef)
 
+  // Today's specific reports counter
+  const todaySeenCount = sightings?.filter(s => {
+    if (!s.seen) return false;
+    const reportDate = new Date(s.timestamp);
+    const today = new Date();
+    return reportDate.toDateString() === today.toDateString();
+  }).length || 0;
+
   // Auto-detect Location
   const detectLocation = () => {
     if (navigator.geolocation) {
@@ -146,7 +154,23 @@ export default function MoonSightingTrackerPage() {
 
       <main className="max-w-[1800px] mx-auto px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 mb-16 animate-in fade-in slide-in-from-top duration-700">
+        {/* Today's Counter Banner */}
+        <div className="flex justify-center mb-12 animate-in fade-in slide-in-from-top duration-1000">
+          <div className="bg-white/5 border border-white/10 backdrop-blur-xl px-10 py-4 rounded-full shadow-[0_0_50px_rgba(233,190,36,0.1)] flex items-center gap-4 border-2">
+            <div className="relative">
+              <div className="absolute inset-0 bg-secondary blur-lg opacity-40 animate-pulse"></div>
+              <span className="text-3xl relative">🌙</span>
+            </div>
+            <div className="text-left">
+              <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-none">
+                <span className="text-secondary">{todaySeenCount}</span> Moon Sightings Reported
+              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mt-1">In Bangladesh Today</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 mb-16 animate-in fade-in slide-in-from-top duration-700 delay-200">
           <div className="space-y-6 max-w-2xl text-center lg:text-left">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-secondary text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md">
               <Sparkles className="w-4 h-4 animate-twinkle" />
@@ -164,11 +188,11 @@ export default function MoonSightingTrackerPage() {
           <div className="flex flex-wrap justify-center gap-6">
              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center backdrop-blur-xl shadow-2xl min-w-[160px]">
                 <p className="text-5xl font-black text-secondary">{sightings?.filter(s => s.seen).length || 0}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-2">Spotted</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-2">Total Spotted</p>
              </div>
              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center backdrop-blur-xl shadow-2xl min-w-[160px]">
                 <p className="text-5xl font-black text-white">{sightings?.length || 0}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-2">Reports</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-2">Total Reports</p>
              </div>
           </div>
         </div>
