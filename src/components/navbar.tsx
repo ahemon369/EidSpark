@@ -1,8 +1,9 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -27,7 +28,7 @@ const navItems = [
   { name: "Zakat", href: "/tools/zakat" },
   { name: "Greeting", href: "/tools/greeting" },
   { name: "Selfie", href: "/tools/selfie" },
-  { name: "Salami", href: "/tools/salami" },
+  { name: "Salami List", href: "/tools/salami-calculator" },
   { name: "Moon Sight", href: "/tools/moon-sighting" },
 ]
 

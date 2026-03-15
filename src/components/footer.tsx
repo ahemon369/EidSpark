@@ -57,10 +57,10 @@ export function Footer() {
           <div>
             <h4 className="font-black text-primary dark:text-secondary uppercase tracking-[0.2em] text-xs mb-10">Platform</h4>
             <ul className="space-y-6 text-muted-foreground font-bold text-lg">
+              <li><Link href="/tools/salami-calculator" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Salami Guide</Link></li>
               <li><Link href="/tools/moon-sighting" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Moon Sight Tracker</Link></li>
               <li><Link href="/tools/salami" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Salami Center</Link></li>
               <li><Link href="/tools/countdown" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> Live Countdown</Link></li>
-              <li><Link href="/about" className="hover:text-primary dark:hover:text-secondary transition-colors flex items-center gap-2 group"><ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" /> About Us</Link></li>
             </ul>
           </div>
 

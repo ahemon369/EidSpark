@@ -20,6 +20,7 @@ import {
   Users,
   Globe,
   CheckCircle2,
+  Laugh,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -62,12 +63,12 @@ const tools = [
     darkColor: "dark:bg-orange-900/30 dark:text-orange-400"
   },
   {
-    title: "Moon Sighting Live",
-    description: "Report and view community moon sightings across all divisions.",
-    icon: Globe,
-    href: "/tools/moon-sighting",
-    color: "bg-indigo-100 text-indigo-700",
-    darkColor: "dark:bg-indigo-900/30 dark:text-indigo-400"
+    title: "Salami Guide",
+    description: "The official funny list of Eid Salami rates for 2026. Don't be stingy!",
+    icon: Laugh,
+    href: "/tools/salami-calculator",
+    color: "bg-yellow-100 text-amber-700",
+    darkColor: "dark:bg-amber-900/30 dark:text-amber-400"
   },
   {
     title: "Salami Tracker",
