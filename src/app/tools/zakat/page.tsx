@@ -43,7 +43,9 @@ export default function ZakatCalculator() {
     if (!db || !user) return null
     return query(collection(db, "users", user.uid, "zakatCalculations"), orderBy("calculationDate", "desc"), limit(5))
   }, [db, user])
-  const { data: history = [] } = useCollection(historyQuery)
+  
+  const { data: historyData } = useCollection(historyQuery)
+  const history = historyData || []
 
   const handleSave = async () => {
     if (!db || !user) { toast({ title: "Sign in required" }); return }
@@ -124,7 +126,7 @@ export default function ZakatCalculator() {
           </TabsContent>
 
           <TabsContent value="history" className="animate-in fade-in duration-700">
-            {history.length > 0 ? (
+            {history && history.length > 0 ? (
               <div className="grid gap-6">
                 {history.map(entry => (
                   <Card key={entry.id} className="border-none shadow-xl rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 flex justify-between items-center">
