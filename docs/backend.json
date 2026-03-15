@@ -1,192 +1,665 @@
-
 {
   "entities": {
-    "ReceivedSalami": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ReceivedSalami",
+      "title": "UserProfile",
       "type": "object",
-      "description": "Represents a record of salami money received by a user during Eid celebrations.",
+      "description": "Represents a user's profile within EidSpark, including their gamification progress and personal details.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier."
+          "description": "Unique identifier for the UserProfile entity."
         },
-        "userId": {
+        "username": {
           "type": "string",
-          "description": "Owner of the record."
+          "description": "The user's display name."
         },
-        "amount": {
-          "type": "number",
-          "description": "The amount received."
-        },
-        "fromPerson": {
+        "avatarUrl": {
           "type": "string",
-          "description": "Who gave the salami."
-        },
-        "receivedAt": {
-          "type": "string",
-          "description": "Timestamp.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "amount",
-        "receivedAt"
-      ]
-    },
-    "EidSelfie": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "EidSelfie",
-      "type": "object",
-      "description": "An Eid selfie photo for the contest.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        },
-        "imageUrl": {
-          "type": "string",
+          "description": "URL to the user's profile avatar image.",
           "format": "uri"
         },
-        "caption": {
-          "type": "string"
+        "totalPoints": {
+          "type": "number",
+          "description": "The total points accumulated by the user across all activities."
         },
-        "likesCount": {
-          "type": "number"
-        },
-        "uploadedAt": {
+        "levelId": {
           "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "imageUrl",
-        "uploadedAt"
-      ]
-    },
-    "SalamiCard": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SalamiCard",
-      "type": "object",
-      "description": "A digital Eidi envelope/card that can be shared via link.",
-      "properties": {
-        "id": {
-          "type": "string"
+          "description": "Reference to the current Level achieved by the user. (Relationship: Level 1:N UserProfile)"
         },
-        "senderName": {
-          "type": "string"
-        },
-        "recipientName": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "number"
-        },
-        "paymentLink": {
-          "type": "string"
+        "earnedBadgeIds": {
+          "type": "array",
+          "description": "References to Badges earned by the user. (Relationship: Badge N:N UserProfile)",
+          "items": {
+            "type": "string"
+          }
         },
         "createdAt": {
           "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
           "format": "date-time"
         }
       },
       "required": [
-        "senderName",
-        "recipientName",
+        "id",
+        "username",
+        "totalPoints",
+        "levelId",
+        "earnedBadgeIds",
         "createdAt"
       ]
     },
-    "AppNotification": {
+    "Level": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AppNotification",
+      "title": "Level",
       "type": "object",
-      "description": "An in-app notification for the user.",
+      "description": "Defines the different progression levels within the EidSpark Rewards gamification system.",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for the Level entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the level (e.g., 'Eid Visitor', 'Eid Legend')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the level."
+        },
+        "minPoints": {
+          "type": "number",
+          "description": "The minimum number of points required to reach this level."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "URL to an icon representing this level.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "minPoints"
+      ]
+    },
+    "Badge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Badge",
+      "type": "object",
+      "description": "Defines the different badges that users can earn by achieving specific milestones.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Badge entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the badge (e.g., 'Eid Starter', 'Social Star')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the badge and the criteria to earn it."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "URL to an icon representing this badge.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "DailyChallenge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyChallenge",
+      "type": "object",
+      "description": "Defines a recurring daily challenge that users can complete for additional points.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DailyChallenge entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the daily challenge (e.g., 'Generate 3 excuses today')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the challenge objective."
+        },
+        "actionType": {
+          "type": "string",
+          "description": "A string identifier for the type of user action required to complete the challenge (e.g., 'GenerateExcuse', 'UploadEidSelfie')."
+        },
+        "targetCount": {
+          "type": "number",
+          "description": "The number of times the 'actionType' must be performed to complete the challenge."
+        },
+        "pointsReward": {
+          "type": "number",
+          "description": "The number of points awarded upon successful completion of the challenge."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "actionType",
+        "targetCount",
+        "pointsReward"
+      ]
+    },
+    "UserChallengeProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserChallengeProgress",
+      "type": "object",
+      "description": "Tracks a specific user's progress and completion for a particular daily challenge on a given day.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserChallengeProgress entity."
         },
         "userId": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "type": {
           "type": "string",
-          "enum": ["greeting", "like", "mosque", "moon", "jamaat"]
+          "description": "Reference to the UserProfile who is attempting the challenge. (Relationship: UserProfile 1:N UserChallengeProgress)"
         },
-        "isRead": {
-          "type": "boolean"
-        },
-        "createdAt": {
+        "challengeId": {
           "type": "string",
+          "description": "Reference to the DailyChallenge being tracked. (Relationship: DailyChallenge 1:N UserChallengeProgress)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The specific date (YYYY-MM-DD) for which this challenge progress is recorded, indicating a daily reset."
+        },
+        "currentCount": {
+          "type": "number",
+          "description": "The current count of actions performed by the user towards completing the challenge for the specified date."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the user has successfully completed the challenge for the specified date."
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the user completed the challenge, if applicable.",
           "format": "date-time"
         }
       },
-      "required": ["userId", "title", "isRead", "createdAt"]
+      "required": [
+        "id",
+        "userId",
+        "challengeId",
+        "date",
+        "currentCount",
+        "isCompleted"
+      ]
+    },
+    "SalamiEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalamiEntry",
+      "type": "object",
+      "description": "Records individual 'salami' (gift money) entries received by a user, part of the Salami Tracker feature.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SalamiEntry entity."
+        },
+        "trackerUserId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who is tracking this salami entry. (Relationship: UserProfile 1:N SalamiEntry)"
+        },
+        "giverName": {
+          "type": "string",
+          "description": "The name of the person who gave the salami."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of salami received."
+        },
+        "receivedDate": {
+          "type": "string",
+          "description": "The date when the salami was received.",
+          "format": "date"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or comments about the salami entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the salami entry was recorded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "trackerUserId",
+        "giverName",
+        "amount",
+        "receivedDate",
+        "createdAt"
+      ]
+    },
+    "EidGreeting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EidGreeting",
+      "type": "object",
+      "description": "Stores details about a personalized Eid greeting generated by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EidGreeting entity."
+        },
+        "creatorUserId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who created this greeting. (Relationship: UserProfile 1:N EidGreeting)"
+        },
+        "recipientName": {
+          "type": "string",
+          "description": "The name of the person the Eid greeting is for."
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Identifier for the chosen greeting template."
+        },
+        "generatedImageUrl": {
+          "type": "string",
+          "description": "URL to the generated Eid greeting image.",
+          "format": "uri"
+        },
+        "shareUrl": {
+          "type": "string",
+          "description": "A unique URL for sharing the generated Eid greeting.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the Eid greeting was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "creatorUserId",
+        "recipientName",
+        "templateId",
+        "generatedImageUrl",
+        "createdAt"
+      ]
+    },
+    "Mosque": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Mosque",
+      "type": "object",
+      "description": "Stores information about a mosque, used by the Mosque Finder feature.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Mosque entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the mosque."
+        },
+        "address": {
+          "type": "string",
+          "description": "The full street address of the mosque."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The geographical latitude coordinate of the mosque."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The geographical longitude coordinate of the mosque."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Contact phone number for the mosque."
+        },
+        "websiteUrl": {
+          "type": "string",
+          "description": "Official website URL for the mosque.",
+          "format": "uri"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image of the mosque.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or details about the mosque."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "UserMosqueContribution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserMosqueContribution",
+      "type": "object",
+      "description": "Records user-contributed information about mosques, such as Eid Jamaat times, which can earn points.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserMosqueContribution entity."
+        },
+        "contributorUserId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who contributed this information. (Relationship: UserProfile 1:N UserMosqueContribution)"
+        },
+        "mosqueId": {
+          "type": "string",
+          "description": "Reference to the Mosque entity if the contribution is for an existing mosque. (Relationship: Mosque 1:N UserMosqueContribution)"
+        },
+        "mosqueName": {
+          "type": "string",
+          "description": "The name of the mosque, especially if it's a new or unlisted mosque."
+        },
+        "mosqueAddress": {
+          "type": "string",
+          "description": "The address of the mosque, particularly useful for new entries."
+        },
+        "jamaatTime": {
+          "type": "string",
+          "description": "The specific prayer time being contributed (e.g., 'Fajr 5:30 AM', 'Eid Prayer 8:00 AM')."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of prayer time being contributed (e.g., 'EidPrayer', 'DailyPrayer')."
+        },
+        "verificationStatus": {
+          "type": "string",
+          "description": "The current verification status of the contribution (e.g., 'Pending', 'Approved', 'Rejected')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the mosque contribution was made.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "contributorUserId",
+        "jamaatTime",
+        "type",
+        "verificationStatus",
+        "createdAt"
+      ]
+    },
+    "ZakatCalculationRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ZakatCalculationRecord",
+      "type": "object",
+      "description": "Stores a historical record of a user's Zakat calculations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ZakatCalculationRecord entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who performed the calculation. (Relationship: UserProfile 1:N ZakatCalculationRecord)"
+        },
+        "cashValue": {
+          "type": "number",
+          "description": "The cash amount input by the user for calculation."
+        },
+        "goldValue": {
+          "type": "number",
+          "description": "The gold value input by the user for calculation."
+        },
+        "savingsValue": {
+          "type": "number",
+          "description": "The savings amount input by the user for calculation."
+        },
+        "businessAssetsValue": {
+          "type": "number",
+          "description": "The business assets value input by the user for calculation."
+        },
+        "calculatedZakatAmount": {
+          "type": "number",
+          "description": "The final Zakat amount calculated based on the inputs."
+        },
+        "calculationDate": {
+          "type": "string",
+          "description": "Timestamp when the Zakat calculation was performed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "cashValue",
+        "goldValue",
+        "savingsValue",
+        "businessAssetsValue",
+        "calculatedZakatAmount",
+        "calculationDate"
+      ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/receivedSalami/{salamiId}",
+        "path": "/users/{userId}",
         "definition": {
-          "entityName": "ReceivedSalami",
+          "entityName": "UserProfile",
           "schema": {
-            "$ref": "#/backend/entities/ReceivedSalami"
+            "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "User's personal salami records."
+          "description": "Stores a user's profile and gamification progress, including total points, current level, and earned badges. Read access for basic profile info (username, avatar, points, level, badges) is public (e.g., for leaderboard), but full document read/write is restricted to the owner (userId from path == request.auth.uid).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching request.auth.uid."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/notifications/{notificationId}",
+        "path": "/levels/{levelId}",
         "definition": {
-          "entityName": "AppNotification",
+          "entityName": "Level",
           "schema": {
-            "$ref": "#/backend/entities/AppNotification"
+            "$ref": "#/backend/entities/Level"
           },
-          "description": "User's personal notifications."
+          "description": "Defines the global progression levels in the EidSpark Rewards system. This collection is read-only for all authenticated users and writeable by administrators.",
+          "params": [
+            {
+              "name": "levelId",
+              "description": "The unique identifier for a specific level."
+            }
+          ]
         }
       },
       {
-        "path": "/eidSelfies/{selfieId}",
+        "path": "/badges/{badgeId}",
         "definition": {
-          "entityName": "EidSelfie",
+          "entityName": "Badge",
           "schema": {
-            "$ref": "#/backend/entities/EidSelfie"
+            "$ref": "#/backend/entities/Badge"
           },
-          "description": "Public selfie contest entries."
+          "description": "Defines the global badges that users can earn. This collection is read-only for all authenticated users and writeable by administrators.",
+          "params": [
+            {
+              "name": "badgeId",
+              "description": "The unique identifier for a specific badge."
+            }
+          ]
         }
       },
       {
-        "path": "/salamiCards/{cardId}",
+        "path": "/dailyChallenges/{challengeId}",
         "definition": {
-          "entityName": "SalamiCard",
+          "entityName": "DailyChallenge",
           "schema": {
-            "$ref": "#/backend/entities/SalamiCard"
+            "$ref": "#/backend/entities/DailyChallenge"
           },
-          "description": "Publicly accessible digital eidi envelopes."
+          "description": "Defines the daily challenges available to all users. This collection is read-only for all authenticated users and writeable by administrators.",
+          "params": [
+            {
+              "name": "challengeId",
+              "description": "The unique identifier for a specific daily challenge."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/dailyChallengeProgress/{challengeProgressId}",
+        "definition": {
+          "entityName": "UserChallengeProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserChallengeProgress"
+          },
+          "description": "Tracks a specific user's progress for a daily challenge on a given day. The `challengeProgressId` should be a composite of `challengeId` and `date` (e.g., 'challengeId_YYYY-MM-DD'). Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user whose challenge progress is being tracked."
+            },
+            {
+              "name": "challengeProgressId",
+              "description": "The unique identifier for a specific user's progress on a daily challenge for a given day (e.g., {challengeId}_{date})."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/salamiEntries/{salamiEntryId}",
+        "definition": {
+          "entityName": "SalamiEntry",
+          "schema": {
+            "$ref": "#/backend/entities/SalamiEntry"
+          },
+          "description": "Records individual 'salami' (gift money) entries received by a user as part of the Salami Tracker. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'trackerUserId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns these salami entries."
+            },
+            {
+              "name": "salamiEntryId",
+              "description": "The unique identifier for a specific salami entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/eidGreetings/{greetingId}",
+        "definition": {
+          "entityName": "EidGreeting",
+          "schema": {
+            "$ref": "#/backend/entities/EidGreeting"
+          },
+          "description": "Stores details about a personalized Eid greeting generated by a user. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'creatorUserId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who created this Eid greeting."
+            },
+            {
+              "name": "greetingId",
+              "description": "The unique identifier for a specific Eid greeting."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/mosques/{mosqueId}",
+        "definition": {
+          "entityName": "Mosque",
+          "schema": {
+            "$ref": "#/backend/entities/Mosque"
+          },
+          "description": "Stores general information about mosques, used by the Mosque Finder feature. This collection is publicly readable for all users and writeable by administrators.",
+          "params": [
+            {
+              "name": "mosqueId",
+              "description": "The unique identifier for a specific mosque."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/mosqueContributions/{contributionId}",
+        "definition": {
+          "entityName": "UserMosqueContribution",
+          "schema": {
+            "$ref": "#/backend/entities/UserMosqueContribution"
+          },
+          "description": "Records user-contributed information about mosques (e.g., Eid Jamaat times). Write access is restricted to the contributor (userId from path == request.auth.uid). Read access for the contributor and administrators. Includes denormalized 'contributorUserId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who made this mosque contribution."
+            },
+            {
+              "name": "contributionId",
+              "description": "The unique identifier for a specific mosque contribution."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/zakatCalculations/{recordId}",
+        "definition": {
+          "entityName": "ZakatCalculationRecord",
+          "schema": {
+            "$ref": "#/backend/entities/ZakatCalculationRecord"
+          },
+          "description": "Stores a historical record of a user's Zakat calculations. Write access is restricted to the owner (userId from path == request.auth.uid). Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who performed this Zakat calculation."
+            },
+            {
+              "name": "recordId",
+              "description": "The unique identifier for a specific Zakat calculation record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/_config/roles_admin/{adminUid}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Manages administrator roles for privileged operations (e.g., modifying global levels, badges, daily challenges). Authorization is based on existence of the authenticated user's UID in this collection (DBAC principle). Documents here would be very minimal, potentially just { 'uid': true }.",
+          "params": [
+            {
+              "name": "adminUid",
+              "description": "The unique identifier of a user who has administrator privileges."
+            }
+          ]
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure for EidSpark Rewards is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and mandates. \n\n**Authorization Independence (CRITICAL):** This design primarily achieves Authorization Independence through two key strategies:\n1.  **Path-Based Ownership:** For all user-specific data (e.g., `UserProfile`, `SalamiEntry`, `EidGreeting`, `UserMosqueContribution`, `ZakatCalculationRecord`, `UserChallengeProgress`), the data is structured under `/users/{userId}/...`. In this pattern, the `{userId}` wildcard in the path directly corresponds to `request.auth.uid` from Firebase Authentication. This means that authorization rules can directly check `request.auth.uid == userId` without needing any `get()` operations to fetch parent documents or other user-specific roles. This eliminates hierarchical authorization dependencies and allows for atomic operations (like creating a user profile and initial settings in a single batch) without rule complications. Each document within these subcollections also includes a `userId` or similar identifier (e.g., `creatorUserId`, `trackerUserId`), reinforcing ownership and enabling direct data integrity checks within the document itself.\n2.  **Global/Static Collections:** For entities like `Level`, `Badge`, `DailyChallenge`, and `Mosque`, these collections are global and primarily read-only for all authenticated users (or public), with write access restricted to administrative roles (managed via a separate `_config/roles_admin/{uid}` collection). Since their access doesn't depend on any user-specific attributes or other documents, they inherently achieve authorization independence. There are no cross-collection `get()` calls in rules required for their authorization.\n\n**QAPs (Queries as Permissions):** The structure facilitates secure `list` operations (QAPs) by:\n1.  **Structural Segregation:** Data with different security postures is segregated into distinct collections or subcollections. For instance, public-facing definitions like `levels` and `badges` are top-level collections, allowing anyone to `list` them securely. User-owned private data is nested under `/users/{userId}`, ensuring that `list` queries for, say, `salamiEntries` must implicitly include the `userId` in the path, thereby restricting results to the authenticated user's data.\n2.  **Leaderboard Derivation:** The leaderboard (`EidSpark Leaderboard`) is designed to be derived directly from the `totalPoints` field in the `/users/{userId}` documents. A client-side query (e.g., `firestore.collection('users').orderBy('totalPoints', 'desc').limit(X)`) will be used. Security rules can then enforce that only public profile fields (`username`, `avatarUrl`, `totalPoints`, `levelId`, `earnedBadgeIds`) are readable for such `list` queries, while sensitive user data remains private. This avoids the need for a separate, denormalized `leaderboard` collection, which would introduce synchronization overhead.\n\n**Other Principles:**\n*   **DBAC (Database-Backed Access Control):** Global roles (e.g., for admin access to `levels` or `dailyChallenges`) will be managed via existence in a dedicated `_config/roles_admin/{uid}` collection, relying solely on `request.auth.uid` for checks, not custom claims.\n*   **Data Clarity and Predictability:** Wildcards are descriptive (e.g., `{userId}`, `{challengeId}`). Fields like `ownerId`, `creatorUserId` are consistently used for explicit ownership within documents, supporting clear rules and efficient indexing. The `rank` is not stored, as it's a dynamic, derived value. `totalPoints` is managed within the `UserProfile` document, ensuring a single source of truth for gamification points."
   }
 }

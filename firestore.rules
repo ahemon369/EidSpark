@@ -1,59 +1,174 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    /**
+     * EIDSPARK REWARDS SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict User-Ownership model for personal data and a 
+     * Database-Backed Access Control (DBAC) model for administrative configurations.
+     * The primary goal is to ensure users can only modify their own gamification 
+     * progress while allowing global visibility for social features like leaderboards.
+     *
+     * DATA STRUCTURE:
+     * - /users/{userId}: The root of user identity and gamification totals.
+     * - /users/{userId}/...: Subcollections containing private user activity (salami, greetings, progress).
+     * - /levels, /badges, /dailyChallenges: Global read-only configurations managed by admins.
+     * - /mosques: Publicly readable directory of locations.
+     * - /_config/roles_admin: Internal collection for defining administrative UIDs.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Authorization: We rely on the {userId} wildcard in the path to 
+     *    match the request.auth.uid, providing high-performance authorization.
+     * 2. DBAC for Admins: Global write permissions for system-wide entities are 
+     *    granted by checking for the user's UID within the admin roles collection.
+     * 3. Public Profiles: Basic user profile data is readable by any authenticated 
+     *    user to support the "EidSpark Leaderboard" feature.
+     * 4. Relational Integrity: On document creation within user paths, we enforce 
+     *    that the internal data matches the path to prevent data spoofing.
+     *
+     * DENORMALIZATION FOR AUTHORIZATION:
+     * To maintain "Authorization Independence," documents include relevant IDs 
+     * (e.g., creatorUserId) directly. This ensures rules remain fast and 
+     * do not require expensive cross-collection lookups.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the user is authenticated with Firebase Auth. */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /** @description Checks if the provided UID matches the authenticated user. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Personal Salami Tracker
-    match /users/{userId}/receivedSalami/{salamiId} {
-      allow read, write: if isOwner(userId);
+    /** @description Verifies ownership and ensures the document already exists for destructive/update actions. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
 
-    // Saved Excuses
-    match /users/{userId}/savedExcuses/{excuseId} {
-      allow read, write: if isOwner(userId);
+    /** @description Checks if the authenticated user is registered as an administrator. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/_config/roles_admin/$(request.auth.uid));
     }
 
-    // User Notifications
-    match /users/{userId}/notifications/{notificationId} {
-      allow read, write: if isOwner(userId);
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description User profile and gamification totals.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid matches path and data.id matches path.
+     * @deny (update) if user attempts to modify a profile they do not own.
+     * @principle Enforces strict ownership for identity while allowing public reads for leaderboard functionality.
+     */
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
-    // Public Selfie Contest
-    match /eidSelfies/{selfieId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount']));
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    /**
+     * @description Global definitions for levels, badges, and challenges.
+     * @path /levels/{id}, /badges/{id}, /dailyChallenges/{id}
+     * @allow (get) if any user is signed in.
+     * @deny (create, update, delete) if user is not an administrator.
+     * @principle System-wide configurations use DBAC for management and are read-only for participants.
+     */
+    match /levels/{levelId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Digital Envelopes (Public Read for sharing)
-    match /salamiCards/{cardId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow delete: if false;
+    match /badges/{badgeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Global Registry (Mosques, Sightings)
+    match /dailyChallenges/{challengeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Tracks a user's progress toward daily challenge completion.
+     * @path /users/{userId}/dailyChallengeProgress/{progressId}
+     * @allow (create) if owner and userId field matches path.
+     * @deny (read) if user tries to view another user's progress.
+     * @principle Scoped subcollection access ensures privacy of daily activity.
+     */
+    match /users/{userId}/dailyChallengeProgress/{progressId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Personalized data for Salami, Greetings, and Zakat.
+     * @path /users/{userId}/[salamiEntries|eidGreetings|zakatCalculations]/{id}
+     * @allow (write) if the authenticated user owns the parent path.
+     * @deny (list) if the user is not the owner.
+     * @principle Uses path-based ownership to secure private financial and social records.
+     */
+    match /users/{userId}/salamiEntries/{id} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.trackerUserId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.trackerUserId == resource.data.trackerUserId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    match /users/{userId}/eidGreetings/{id} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.creatorUserId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.creatorUserId == resource.data.creatorUserId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    match /users/{userId}/zakatCalculations/{id} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description User contributions for mosque information (Jamaat times).
+     * @path /users/{userId}/mosqueContributions/{id}
+     * @allow (get) if owner OR admin (for verification).
+     * @deny (update) if modifying a contribution owned by another user.
+     * @principle Ownership-based writes with administrative review capability.
+     */
+    match /users/{userId}/mosqueContributions/{id} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.contributorUserId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.contributorUserId == resource.data.contributorUserId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Publicly accessible directory of mosque locations.
+     * @path /mosques/{mosqueId}
+     * @allow (get, list) for any visitor (including anonymous).
+     * @deny (write) if user is not an administrator.
+     * @principle Public consumption of shared community data.
+     */
     match /mosques/{mosqueId} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-    
-    match /moonSightings/{sightingId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    match /{path=**} {
+    /**
+     * @description Internal administrative roles configuration.
+     * @path /_config/roles_admin/{adminUid}
+     * @allow (read, write) if false (strictly for manual DB management or backend).
+     * @principle Prevents unauthorized users from escalating their own privileges.
+     */
+    match /_config/roles_admin/{adminUid} {
       allow read, write: if false;
     }
   }
