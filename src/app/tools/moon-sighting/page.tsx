@@ -4,6 +4,7 @@
 import { useState } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -72,9 +73,8 @@ export default function MoonSightingTrackerPage() {
   const { data: adminDoc } = useDoc(adminRoleRef)
   const isAdmin = !!adminDoc
 
-  // Today's specific reports counter
+  // Today's specific reports counter logic
   const todaySeenCount = sightings?.filter(s => {
-    if (!s.seen) return false;
     const reportDate = new Date(s.timestamp);
     const today = new Date();
     return reportDate.toDateString() === today.toDateString();
@@ -374,6 +374,7 @@ export default function MoonSightingTrackerPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

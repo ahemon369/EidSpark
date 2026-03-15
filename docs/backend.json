@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -145,6 +146,24 @@
         "isApprovedByAdmin",
         "communitySubmissionCount"
       ]
+    },
+    "MoonSighting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MoonSighting",
+      "type": "object",
+      "description": "A community-submitted report of a moon sighting (Hilal) across Bangladesh.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "locationName": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "seen": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "userId", "userName", "locationName", "lat", "lng", "timestamp", "seen"]
     }
   },
   "auth": {
@@ -162,11 +181,11 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores individual user profile data. Access is private, restricted to the authenticated user matching the 'userId' in the path. The 'userId' parameter corresponds to `request.auth.uid`.",
+          "description": "Stores individual user profile data.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user, matching `request.auth.uid`."
+              "description": "The unique identifier of the user."
             }
           ]
         }
@@ -178,11 +197,11 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Identifies users with administrative privileges. The mere existence of a document at this path for a specific 'userId' grants admin access. This follows the Database Access Control (DBAC) pattern where roles are stored in the database. Read access is public for security rule evaluation; write access is restricted to existing admins or privileged backend functions.",
+          "description": "Identifies administrative users.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who possesses administrative privileges."
+              "description": "The unique identifier of the admin."
             }
           ]
         }
@@ -194,7 +213,7 @@
           "schema": {
             "$ref": "#/backend/entities/Mosque"
           },
-          "description": "Stores core details about each mosque. Publicly readable if `isApprovedByAdmin` is true. Authenticated users can create new mosque entries. Only the `submittedByUserId` or an admin can update/delete the entry. Includes denormalized `submittedByUserId` for authorization independence and explicit ownership.",
+          "description": "Stores mosque details.",
           "params": [
             {
               "name": "mosqueId",
@@ -204,26 +223,21 @@
         }
       },
       {
-        "path": "/mosques/{mosqueId}/jamaatTimes/{jamaatTimeId}",
+        "path": "/moonSightings/{sightingId}",
         "definition": {
-          "entityName": "EidJamaatTime",
+          "entityName": "MoonSighting",
           "schema": {
-            "$ref": "#/backend/entities/EidJamaatTime"
+            "$ref": "#/backend/entities/MoonSighting"
           },
-          "description": "Stores specific Eid prayer times for a mosque. Publicly readable if its own `isApprovedByAdmin` is true. Authenticated users can create new prayer time entries or increment `communitySubmissionCount` for existing ones. Only the `submittedByUserId` or an admin can update/delete the entry. Includes denormalized `mosqueId` (for querying and independence) and `submittedByUserId` (for submitter ownership checks). The `isApprovedByAdmin` field on this document enables Authorization Independence for read operations, removing reliance on the parent mosque's approval status in rules.",
+          "description": "Stores community moon sighting reports.",
           "params": [
             {
-              "name": "mosqueId",
-              "description": "The unique identifier of the parent mosque to which this prayer time belongs."
-            },
-            {
-              "name": "jamaatTimeId",
-              "description": "The unique identifier for a specific Eid prayer time slot."
+              "name": "sightingId",
+              "description": "The unique identifier for a sighting report."
             }
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure for the 'Live Eid Jamaat Finder' feature is designed with a strong emphasis on Authorization Independence, Structural Segregation, and clear Access Modeling to ensure security, scalability, and debuggability. \n\n1.  **Authorization Independence & Denormalization:**\n    *   **Mosque Approval (`isApprovedByAdmin`):** Both `Mosque` documents in `/mosques/{mosqueId}` and `EidJamaatTime` documents in `/mosques/{mosqueId}/jamaatTimes/{jamaatTimeId}` include their own `isApprovedByAdmin` boolean field. This is critical for Authorization Independence. Public read access to a specific `EidJamaatTime` document can be granted solely based on its own `isApprovedByAdmin` field, without requiring a `get()` operation on the parent `Mosque` document. Similarly, the `Mosque` document itself is publicly readable only if its `isApprovedByAdmin` is true. This eliminates hierarchical authorization dependencies, enabling atomic operations (like creating a mosque and its first jamaat time in a batch) and simplifying security rules significantly.\n    *   **Ownership (`submittedByUserId`):** Each `Mosque` and `EidJamaatTime` document contains `submittedByUserId`. This denormalizes the ownership context directly into the document, allowing `request.auth.uid` checks for edit/delete permissions by the original submitter without cross-document lookups.\n    *   **`mosqueId` in `EidJamaatTime`:** The `mosqueId` is explicitly included in each `EidJamaatTime` document. While a subcollection path inherently knows its parent's ID, this explicit field aids in querying and also supports authorization independence by allowing rules to potentially check against the parent's ID if needed for specific logic (though the `isApprovedByAdmin` on the `EidJamaatTime` itself handles public read independence).\n\n2.  **Structural Segregation (Homogeneous Security Posture):**\n    *   **Public and Pending Data:** Instead of separating 'approved' and 'pending' mosques into different collections (which complicates listing and search), all `Mosque` and `EidJamaatTime` documents reside in their respective main collections (`/mosques` and `/mosques/{mosqueId}/jamaatTimes`). Access control is managed by the `isApprovedByAdmin` field. This ensures a homogeneous security posture within each collection: all documents *can* be publicly read if `isApprovedByAdmin: true`, or writable by the submitter/admin regardless of approval status. This greatly simplifies rules for QAPs (Queries as Permissions) as client applications can perform `list` operations with a `where('isApprovedByAdmin', '==', true)` filter, knowing that the rules will enforce this server-side.\n    *   **Admin Roles:** A dedicated top-level collection, `/roles_admin/{userId}`, is used for Database Access Control (DBAC). The mere *existence* of a document in this collection for a given `userId` grants administrative privileges. This segregates role information from user profiles and provides an explicit, easily checked permission structure without custom claims.\n\n3.  **QAPs (Queries as Permissions) & Scalability:**\n    *   The top-level `/mosques` collection and its subcollection `/jamaatTimes` are designed for efficient public listing and searching. Users can query `/mosques` by `district`, `area`, or `name` and filter by `isApprovedByAdmin == true` to retrieve approved mosque data. Similarly, `jamaatTimes` for an approved mosque can be listed, also filtered by `isApprovedByAdmin == true`. This design inherently supports the search feature and map display without requiring complex, inefficient, or insecure security rules. Firebase security rules can directly enforce that only documents with `isApprovedByAdmin: true` are returned for public `list` queries, ensuring that rules are not used as filters after data retrieval. The `communitySubmissionCount` field on `EidJamaatTime` can be used for client-side ordering or additional filtering based on community verification status without impacting core security rules."
+    ]
   }
 }
