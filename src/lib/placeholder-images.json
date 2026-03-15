@@ -41,6 +41,24 @@
       "description": "Preview of the Mosque Finder Map",
       "imageUrl": "https://picsum.photos/seed/preview-map/600/400",
       "imageHint": "mosque map"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "User profile avatar placeholder",
+      "imageUrl": "https://picsum.photos/seed/user-1/100/100",
+      "imageHint": "user face"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "User profile avatar placeholder",
+      "imageUrl": "https://picsum.photos/seed/user-2/100/100",
+      "imageHint": "user profile"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Team member placeholder",
+      "imageUrl": "https://picsum.photos/seed/team-1/150/150",
+      "imageHint": "person smiling"
     }
   ]
 }

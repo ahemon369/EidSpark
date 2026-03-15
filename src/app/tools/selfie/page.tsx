@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { 
   Camera, 
   Upload, 
@@ -35,6 +37,8 @@ import { generateSelfieBackground } from "@/ai/flows/generate-selfie-background"
 import { generateEidCaption } from "@/ai/flows/generate-eid-caption"
 import { useUser, useFirestore } from "@/firebase"
 import { collection, addDoc } from "firebase/firestore"
+import { errorEmitter } from '@/firebase/error-emitter'
+import { FirestorePermissionError } from '@/firebase/errors'
 
 const frames = [
   { id: 'royal', name: 'Royal Gold Arch', primary: '#0f172a', secondary: '#fbbf24', accent: '#f59e0b' },
@@ -84,6 +88,7 @@ export default function SelfiePosterStudio() {
   const [isSaving, setIsSaving] = useState(false)
   
   const [showCamera, setShowCamera] = useState(false)
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Transform States
@@ -107,11 +112,14 @@ export default function SelfiePosterStudio() {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setShowCamera(true);
       }
     } catch (err) {
+      console.error('Error accessing camera:', err);
+      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
@@ -206,27 +214,35 @@ export default function SelfiePosterStudio() {
     setActiveStickers([...activeStickers, newSticker])
   }
 
-  const handleSaveToGallery = async () => {
+  const handleSaveToGallery = () => {
     if (!user || !db || !canvasRef.current) {
       toast({ title: "Login Required" });
       return
     }
     setIsSaving(true)
-    try {
-      const imageUrl = canvasRef.current.toDataURL('image/png')
-      await addDoc(collection(db, "users", user.uid, "selfiePosters"), {
-        userId: user.uid,
-        imageUrl,
-        themeId: selectedTheme.id,
-        frameId: selectedFrame.id,
-        createdAt: new Date().toISOString()
-      })
-      toast({ title: "Saved to Gallery" })
-    } catch (error) {
-      toast({ title: "Save Failed", variant: "destructive" })
-    } finally {
-      setIsSaving(false)
+    const imageUrl = canvasRef.current.toDataURL('image/png')
+    const posterData = {
+      userId: user.uid,
+      imageUrl,
+      themeId: selectedTheme.id,
+      frameId: selectedFrame.id,
+      createdAt: new Date().toISOString()
     }
+
+    addDoc(collection(db, "users", user.uid, "selfiePosters"), posterData)
+      .then(() => {
+        toast({ title: "Saved to Gallery" })
+        setIsSaving(false)
+      })
+      .catch(async (error) => {
+        setIsSaving(false)
+        const permissionError = new FirestorePermissionError({
+          path: `users/${user.uid}/selfiePosters`,
+          operation: 'create',
+          requestResourceData: posterData
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
   const renderPoster = useCallback(() => {
@@ -383,17 +399,26 @@ export default function SelfiePosterStudio() {
               <div className="p-8 overflow-y-auto max-h-[600px] custom-scrollbar flex-grow">
                 {/* Image & Adjustment Tab */}
                 <TabsContent value="image" className="space-y-8 mt-0">
-                  {showCamera ? (
-                    <div className="space-y-4">
-                      <div className="relative rounded-[2rem] overflow-hidden border-4 border-primary/10 aspect-video bg-black">
-                        <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted />
-                      </div>
-                      <div className="flex gap-3">
-                        <Button onClick={capturePhoto} className="flex-1 h-14 rounded-xl emerald-gradient font-black">Capture Selfie</Button>
-                        <Button variant="outline" onClick={stopCamera} className="h-14 w-14 rounded-xl border-2"><X className="w-5 h-5" /></Button>
-                      </div>
+                  <div className={cn("space-y-4", !showCamera && "hidden")}>
+                    <div className="relative rounded-[2rem] overflow-hidden border-4 border-primary/10 aspect-video bg-black">
+                      <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted />
                     </div>
-                  ) : (
+                    {hasCameraPermission === false && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Camera Access Required</AlertTitle>
+                        <AlertDescription>
+                          Please allow camera access to use this feature.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="flex gap-3">
+                      <Button onClick={capturePhoto} className="flex-1 h-14 rounded-xl emerald-gradient font-black">Capture Selfie</Button>
+                      <Button variant="outline" onClick={stopCamera} className="h-14 w-14 rounded-xl border-2"><X className="w-5 h-5" /></Button>
+                    </div>
+                  </div>
+
+                  {!showCamera && (
                     <div className="grid grid-cols-2 gap-4">
                       <Button onClick={startCamera} variant="outline" className="h-32 rounded-3xl flex-col gap-3 border-2 border-primary/5 hover:bg-primary/5 hover:border-primary/20 transition-all">
                         <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary"><Camera className="w-6 h-6" /></div>
