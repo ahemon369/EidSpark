@@ -23,6 +23,24 @@
       "description": "Tara Masjid (Star Mosque) in Dhaka",
       "imageUrl": "https://picsum.photos/seed/tara-masjid/600/400",
       "imageHint": "star mosque"
+    },
+    {
+      "id": "preview-greeting",
+      "description": "Preview of the AI Greeting Designer",
+      "imageUrl": "https://picsum.photos/seed/preview-greeting/600/400",
+      "imageHint": "eid greeting"
+    },
+    {
+      "id": "preview-selfie",
+      "description": "Preview of the AI Selfie Studio",
+      "imageUrl": "https://picsum.photos/seed/preview-selfie/600/400",
+      "imageHint": "eid selfie"
+    },
+    {
+      "id": "preview-map",
+      "description": "Preview of the Mosque Finder Map",
+      "imageUrl": "https://picsum.photos/seed/preview-map/600/400",
+      "imageHint": "mosque map"
     }
   ]
 }

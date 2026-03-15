@@ -82,14 +82,16 @@ export function Navbar() {
           {/* Brand Section */}
           <Link href="/" className="flex items-center gap-[10px] group relative z-50">
             <div className="relative h-[40px] w-auto transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(6,95,70,0.3)]">
-               <Image 
-                src={logo?.imageUrl || ""} 
-                alt="EidSpark Logo" 
-                width={40} 
-                height={40} 
-                className="object-contain h-[40px] w-auto"
-                priority
-               />
+               {logo?.imageUrl && (
+                 <Image 
+                  src={logo.imageUrl} 
+                  alt="EidSpark Logo" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain h-[40px] w-auto"
+                  priority
+                 />
+               )}
             </div>
             <span className="text-2xl font-black tracking-tight text-primary transition-colors group-hover:text-primary/90">
               EidSpark
@@ -185,7 +187,9 @@ export function Navbar() {
         <div className="flex flex-col items-center space-y-6 w-full px-8 text-center animate-in fade-in slide-in-from-bottom duration-500">
           <div className="mb-8">
              <div className="relative h-16 w-16 mx-auto mb-4">
-                <Image src={logo?.imageUrl || ""} alt="Logo" width={64} height={64} className="object-contain" />
+                {logo?.imageUrl && (
+                  <Image src={logo.imageUrl} alt="Logo" width={64} height={64} className="object-contain" />
+                )}
              </div>
              <h2 className="text-3xl font-black text-primary tracking-tight">EidSpark</h2>
           </div>

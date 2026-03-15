@@ -41,13 +41,15 @@ export default function AboutPage() {
               </div>
               <div className="relative">
                 <div className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-2">
-                  <Image 
-                    src={heroImage?.imageUrl || ""} 
-                    alt="Celebration" 
-                    width={800} 
-                    height={600} 
-                    className="object-cover"
-                  />
+                  {heroImage?.imageUrl && (
+                    <Image 
+                      src={heroImage.imageUrl} 
+                      alt="Celebration" 
+                      width={800} 
+                      height={600} 
+                      className="object-cover"
+                    />
+                  )}
                 </div>
                 <div className="absolute -bottom-6 -left-6 bg-secondary p-8 rounded-3xl text-primary shadow-xl hidden md:block">
                   <Heart className="w-10 h-10 fill-primary mb-4" />

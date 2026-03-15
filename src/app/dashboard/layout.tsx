@@ -101,13 +101,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="p-8">
             <Link href="/" className="flex items-center gap-3">
               <div className="relative h-10 w-10 flex items-center justify-center">
-                 <Image 
-                  src={logo?.imageUrl || ""} 
-                  alt="EidSpark Logo" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain h-10 w-auto"
-                 />
+                 {logo?.imageUrl && (
+                   <Image 
+                    src={logo.imageUrl} 
+                    alt="EidSpark Logo" 
+                    width={40} 
+                    height={40} 
+                    className="object-contain h-10 w-auto"
+                   />
+                 )}
               </div>
               <span className="text-xl font-black text-primary">EidSpark</span>
             </Link>

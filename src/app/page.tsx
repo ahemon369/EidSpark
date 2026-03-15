@@ -238,14 +238,16 @@ export default function Home() {
                         previewIndex === idx ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95 pointer-events-none"
                       )}
                     >
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        className="object-cover opacity-90"
-                        priority={idx === 0}
-                        data-ai-hint={item.hint}
-                      />
+                      {item.image && (
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          className="object-cover opacity-90"
+                          priority={idx === 0}
+                          data-ai-hint={item.hint}
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                       <div className="absolute bottom-12 left-10 right-10 text-white glass-card p-8 rounded-[2.5rem] border-white/20 bg-white/10 backdrop-blur-xl">
                         <div className="flex items-center gap-3 mb-3">
@@ -441,13 +443,15 @@ export default function Home() {
             <div className="col-span-1 space-y-8">
               <Link href="/" className="flex items-center gap-4">
                 <div className="relative w-14 h-14 overflow-hidden flex items-center justify-center">
-                  <Image 
-                    src={logo?.imageUrl || ""} 
-                    alt="EidSpark Official Logo" 
-                    width={56} 
-                    height={56} 
-                    className="object-contain"
-                  />
+                  {logo?.imageUrl && (
+                    <Image 
+                      src={logo.imageUrl} 
+                      alt="EidSpark Official Logo" 
+                      width={56} 
+                      height={56} 
+                      className="object-contain"
+                    />
+                  )}
                 </div>
                 <span className="text-3xl font-black tracking-tight text-primary">EidSpark</span>
               </Link>
