@@ -23,7 +23,8 @@ import {
   Users,
   Compass,
   Github,
-  Mail
+  Mail,
+  CalendarDays
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -139,8 +140,7 @@ export default function Home() {
 
   // Live Countdown logic
   useEffect(() => {
-    const target = new Date()
-    target.setDate(target.getDate() + 18) // Simulated future Eid date
+    const target = new Date("2026-03-20T00:00:00") // Fixed Eid Date
     
     const tick = () => {
       const now = new Date().getTime()
@@ -284,22 +284,28 @@ export default function Home() {
                    </div>
                 </div>
                 
-                <div className="grid grid-cols-4 gap-4 md:gap-8 perspective-1000">
-                   {[
-                     { label: "Days", value: countdown.days },
-                     { label: "Hours", value: countdown.hours },
-                     { label: "Mins", value: countdown.minutes },
-                     { label: "Secs", value: countdown.seconds }
-                   ].map((t) => (
-                     <div key={t.label} className="text-center group">
-                        <div key={t.value} className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums animate-flip-number">
-                          {t.value.toString().padStart(2, '0')}
-                        </div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
-                          {t.label}
-                        </div>
-                     </div>
-                   ))}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="grid grid-cols-4 gap-4 md:gap-8 perspective-1000">
+                    {[
+                      { label: "Days", value: countdown.days },
+                      { label: "Hours", value: countdown.hours },
+                      { label: "Mins", value: countdown.minutes },
+                      { label: "Secs", value: countdown.seconds }
+                    ].map((t) => (
+                      <div key={t.label} className="text-center group">
+                          <div key={t.value} className="text-4xl md:text-5xl font-black text-primary drop-shadow-sm group-hover:text-secondary transition-colors duration-300 tabular-nums animate-flip-number">
+                            {t.value.toString().padStart(2, '0')}
+                          </div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
+                            {t.label}
+                          </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                    <CalendarDays className="w-3 h-3" />
+                    <span>Expected Eid-ul-Fitr: March 20, 2026 (Bangladesh)</span>
+                  </div>
                 </div>
              </div>
           </div>

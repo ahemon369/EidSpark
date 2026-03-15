@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card, CardContent } from "@/components/ui/card"
-import { Moon, Star, Sparkles, MapPin } from "lucide-react"
+import { Moon, Star, Sparkles, MapPin, CalendarDays } from "lucide-react"
 
 export default function EidCountdown() {
   const [timeLeft, setTimeLeft] = useState({
@@ -14,10 +14,8 @@ export default function EidCountdown() {
   })
 
   useEffect(() => {
-    // Simulated next Eid date (Eid-ul-Fitr approx)
-    const targetDate = new Date()
-    targetDate.setDate(targetDate.getDate() + 18)
-    targetDate.setHours(targetDate.getHours() + 12)
+    // Expected Eid-ul-Fitr Date: March 20, 2026
+    const targetDate = new Date("2026-03-20T00:00:00")
 
     const timer = setInterval(() => {
       const now = new Date().getTime()
@@ -81,17 +79,24 @@ export default function EidCountdown() {
             <Star className="absolute top-1/4 right-0 w-4 h-4 text-secondary/50 animate-pulse delay-500" />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 w-full max-w-5xl perspective-1000">
-            {Object.entries(timeLeft).map(([label, value]) => (
-              <Card key={label} className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[2.5rem] overflow-hidden group hover:bg-white/10 transition-all duration-500 hover:scale-105 border-2">
-                <CardContent className="p-10 text-center">
-                  <div key={value} className="text-6xl lg:text-8xl font-black text-white group-hover:text-secondary transition-colors duration-500 drop-shadow-md animate-flip-number">
-                    {value.toString().padStart(2, "0")}
-                  </div>
-                  <div className="text-xs lg:sm font-black text-white/40 uppercase tracking-[0.3em] mt-4">{label}</div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="space-y-8 w-full max-w-5xl">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 perspective-1000">
+              {Object.entries(timeLeft).map(([label, value]) => (
+                <Card key={label} className="bg-white/5 border-white/10 backdrop-blur-xl rounded-[2.5rem] overflow-hidden group hover:bg-white/10 transition-all duration-500 hover:scale-105 border-2">
+                  <CardContent className="p-10 text-center">
+                    <div key={value} className="text-6xl lg:text-8xl font-black text-white group-hover:text-secondary transition-colors duration-500 drop-shadow-md animate-flip-number">
+                      {value.toString().padStart(2, "0")}
+                    </div>
+                    <div className="text-xs lg:sm font-black text-white/40 uppercase tracking-[0.3em] mt-4">{label}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/5 border border-white/10 text-secondary text-xs font-black uppercase tracking-widest backdrop-blur-md">
+              <CalendarDays className="w-4 h-4" />
+              <span>Expected Eid-ul-Fitr Date: March 20, 2026 (Bangladesh)</span>
+            </div>
           </div>
 
           <div className="max-w-2xl mx-auto space-y-8 pt-12 pb-20">
