@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,7 +18,6 @@ import {
   Globe,
   Milestone,
   ShieldCheck,
-  ChevronRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -106,13 +105,8 @@ export default function UltraQiblaCompass() {
   }, [calculateQibla, calculateDistance])
 
   const handleOrientation = (e: DeviceOrientationEvent) => {
-    // webkitCompassHeading is absolute North for iOS
-    // e.alpha might be relative or absolute depending on the event type used
     let compass = (e as any).webkitCompassHeading || (e as any).alpha
-    
     if (compass !== null && compass !== undefined) {
-      // If using standard alpha on Android, it might be inverted or relative
-      // The listener 'deviceorientationabsolute' handles the absolute North mapping
       setHeading(compass)
     }
   }
@@ -129,8 +123,6 @@ export default function UltraQiblaCompass() {
 
   const requestPermission = async () => {
     if (typeof window === 'undefined') return
-
-    // iOS 13+ requires manual permission request
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const response = await (DeviceOrientationEvent as any).requestPermission()
@@ -140,13 +132,12 @@ export default function UltraQiblaCompass() {
           toast({ title: "Compass Enabled", description: "Sensor access granted." })
         } else {
           setPermissionAllow(false)
-          setError("Motion sensor permission is required for the real-time compass.")
+          setError("Motion sensor permission is required.")
         }
       } catch (err) {
         setError("Could not request sensor permission.")
       }
     } else {
-      // Non-iOS or older versions
       setPermissionAllow(true)
       startCompass()
     }
@@ -154,14 +145,12 @@ export default function UltraQiblaCompass() {
 
   useEffect(() => {
     getLocation()
-    // Cleanup listeners
     return () => {
       window.removeEventListener("deviceorientationabsolute", handleOrientation)
       window.removeEventListener("deviceorientation", handleOrientation)
     }
   }, [getLocation])
 
-  // Check if phone is pointing towards Kaaba
   const isAligned = qiblaDir !== null && Math.abs((heading - qiblaDir + 540) % 360 - 180) < 5
 
   return (
@@ -169,7 +158,6 @@ export default function UltraQiblaCompass() {
       <Navbar />
       
       <main className="max-w-5xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        {/* Header Section */}
         <div className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-[0.2em] border border-primary/20 shadow-sm backdrop-blur-md">
             <Compass className="w-4 h-4 text-secondary fill-secondary" />
@@ -185,23 +173,19 @@ export default function UltraQiblaCompass() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left Column: The Compass Hardware UI */}
           <div className="flex flex-col items-center justify-center gap-12 order-2 lg:order-1">
             <div className="relative group perspective-1000">
-              {/* Outer Glow Ring */}
               <div className={cn(
                 "absolute inset-0 -z-10 rounded-full blur-[100px] transition-all duration-1000 opacity-20",
                 isAligned ? "bg-secondary scale-150" : "bg-primary"
               )}></div>
 
-              {/* The Compass Housing */}
               <div 
                 className={cn(
                   "w-80 h-80 sm:w-[500px] sm:h-[500px] rounded-full bg-white dark:bg-slate-900 shadow-[0_64px_128px_-12px_rgba(6,95,70,0.25)] border-[16px] border-white dark:border-slate-800 relative flex items-center justify-center transition-all duration-700",
                   isAligned ? "ring-[20px] ring-secondary/20 scale-105" : "ring-8 ring-primary/5"
                 )}
               >
-                {/* Degree Markings (Static) */}
                 <div className="absolute inset-0 rounded-full border border-primary/5 opacity-30 pointer-events-none p-4">
                   {[...Array(72)].map((_, i) => (
                     <div 
@@ -222,27 +206,21 @@ export default function UltraQiblaCompass() {
                   ))}
                 </div>
 
-                {/* Rotating Inner Disc */}
                 <div 
                   className="relative w-full h-full flex items-center justify-center transition-transform duration-500 ease-out"
                   style={{ transform: `rotate(${-heading}deg)` }}
                 >
-                  {/* North Pointer */}
                   <div className="absolute top-12 flex flex-col items-center">
                     <span className="text-destructive font-black text-2xl mb-1 drop-shadow-md">N</span>
                     <div className="w-2 h-10 bg-destructive rounded-full shadow-lg"></div>
                   </div>
 
-                  {/* Qibla Direction Indicator */}
                   {qiblaDir !== null && (
                     <div 
                       className="absolute inset-0 flex flex-col items-center justify-center"
                       style={{ transform: `rotate(${qiblaDir}deg)` }}
                     >
-                      {/* The Main Directional Line */}
                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-1.5 h-[40%] bg-gradient-to-t from-emerald-500/0 via-emerald-500/40 to-secondary rounded-full -translate-y-full blur-[1px]"></div>
-                      
-                      {/* The Kaaba Arrow */}
                       <div className="relative group/kaaba -translate-y-28 sm:-translate-y-44">
                          <div className={cn(
                            "w-24 h-24 bg-emerald-950 rounded-[2.5rem] flex flex-col items-center justify-center shadow-2xl border-4 border-secondary overflow-hidden transition-all duration-700",
@@ -251,22 +229,18 @@ export default function UltraQiblaCompass() {
                             <Navigation2 className="w-12 h-12 text-secondary fill-secondary animate-pulse" />
                             <span className="text-[10px] font-black text-secondary mt-1 tracking-widest">KABA</span>
                          </div>
-                         
-                         {/* Glow underlying the arrow */}
                          <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl animate-pulse"></div>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Center Cap */}
                 <div className="absolute w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-2xl border-8 border-primary/10 z-30 flex items-center justify-center">
                   <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
                 </div>
               </div>
             </div>
 
-            {/* Support Message */}
             {!permissionGranted && (
               <div className="text-center space-y-4 animate-in fade-in duration-1000">
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Action Required</p>
@@ -281,7 +255,6 @@ export default function UltraQiblaCompass() {
             )}
           </div>
 
-          {/* Right Column: Information & Metrics */}
           <div className="space-y-8 order-1 lg:order-2">
             <Card className="border-none shadow-2xl rounded-[3rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 overflow-hidden">
               <div className={cn(
@@ -328,15 +301,10 @@ export default function UltraQiblaCompass() {
                       <MapPin className="w-7 h-7" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Your Current Location</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Location</p>
                       <p className="text-lg font-black text-slate-800 dark:text-white leading-tight">
                         {isLocating ? "Detecting..." : locationName}
                       </p>
-                      {coords && (
-                        <p className="text-xs font-bold text-muted-foreground">
-                          {coords.lat.toFixed(4)}° N, {coords.lon.toFixed(4)}° E
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -359,14 +327,14 @@ export default function UltraQiblaCompass() {
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest">Calibration Hint</p>
                       <p className="text-xs font-medium text-amber-700/80 dark:text-amber-200/60 leading-relaxed">
-                        Hold your device flat and move it in a <strong>figure-8 motion</strong>. Metal cases or magnetic covers can interfere with accuracy.
+                        Hold your device flat and move it in a <strong>figure-8 motion</strong>. Metal cases can interfere with accuracy.
                       </p>
                     </div>
                   </div>
 
-                  <Button variant="ghost" className="w-full justify-between h-14 rounded-2xl font-bold group border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50" onClick={getLocation}>
+                  <Button variant="ghost" className="w-full justify-between h-14 rounded-2xl font-bold border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50" onClick={getLocation}>
                     Refresh GPS Data
-                    <RefreshCcw className="w-4 h-4 text-muted-foreground group-hover:rotate-180 transition-transform duration-700" />
+                    <RefreshCcw className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </div>
               </CardContent>
@@ -383,16 +351,9 @@ export default function UltraQiblaCompass() {
       <Footer />
 
       <style jsx global>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.8); }
-        }
-        .animate-twinkle {
-          animation: twinkle 3s infinite ease-in-out;
-        }
+        .perspective-1000 { perspective: 1000px; }
+        @keyframes twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+        .animate-twinkle { animation: twinkle 3s infinite ease-in-out; }
       `}</style>
     </div>
   )
