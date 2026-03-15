@@ -16,8 +16,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Clock, Plus, Loader2, Sparkles } from "lucide-react"
+import { Clock, Plus, Loader2, Sparkles, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { awardPoints } from "@/lib/gamification-utils"
 
 export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string, mosqueName: string }) {
   const { user } = useUser()
@@ -42,7 +43,7 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
 
     setIsSubmitting(true)
     try {
-      // Check if this specific time already exists for this mosque to avoid duplicates and handle verification
+      // Check if this specific time already exists
       const q = query(
         collection(db, "mosques", mosqueId, "jamaatTimes"),
         where("time", "==", time)
@@ -50,17 +51,17 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
       const existing = await getDocs(q)
       
       if (!existing.empty) {
-        // Increment community verification count if same time reported
         const timeDoc = existing.docs[0]
         await updateDoc(doc(db, "mosques", mosqueId, "jamaatTimes", timeDoc.id), {
           communitySubmissionCount: increment(1)
         })
-        toast({ title: "Submission Verified!", description: "This time was already reported. We've added your verification." })
+        awardPoints(db, user.uid, 'AddJamaat')
+        toast({ title: "Submission Verified!", description: "Points awarded for verification." })
       } else {
         // Create new time entry
         await addDoc(collection(db, "mosques", mosqueId, "jamaatTimes"), {
           mosqueId,
-          eidDate: "2026-03-20", // Default for upcoming Eid
+          eidDate: "2026-03-20", 
           time,
           isApprovedByAdmin: false,
           submittedByUserId: user.uid,
@@ -68,17 +69,19 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
           communitySubmissionCount: 1
         })
 
+        awardPoints(db, user.uid, 'AddJamaat')
+
         // Trigger Notification
         await addDoc(collection(db, "users", user.uid, "notifications"), {
           userId: user.uid,
           title: "Jamaat Time Added! 🕒",
-          message: `Your update for ${mosqueName} (${time}) is pending approval. JazakAllah!`,
+          message: `Your update for ${mosqueName} (${time}) earned you +6 Eid Points!`,
           type: "jamaat",
           isRead: false,
           createdAt: new Date().toISOString()
         })
 
-        toast({ title: "Time Added!", description: "Will appear once approved by a moderator." })
+        toast({ title: "Time Added!", description: "+6 points awarded!" })
       }
       
       setOpen(false)
@@ -109,6 +112,11 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-center justify-center gap-2">
+            <Star className="w-4 h-4 text-secondary fill-secondary" />
+            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Earn +6 Eid Points</span>
+          </div>
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Prayer Time</Label>
@@ -122,7 +130,6 @@ export function AddJamaatTimeModal({ mosqueId, mosqueName }: { mosqueId: string,
                   className="h-14 pl-12 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 transition-all"
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground italic px-1">Note: Enter the exact time including AM/PM.</p>
             </div>
           </div>
 

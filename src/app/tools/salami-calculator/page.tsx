@@ -25,6 +25,8 @@ import {
 import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { useUser, useFirestore } from "@/firebase"
+import { awardPoints } from "@/lib/gamification-utils"
 
 const salamiList = [
   { id: 1, category: "Very Close Junior", amount: 25 },
@@ -39,6 +41,8 @@ const salamiList = [
 ]
 
 export default function SalamiCalculatorPage() {
+  const { user } = useUser()
+  const db = useFirestore()
   const { toast } = useToast()
   const [selectedId, setSelectedId] = useState<string>("")
   const [result, setResult] = useState<{ amount: number; category: string } | null>(null)
@@ -47,6 +51,9 @@ export default function SalamiCalculatorPage() {
     const item = salamiList.find((s) => s.id.toString() === selectedId)
     if (item) {
       setResult({ amount: item.amount, category: item.category })
+      if (user && db) {
+        awardPoints(db, user.uid, 'SalamiCalc')
+      }
     }
   }
 
@@ -81,8 +88,8 @@ export default function SalamiCalculatorPage() {
       <Navbar />
       
       <main className="max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-[0.2em] border border-secondary/20 shadow-sm backdrop-blur-md">
+        <header className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-secondary/10 text-primary text-xs font-black uppercase tracking-[0.2em] border border-primary/20 shadow-sm backdrop-blur-md">
             <Laugh className="w-4 h-4 text-secondary fill-secondary" />
             <span>Fun Feature • Eid 2026 Edition</span>
           </div>
@@ -91,9 +98,9 @@ export default function SalamiCalculatorPage() {
             <span className="text-secondary drop-shadow-sm">List 2026</span>
           </h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
-            The unofficial, totally non-binding, and hilarious guide to Eid Salami distribution in Bangladesh.
+            The unofficial, totally non-binding, and hilarious guide to Eid Salami.
           </p>
-        </div>
+        </header>
 
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Table Section */}
@@ -133,7 +140,7 @@ export default function SalamiCalculatorPage() {
               <div className="space-y-2">
                 <p className="text-sm font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest">Disclaimer</p>
                 <p className="text-lg font-bold text-amber-700/80 dark:text-amber-200/60 leading-relaxed italic">
-                  "This list is only for fun 😂. Use it at your own risk! EidSpark is not responsible for any family drama caused by these rates."
+                  "This list is only for fun 😂. Use it at your own risk! EidSpark is not responsible for family drama."
                 </p>
               </div>
             </div>
@@ -155,10 +162,15 @@ export default function SalamiCalculatorPage() {
               </div>
 
               <CardContent className="p-10 space-y-8">
+                <div className="bg-primary/5 p-4 rounded-2xl border border-primary/5 flex items-center justify-center gap-2">
+                  <Star className="w-4 h-4 text-secondary fill-secondary" />
+                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">Earn +2 points per calculation</span>
+                </div>
+
                 <div className="space-y-4">
                   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Who are you giving to?</Label>
                   <Select value={selectedId} onValueChange={setSelectedId}>
-                    <SelectTrigger className="h-14 rounded-2xl border-2 border-secondary/10 bg-slate-50 focus:border-secondary/30 transition-all font-bold px-6">
+                    <SelectTrigger className="h-14 rounded-2xl border-2 border-secondary/10 bg-slate-50 focus:border-secondary/30 transition-all font-bold px-6 text-slate-800">
                       <SelectValue placeholder="Select a situation..." />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-secondary/10">
@@ -192,7 +204,6 @@ export default function SalamiCalculatorPage() {
                         <p className="text-xs font-bold text-primary/60 uppercase tracking-widest">Recommended Amount</p>
                       </div>
                       
-                      {/* Fun Meter */}
                       <div className="pt-4 border-t border-secondary/10">
                         <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2">Salami Level</p>
                         <div className="flex justify-center gap-4">
@@ -213,7 +224,7 @@ export default function SalamiCalculatorPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 text-slate-800">
                       <p className="text-[10px] font-black uppercase text-center text-muted-foreground tracking-[0.3em]">Share Your Result</p>
                       <div className="flex gap-2">
                         <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50" onClick={() => shareSocial('fb')}>
@@ -231,11 +242,6 @@ export default function SalamiCalculatorPage() {
                 )}
               </CardContent>
             </Card>
-
-            <div className="flex justify-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-40">
-              <Moon className="w-3.5 h-3.5" />
-              <span>EidSpark Happiness Division</span>
-            </div>
           </aside>
         </div>
       </main>

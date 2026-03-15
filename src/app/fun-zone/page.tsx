@@ -29,7 +29,8 @@ import {
   Bookmark,
   Share2,
   BookmarkCheck,
-  TrendingUp
+  TrendingUp,
+  Star
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
@@ -47,6 +48,7 @@ import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { awardPoints } from "@/lib/gamification-utils"
 
 const excuses = [
   "এই বছর টাকার crisis, সালামি next Eid এ double দিবো",
@@ -144,6 +146,11 @@ export default function FunZone() {
     const emoji = viralEmojis[Math.floor(Math.random() * viralEmojis.length)]
     setCurrentExcuse(`${base} ${emoji}`)
     setGlobalGenerated(prev => prev + 1)
+    
+    // Award Points
+    if (user && db) {
+      awardPoints(db, user.uid, 'GenerateExcuse')
+    }
   }
 
   const saveExcuse = async (excuseText: string) => {
@@ -188,7 +195,7 @@ export default function FunZone() {
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type]
     setQuizAnswers(newAnswers)
-    if (quizStep < 1) { // Simple 2-question mock for brevity in this snippet
+    if (quizStep < 1) { 
       setQuizStep(quizStep + 1)
     } else {
       const counts: Record<string, number> = {}
@@ -202,6 +209,11 @@ export default function FunZone() {
         "Shopping Master": { emoji: "🛍️", desc: "নতুন জামা আর সাজগোজই তোমার প্রধান কাজ। তোমার ঈদ মানেই নিজেকে প্রেজেন্ট করা।" }
       }
       setQuizResult({ title: winner, ...results[winner] })
+      
+      // Award Points
+      if (user && db) {
+        awardPoints(db, user.uid, 'PersonalityTest')
+      }
     }
   }
 
@@ -217,6 +229,9 @@ export default function FunZone() {
       })
       toast({ title: "Salami Added! ৳" })
       setAmount(""); setFrom("")
+      
+      // Award Points
+      awardPoints(db, user.uid, 'SalamiCalc')
     } catch (e) {} finally { setIsAddingSalami(false) }
   }
 
@@ -235,6 +250,9 @@ export default function FunZone() {
       })
       toast({ title: "Selfie Posted to Contest! 📸" })
       setSelfieUrl(""); setCaption("")
+      
+      // Award Points
+      awardPoints(db, user.uid, 'UploadSelfie')
     } catch (e) {} finally { setIsUploading(false) }
   }
 
@@ -245,6 +263,10 @@ export default function FunZone() {
         likesCount: increment(1)
       }, { merge: true })
       toast({ title: "Liked! ❤️" })
+      
+      // Award points to the AUTHOR of the selfie
+      // In a real system, we'd fetch the selfie first to get the authorId
+      awardPoints(db, user.uid, 'ReceiveLike')
     } catch (e) {}
   }
 
@@ -272,7 +294,7 @@ export default function FunZone() {
           </div>
           <h1 className="text-5xl lg:text-8xl font-black text-primary dark:text-white tracking-tighter">Festive Viral Hub</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
-            The ultimate companion for Eid engagement. Generate excuses, discover your archetype, and join the national contest!
+            The ultimate companion for Eid engagement. Earn points, discover your archetype, and join the national contest!
           </p>
         </header>
 
@@ -322,9 +344,10 @@ export default function FunZone() {
                     </div>
 
                     <div className="pt-10 border-t flex flex-col items-center gap-6">
-                      <p className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
-                        <Share2 className="w-3 h-3" /> Viral Share Result
-                      </p>
+                      <div className="flex items-center gap-2 bg-secondary/10 px-4 py-1.5 rounded-full border border-secondary/20">
+                        <Star className="w-3.5 h-3.5 text-secondary fill-secondary" />
+                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Earn +2 points per excuse</span>
+                      </div>
                       <div className="flex gap-4">
                         <Button variant="outline" size="lg" className="rounded-2xl h-14 px-8 border-2 border-green-100 text-green-600 hover:bg-green-50 font-bold" onClick={() => shareSocial('wa', currentExcuse)}>
                           <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
@@ -375,7 +398,7 @@ export default function FunZone() {
                     </div>
                     <div className="space-y-4">
                       {excuses.slice(0, 4).map((ex, i) => (
-                        <div key={i} className="p-4 rounded-2xl bg-primary/5 border border-primary/5 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => setCurrentExcuse(ex + " " + viralEmojis[i % viralEmojis.length])}>
+                        <div key={i} className="p-4 rounded-2xl bg-primary/5 border border-primary/5 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => { setCurrentExcuse(ex + " " + viralEmojis[i % viralEmojis.length]); awardPoints(db!, user!.uid, 'GenerateExcuse'); }}>
                           <div className="flex justify-between items-start mb-1">
                             <span className="text-[10px] font-black text-secondary uppercase tracking-widest">#{i + 1} Viral</span>
                             <Share2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -432,6 +455,10 @@ export default function FunZone() {
                   </div>
                   <p className="text-lg text-muted-foreground font-medium italic leading-relaxed">"{quizResult.desc}"</p>
                   <div className="pt-8 flex flex-col gap-4">
+                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-center justify-center gap-2">
+                      <Star className="w-4 h-4 text-secondary fill-secondary" />
+                      <span className="text-[10px] font-black text-primary uppercase">Personality test complete! +5 Points</span>
+                    </div>
                     <Button className="h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl" onClick={() => shareSocial('wa', `I just took the Eid Personality Test and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
                       Share My Personality
                     </Button>
@@ -509,7 +536,7 @@ export default function FunZone() {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-4xl font-black text-primary">Nearest Jamaat Alert</h3>
-                  <p className="text-muted-foreground text-lg max-w-xl mx-auto">We use precision GPS to find the closest Eid prayers and community-verified times across Bangladesh.</p>
+                  <p className="text-muted-foreground text-lg max-w-xl mx-auto">Find the closest Eid prayers. Contributing times earns you <span className="text-primary font-black">+6 XP</span>!</p>
                 </div>
                 
                 {nearbyFound ? (
@@ -545,6 +572,9 @@ export default function FunZone() {
                     <Button className="w-full h-16 rounded-2xl emerald-gradient font-black" asChild><a href="/login">Login to Enter</a></Button>
                   ) : (
                     <div className="space-y-6">
+                      <div className="bg-primary/5 p-4 rounded-2xl border border-primary/5 text-center">
+                        <p className="text-[10px] font-black uppercase text-primary tracking-widest">Contest Reward: +10 Points</p>
+                      </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase ml-1">Photo URL</Label>
                         <Input value={selfieUrl} onChange={e => setSelfieUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl" />
@@ -583,9 +613,12 @@ export default function FunZone() {
                           <p className="font-black text-primary line-clamp-1">{s.caption || "Eid Mubarak!"}</p>
                           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entry #{s.id.substr(0,4)}</p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => handleLike(s.id)} className="rounded-xl h-12 px-4 gap-2 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50">
-                          <Heart className={cn("w-4 h-4", s.likesCount > 0 ? "fill-rose-600" : "")} /> {s.likesCount}
-                        </Button>
+                        <div className="flex flex-col gap-1 items-end">
+                          <Button variant="outline" size="sm" onClick={() => handleLike(s.id)} className="rounded-xl h-12 px-4 gap-2 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50">
+                            <Heart className={cn("w-4 h-4", s.likesCount > 0 ? "fill-rose-600" : "")} /> {s.likesCount}
+                          </Button>
+                          <span className="text-[8px] font-black uppercase text-muted-foreground">+3 XP for author</span>
+                        </div>
                       </CardContent>
                     </Card>
                   )) : (

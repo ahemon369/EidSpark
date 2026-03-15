@@ -3,11 +3,11 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles, Trophy, Star } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useUser, useAuth } from "@/firebase"
+import { useUser, useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
@@ -21,16 +21,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { collection, query, where } from "firebase/firestore"
 
 const navItems = [
   { name: "Home", href: "/" },
+  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Fun Zone", href: "/fun-zone", icon: Sparkles },
   { name: "Jamaat Finder", href: "/tools/jamaat-finder" },
   { name: "Zakat", href: "/tools/zakat" },
-  { name: "Greeting", href: "/tools/greeting" },
-  { name: "Selfie", href: "/tools/selfie" },
-  { name: "Salami List", href: "/tools/salami-calculator" },
-  { name: "Moon Sight", href: "/tools/moon-sighting" },
 ]
 
 export function Navbar() {
@@ -41,9 +39,18 @@ export function Navbar() {
   const router = useRouter()
   const { user, isUserLoading: loading } = useUser()
   const auth = useAuth()
+  const db = useFirestore()
   const { toast } = useToast()
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
+
+  // Fetch points real-time
+  const userQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(collection(db, "users"), where("id", "==", user.uid))
+  }, [db, user])
+  const { data: userData } = useCollection(userQuery)
+  const totalPoints = userData?.[0]?.totalPoints || 0
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -119,6 +126,15 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="hidden lg:flex items-center gap-4 z-50">
+            {user && !loading && (
+              <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 shadow-sm animate-in fade-in">
+                <Star className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
+                <span className="text-xs font-black text-primary tracking-tighter">
+                  {totalPoints} <span className="text-[10px] text-muted-foreground font-bold uppercase ml-0.5">Points</span>
+                </span>
+              </div>
+            )}
+
             <Button 
               variant="ghost" 
               size="icon" 
@@ -178,6 +194,12 @@ export function Navbar() {
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
         <div className="space-y-6 w-full max-w-xs text-center">
+          {user && (
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/10 border-2 border-secondary/20 mb-8">
+              <Star className="w-6 h-6 text-secondary fill-secondary" />
+              <span className="text-2xl font-black text-primary">{totalPoints} XP</span>
+            </div>
+          )}
           {navItems.map((item) => (
             <Link
               key={item.name}

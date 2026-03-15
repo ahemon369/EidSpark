@@ -24,13 +24,15 @@ import {
   CheckCircle2,
   XCircle,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, query, orderBy, limit, deleteDoc, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import { awardPoints } from "@/lib/gamification-utils"
 
 // Dynamically import the map to avoid SSR issues with Leaflet
 const MoonMap = dynamic(() => import("@/components/moon-sighting-map"), {
@@ -43,7 +45,7 @@ const MoonMap = dynamic(() => import("@/components/moon-sighting-map"), {
   ),
 })
 
-interface Star {
+interface StarItem {
   top: string;
   left: string;
   size: string;
@@ -65,7 +67,7 @@ export default function MoonSightingTrackerPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   
   // Star State for hydration fix
-  const [stars, setStars] = useState<Star[]>([])
+  const [stars, setStars] = useState<StarItem[]>([])
 
   useEffect(() => {
     // Generate stars only on the client to avoid hydration mismatch
@@ -140,15 +142,8 @@ export default function MoonSightingTrackerPage() {
         timestamp: new Date().toISOString()
       })
       
-      // Trigger Notification
-      await addDoc(collection(db, "users", user.uid, "notifications"), {
-        userId: user.uid,
-        title: "Report Posted! 🌙",
-        message: `Your moon sighting report from ${locationName} is now live on the community map.`,
-        type: "moon",
-        isRead: false,
-        createdAt: new Date().toISOString()
-      })
+      // Award Points
+      awardPoints(db, user.uid, 'ReportMoon')
 
       toast({ title: "Sighting Reported!", description: "Your report is now live on the community map." })
       setLocationName("")
@@ -222,7 +217,7 @@ export default function MoonSightingTrackerPage() {
               <span className="text-secondary drop-shadow-[0_0_30px_rgba(233,190,36,0.3)]">Tracker</span>
             </h1>
             <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
-              Track the hilal across Bangladesh. Submit your report and visualize the community sightings in real-time.
+              Track the hilal across Bangladesh. Earn <span className="text-secondary font-black">+8 XP</span> per report!
             </p>
           </div>
 
@@ -259,11 +254,16 @@ export default function MoonSightingTrackerPage() {
                     <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10">
                       <Globe className="w-10 h-10 text-slate-600" />
                     </div>
-                    <p className="text-sm font-bold text-slate-400">Sign in to report a sighting from your location.</p>
+                    <p className="text-sm font-bold text-slate-400">Sign in to report a sighting and earn points.</p>
                     <Button className="w-full h-14 rounded-2xl emerald-gradient font-black text-lg shadow-xl" onClick={() => window.location.href = '/login'}>Log In Now</Button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="bg-secondary/10 p-4 rounded-2xl border border-secondary/20 flex items-center justify-center gap-2">
+                      <Star className="w-4 h-4 text-secondary fill-secondary" />
+                      <span className="text-[10px] font-black uppercase text-secondary tracking-widest">+8 Eid Points per report</span>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">City / District</Label>
                       <Input 
@@ -333,7 +333,7 @@ export default function MoonSightingTrackerPage() {
               <div className="space-y-2">
                 <p className="text-xs font-black text-secondary uppercase tracking-widest">Official Notice</p>
                 <p className="text-[11px] text-slate-400 font-bold leading-relaxed">
-                  Community reports are for guidance only. Please wait for the official moon sighting announcement from the National Moon Sighting Committee.
+                  Community reports are for guidance only. Wait for the official National Moon Sighting Committee announcement.
                 </p>
               </div>
             </div>
