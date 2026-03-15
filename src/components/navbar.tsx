@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,7 @@ import {
 
 const navItems = [
   { name: "Home", href: "/" },
+  { name: "Fun Zone", href: "/fun-zone", icon: Sparkles },
   { name: "Jamaat Finder", href: "/tools/jamaat-finder" },
   { name: "Zakat", href: "/tools/zakat" },
   { name: "Greeting", href: "/tools/greeting" },
@@ -104,12 +105,13 @@ export function Navbar() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-bold transition-all duration-300",
+                  "px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2",
                   pathname === item.href
                     ? "text-primary dark:text-secondary bg-primary/5 dark:bg-secondary/10"
                     : "text-muted-foreground hover:text-primary dark:hover:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
                 )}
               >
+                {item.icon && <item.icon className="w-3.5 h-3.5" />}
                 {item.name}
               </Link>
             ))}
@@ -182,10 +184,11 @@ export function Navbar() {
               href={item.href}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "block py-3 rounded-2xl text-2xl font-black transition-all",
+                "block py-3 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-3",
                 pathname === item.href ? "text-primary dark:text-secondary bg-primary/5" : "text-muted-foreground hover:text-primary"
               )}
             >
+              {item.icon && <item.icon className="w-6 h-6" />}
               {item.name}
             </Link>
           ))}
