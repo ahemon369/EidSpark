@@ -19,7 +19,9 @@ import {
   Menu,
   X,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  ArrowLeft,
+  Globe
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -132,7 +134,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="p-6 border-t">
+          <div className="p-6 border-t space-y-2">
+            <Link 
+              href="/"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-muted-foreground hover:bg-slate-50 hover:text-primary transition-all group"
+              title="Return to EidSpark homepage"
+            >
+              <Globe className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+              Main Website
+            </Link>
             <Button 
               variant="ghost" 
               className="w-full justify-start text-destructive hover:bg-destructive/5 font-bold rounded-xl h-12"
@@ -147,10 +157,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       <div className="flex-grow flex flex-col h-screen overflow-hidden">
         <header className="h-20 bg-white border-b flex items-center justify-between px-8 shrink-0">
-          <div className="hidden lg:block">
-            <h1 className="text-xl font-black text-slate-800">
-              {menuItems.find(i => i.href === pathname)?.name || "Dashboard"}
-            </h1>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-xl font-bold gap-2 text-primary border-primary/20 hover:bg-primary/5 h-10 px-3 sm:px-4 ml-10 lg:ml-0" 
+              asChild
+              title="Return to EidSpark homepage"
+            >
+              <Link href="/">
+                <ArrowLeft className="w-4 h-4" /> 
+                <span className="hidden sm:inline">Back to Website</span>
+              </Link>
+            </Button>
+
+            <div className="hidden lg:block h-6 w-px bg-slate-200 mx-2"></div>
+
+            <div className="hidden lg:block">
+              <h1 className="text-xl font-black text-slate-800">
+                {menuItems.find(i => i.href === pathname)?.name || "Dashboard"}
+              </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-4 ml-auto lg:ml-0">
