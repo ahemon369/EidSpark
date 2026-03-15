@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -102,7 +101,7 @@ export default function JamaatMap({
         <div className="space-y-2">
           <h3 className="text-2xl font-black text-primary">Map Configuration Required</h3>
           <p className="text-muted-foreground max-w-sm mx-auto">
-            The Mapbox token is missing. Please add <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> to your Vercel environment variables to enable the live registry.
+            The Mapbox token is missing. Please add <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> to your environment variables to enable the live registry.
           </p>
         </div>
       </div>
