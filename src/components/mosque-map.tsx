@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { Button } from "@/components/ui/button"
-import { Navigation, Loader2, MapPin, Heart, Clock, Timer } from "lucide-react"
+import { Navigation, Loader2, MapPin, Heart, Clock, Timer, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -71,8 +71,8 @@ function MosqueFetcher({ userPos, onFetch }: { userPos: [number, number] | null;
     const φ2 = lat2 * Math.PI/180
     const Δφ = (lat2-lat1) * Math.PI/180
     const Δλ = (lon2-lon1) * Math.PI/180
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     return R * c
   }
 
@@ -273,6 +273,20 @@ export default function MosqueMap({ center, zoom, onLocationFound, onMosquesUpda
   const handleFetch = (fetched: Mosque[]) => {
     setMosques(fetched)
     if (onMosquesUpdate) onMosquesUpdate(fetched)
+  }
+
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'your_mapbox_token_here') {
+    return (
+      <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-slate-100 flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <AlertTriangle className="w-12 h-12 text-amber-500" />
+        <div className="space-y-2">
+          <h3 className="text-xl font-black text-primary">Map Not Configured</h3>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            Please add your Mapbox token to the environment variables to view local mosques.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;

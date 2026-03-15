@@ -5,7 +5,7 @@ import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
 import { format } from "date-fns"
-import { User, Clock, CheckCircle2, XCircle, MapPin } from "lucide-react"
+import { User, Clock, CheckCircle2, XCircle, MapPin, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -62,6 +62,20 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
 export default function MoonSightingMap({ sightings }: { sightings: Sighting[] }) {
   const center: [number, number] = [23.6850, 90.3563] // Center of Bangladesh
   const zoom = 7
+
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'your_mapbox_token_here') {
+    return (
+      <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-12 text-center space-y-6 rounded-[3rem] border-8 border-white/5">
+        <AlertTriangle className="w-20 h-20 text-amber-500" />
+        <div className="space-y-3">
+          <h3 className="text-3xl font-black text-white tracking-tight">Tracker Unavailable</h3>
+          <p className="text-slate-400 max-w-sm mx-auto leading-relaxed">
+            The community map requires a secure Mapbox configuration. Please set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your environment.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
 

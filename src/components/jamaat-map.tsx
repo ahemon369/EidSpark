@@ -95,6 +95,20 @@ export default function JamaatMap({
     }
   }, []);
 
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'your_mapbox_token_here') {
+    return (
+      <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center p-8 text-center space-y-4 rounded-[3rem] border-4 border-dashed border-primary/10">
+        <AlertTriangle className="w-16 h-16 text-amber-500" />
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black text-primary">Map Configuration Required</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto">
+            The Mapbox token is missing. Please add <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> to your Vercel environment variables to enable the live registry.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
 
   const markers = mosques.map((mosque) => (
