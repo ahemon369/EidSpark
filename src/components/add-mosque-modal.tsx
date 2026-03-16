@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, MapPin, Loader2, Globe, Sparkles, LocateFixed, Clock, Landmark, Users } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { awardPoints } from "@/lib/gamification-utils"
+import { cn } from "@/lib/utils"
 
 export function AddMosqueModal() {
   const { user } = useUser()
@@ -182,9 +183,9 @@ export function AddMosqueModal() {
                 <Label className="text-[10px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-3">
                   <MapPin className="w-4 h-4" /> GPS Precise Location
                 </Label>
-                <Button type="button" variant="ghost" size="sm" onClick={detectLocation} className="text-[10px] font-black uppercase text-secondary h-8 hover:bg-secondary/10 px-4 rounded-full">
-                  <LocateFixed className="w-3.5 h-3.5 mr-2" /> Sync GPS
-                </Button>
+                <button type="button" onClick={detectLocation} className="text-[10px] font-black uppercase text-secondary h-8 hover:bg-secondary/10 px-4 rounded-full flex items-center gap-2">
+                  <LocateFixed className="w-3.5 h-3.5" /> Sync GPS
+                </button>
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <Input 
