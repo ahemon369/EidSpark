@@ -19,7 +19,6 @@ export default function EidCountdown() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    // Expected Eid-ul-Fitr Date: March 20, 2026
     const targetDate = new Date("2026-03-20T00:00:00")
 
     const timer = setInterval(() => {
@@ -70,18 +69,15 @@ export default function EidCountdown() {
   };
 
   return (
-    <div className="min-h-screen animate-slow-gradient bg-gradient-to-br from-emerald-950 via-emerald-900 to-black text-white selection:bg-secondary selection:text-emerald-950 relative overflow-hidden">
+    <div className="min-h-screen animate-slow-gradient bg-gradient-to-br from-emerald-950 via-emerald-900 to-black text-white selection:bg-secondary selection:text-emerald-950 relative overflow-hidden flex flex-col">
       <Navbar />
       
-      {/* Immersive Islamic Pattern Overlay */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none islamic-pattern"></div>
 
-      <div className="relative pt-[80px]">
+      <div className="pt-[80px] flex flex-col flex-grow">
         <BackButton />
         
-        <div className="max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8 relative z-10 min-h-[calc(100vh-64px)] flex flex-col items-center justify-center">
-          
-          {/* Animated Background Atmosphere */}
+        <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 relative z-10 flex-grow flex flex-col items-center justify-center">
           <div className="absolute top-20 right-20 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[140px] animate-pulse"></div>
           <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] animate-pulse delay-1000"></div>
 
@@ -102,31 +98,17 @@ export default function EidCountdown() {
               </h1>
             </div>
 
-            {/* Premium Moon & Stars Container */}
             <div className="relative py-16">
               <div className="w-72 h-72 lg:w-[450px] lg:h-[450px] rounded-full bg-gradient-to-br from-secondary via-amber-400 to-amber-700 shadow-[0_0_150px_rgba(233,190,36,0.3)] animate-float flex items-center justify-center group overflow-hidden border-8 border-white/10 relative">
-                 {/* Crescent shape creation */}
                  <div className="absolute top-0 right-0 w-[88%] h-full bg-emerald-950 rounded-full translate-x-10 -translate-y-6 group-hover:translate-x-14 group-hover:-translate-y-8 transition-transform duration-1000"></div>
-                 
-                 {/* Inner Glow */}
                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                 
                  <Moon className="w-32 h-32 text-secondary/20 absolute bottom-20 left-20 animate-pulse" />
               </div>
-
-              {/* Twinkling Stars */}
               <Star className="absolute -top-10 -left-10 w-14 h-14 text-secondary animate-twinkle shadow-secondary" />
-              <Star className="absolute top-1/2 -right-24 w-8 h-8 text-white/60 animate-twinkle delay-300" />
-              <Star className="absolute -bottom-20 left-1/2 w-6 h-6 text-white/40 animate-twinkle delay-700" />
-              <Star className="absolute top-1/4 -right-10 w-4 h-4 text-secondary/50 animate-twinkle delay-500" />
-              <Star className="absolute bottom-10 -left-20 w-5 h-5 text-white/30 animate-twinkle delay-1000" />
-              
-              {/* Focal Glow */}
               <div className="absolute inset-0 bg-secondary/10 rounded-full blur-[120px] -z-10 scale-150"></div>
             </div>
 
             <div className="space-y-12 w-full max-w-6xl">
-              {/* Glassmorphism Countdown Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 perspective-1000">
                 {[
                   { label: "Days", value: timeLeft.days },
@@ -140,9 +122,6 @@ export default function EidCountdown() {
                         {value.toString().padStart(2, "0")}
                       </div>
                       <div className="text-xs lg:text-sm font-black text-white/40 uppercase tracking-[0.4em] mt-6 group-hover:text-white/60 transition-colors">{label}</div>
-                      
-                      {/* Subtle Internal Glow */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-white/10 rounded-full blur-sm"></div>
                     </CardContent>
                   </Card>
                 ))}
@@ -154,7 +133,6 @@ export default function EidCountdown() {
                     <CalendarDays className="w-5 h-5" />
                     <span>Expected Eid-ul-Fitr: March 20, 2026 (Bangladesh)</span>
                   </div>
-
                   <Button 
                     onClick={toggleTakbir}
                     variant="outline"
@@ -167,43 +145,7 @@ export default function EidCountdown() {
                     {isPlayingTakbir ? "Stop Takbir" : "Play Eid Takbir"}
                   </Button>
                 </div>
-
-                {/* Social Share Group */}
-                <div className="space-y-6">
-                  <p className="text-xs font-black uppercase tracking-[0.4em] text-white/30 text-center">Spread the Eid Spirit</p>
-                  <div className="flex flex-wrap items-center justify-center gap-6">
-                    <Button 
-                      variant="outline" 
-                      className="rounded-2xl h-16 px-10 border-white/10 hover:bg-white/10 font-black text-base gap-3 shadow-xl transition-transform hover:-translate-y-1"
-                      onClick={() => shareCountdown('facebook')}
-                    >
-                      <Facebook className="w-6 h-6 fill-current" /> Facebook
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="rounded-2xl h-16 px-10 border-white/10 hover:bg-white/10 font-black text-base gap-3 shadow-xl transition-transform hover:-translate-y-1"
-                      onClick={() => shareCountdown('whatsapp')}
-                    >
-                      <MessageCircle className="w-6 h-6" /> WhatsApp
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="rounded-2xl h-16 px-10 border-white/10 hover:bg-white/10 font-black text-base gap-3 shadow-xl transition-transform hover:-translate-y-1"
-                      onClick={() => shareCountdown('twitter')}
-                    >
-                      <Twitter className="w-6 h-6 fill-current" /> Twitter
-                    </Button>
-                  </div>
-                </div>
               </div>
-            </div>
-
-            <div className="max-w-3xl mx-auto space-y-10 pt-20 pb-32">
-              <h3 className="text-3xl lg:text-5xl font-black italic text-white/90 leading-tight">
-                "Eid-ul-Fitr is a time of joy, gratitude, and community."
-              </h3>
-              <div className="h-1.5 w-32 bg-secondary mx-auto rounded-full shadow-[0_0_20px_rgba(233,190,36,0.5)]"></div>
-              <p className="text-white/40 font-black tracking-[0.5em] uppercase text-sm">Stay Blessed • Stay Excited</p>
             </div>
           </div>
         </div>
