@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
@@ -207,7 +206,7 @@ export default function JamaatFinderPage() {
                 className="rounded-full text-[10px] font-black uppercase h-8 px-4"
                 onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
               >
-                < 5km
+                &lt; 5km
               </Button>
             </div>
 
