@@ -1,35 +1,179 @@
 
 "use client"
 
-import { useUser } from "@/firebase"
+import { useUser, useAuth, useFirestore } from "@/firebase"
+import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth"
+import { doc, updateDoc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, Shield, Bell, Moon, Camera, Save, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter,
+  DialogTrigger
+} from "@/components/ui/dialog"
+import { User, Shield, Bell, Moon, Camera, Save, Loader2, Lock, CheckCircle2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function ProfileSettings() {
   const { user } = useUser()
+  const auth = useAuth()
+  const db = useFirestore()
   const { toast } = useToast()
-  const [isSaving, setIsSaving] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Local states for UI feedback (Note: persistence requires updateProfile/updateEmail)
-  const [displayName, setDisplayName] = useState(user?.displayName || "")
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  
+  // Local states
+  const [displayName, setDisplayName] = useState("")
   const [darkMode, setDarkMode] = useState(false)
   const [notifications, setNotifications] = useState(true)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
-  const handleSave = async (e: React.FormEvent) => {
+  // Password change states
+  const [passwordForm, setPasswordForm] = useState({
+    current: "",
+    new: "",
+    confirm: ""
+  })
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
+
+  // Initialize data
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.displayName || "")
+      setAvatarPreview(user.photoURL || null)
+    }
+    
+    // Load dark mode from local storage
+    const savedTheme = localStorage.getItem("darkMode") === "true"
+    setDarkMode(savedTheme)
+    if (savedTheme) document.body.classList.add("dark")
+  }, [user])
+
+  const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user || !auth || !db) return
+    if (!displayName.trim()) {
+      toast({ variant: "destructive", title: "Name is required" })
+      return
+    }
+
     setIsSaving(true)
-    // Simulate API delay
-    setTimeout(() => {
+    
+    // 1. Update Firebase Auth Profile
+    updateProfile(auth.currentUser!, {
+      displayName: displayName,
+      photoURL: avatarPreview || user.photoURL
+    }).then(() => {
+      // 2. Update Firestore Document
+      const userRef = doc(db, "users", user.uid)
+      updateDoc(userRef, {
+        username: displayName,
+        avatarUrl: avatarPreview || user.photoURL,
+        updatedAt: new Date().toISOString()
+      }).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'update'
+        }))
+      })
+
+      toast({ title: "Profile Updated", description: "Your details have been saved successfully." })
+    }).catch((error) => {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message || "Could not update profile." })
+    }).finally(() => {
       setIsSaving(false)
-      toast({ title: "Settings Updated", description: "Your preferences have been saved." })
-    }, 1000)
+    })
+  }
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast({ variant: "destructive", title: "Invalid file type", description: "Please upload an image (JPG/PNG)." })
+      return
+    }
+
+    setIsUploading(true)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string
+      setAvatarPreview(base64)
+      setIsUploading(false)
+      toast({ title: "Photo Previewed", description: "Click 'Save Changes' to apply permanently." })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const toggleDarkMode = (val: boolean) => {
+    setDarkMode(val)
+    localStorage.setItem("darkMode", val.toString())
+    if (val) {
+      document.body.classList.add("dark")
+    } else {
+      document.body.classList.remove("dark")
+    }
+  }
+
+  const toggleNotifications = (val: boolean) => {
+    setNotifications(val)
+    if (!user || !db) return
+    
+    const userRef = doc(db, "users", user.uid)
+    updateDoc(userRef, {
+      notificationsEnabled: val
+    }).catch(async () => {
+      // Background fail is silent or emitted
+    })
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!auth || !auth.currentUser || !user?.email) return
+
+    if (passwordForm.new !== passwordForm.confirm) {
+      toast({ variant: "destructive", title: "Mismatch", description: "New passwords do not match." })
+      return
+    }
+
+    if (passwordForm.new.length < 6) {
+      toast({ variant: "destructive", title: "Too short", description: "Password must be at least 6 characters." })
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      // Re-authenticate first (standard Firebase security requirement for password changes)
+      const credential = EmailAuthProvider.credential(user.email, passwordForm.current)
+      await reauthenticateWithCredential(auth.currentUser, credential)
+      
+      // Update password
+      await updatePassword(auth.currentUser, passwordForm.new)
+      
+      toast({ title: "Password Updated", description: "Your security has been refreshed." })
+      setPasswordModalOpen(false)
+      setPasswordForm({ current: "", new: "", confirm: "" })
+    } catch (error: any) {
+      let msg = "Failed to update password. Check your current password."
+      if (error.code === 'auth/wrong-password') msg = "The current password you entered is incorrect."
+      toast({ variant: "destructive", title: "Error", description: msg })
+    } finally {
+      setIsChangingPassword(false)
+    }
   }
 
   return (
@@ -54,29 +198,46 @@ export default function ProfileSettings() {
             </div>
           </CardHeader>
           <CardContent className="p-10">
-            <form onSubmit={handleSave} className="space-y-8">
+            <form onSubmit={handleSaveProfile} className="space-y-8">
               <div className="flex flex-col sm:flex-row items-center gap-8">
                 <div className="relative group">
-                  <Avatar className="h-32 w-32 border-4 border-slate-100 shadow-xl transition-all group-hover:scale-105">
-                    <AvatarImage src={user?.photoURL || ""} />
-                    <AvatarFallback className="bg-primary text-white font-black text-4xl">{user?.displayName?.[0]}</AvatarFallback>
+                  <Avatar className="h-32 w-32 border-4 border-slate-100 shadow-xl transition-all group-hover:scale-105 overflow-hidden">
+                    <AvatarImage src={avatarPreview || ""} className="object-cover" />
+                    <AvatarFallback className="bg-primary text-white font-black text-4xl">{displayName?.[0] || user?.email?.[0]}</AvatarFallback>
                   </Avatar>
-                  <button type="button" className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border-2 border-slate-100 hover:bg-slate-50 transition-colors">
-                    <Camera className="w-5 h-5 text-primary" />
+                  <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border-2 border-slate-100 hover:bg-slate-50 transition-colors"
+                  >
+                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Camera className="w-5 h-5 text-primary" />}
                   </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handlePhotoUpload} 
+                  />
                 </div>
                 <div className="flex-grow space-y-4 w-full">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                      <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="h-12 rounded-xl" />
+                      <Input 
+                        value={displayName} 
+                        onChange={(e) => setDisplayName(e.target.value)} 
+                        className="h-12 rounded-xl border-2 focus:border-primary/20" 
+                        placeholder="John Doe"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
-                      <Input value={user?.email || ""} readOnly className="h-12 rounded-xl bg-slate-50 opacity-60" />
+                      <Input value={user?.email || ""} readOnly className="h-12 rounded-xl bg-slate-50 opacity-60 cursor-not-allowed" />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground italic font-medium">Your email cannot be changed once verified.</p>
+                  <p className="text-xs text-muted-foreground italic font-medium">Your profile name is visible to other users in the community.</p>
                 </div>
               </div>
               <Button type="submit" disabled={isSaving} className="emerald-gradient text-white h-14 rounded-2xl font-black px-10 shadow-xl shadow-primary/20">
@@ -102,7 +263,7 @@ export default function ProfileSettings() {
               </div>
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
                 <span className="text-sm font-bold text-slate-700">Dark Mode</span>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
               </div>
             </div>
           </Card>
@@ -120,7 +281,7 @@ export default function ProfileSettings() {
               </div>
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
                 <span className="text-sm font-bold text-slate-700">Push Notifications</span>
-                <Switch checked={notifications} onCheckedChange={setNotifications} />
+                <Switch checked={notifications} onCheckedChange={toggleNotifications} />
               </div>
             </div>
           </Card>
@@ -138,7 +299,64 @@ export default function ProfileSettings() {
                 <p className="text-sm text-muted-foreground font-medium">Protect your account and data.</p>
               </div>
             </div>
-            <Button variant="outline" className="rounded-xl font-bold h-12 border-2">Change Password</Button>
+            
+            <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="rounded-xl font-bold h-12 border-2 hover:bg-slate-50">
+                  <Lock className="w-4 h-4 mr-2" /> Change Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-[2.5rem] sm:max-w-[425px]">
+                <form onSubmit={handleChangePassword}>
+                  <DialogHeader className="space-y-3 mb-6">
+                    <DialogTitle className="text-2xl font-black">Update Password</DialogTitle>
+                    <DialogDescription>Enter your current password to authorize this change.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Current Password</Label>
+                      <Input 
+                        type="password" 
+                        required
+                        value={passwordForm.current}
+                        onChange={(e) => setPasswordForm({...passwordForm, current: e.target.value})}
+                        className="h-12 rounded-xl" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">New Password</Label>
+                      <Input 
+                        type="password" 
+                        required
+                        value={passwordForm.new}
+                        onChange={(e) => setPasswordForm({...passwordForm, new: e.target.value})}
+                        className="h-12 rounded-xl" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Confirm New Password</Label>
+                      <Input 
+                        type="password" 
+                        required
+                        value={passwordForm.confirm}
+                        onChange={(e) => setPasswordForm({...passwordForm, confirm: e.target.value})}
+                        className="h-12 rounded-xl" 
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter className="mt-6">
+                    <Button 
+                      type="submit" 
+                      disabled={isChangingPassword}
+                      className="w-full h-12 rounded-xl font-black emerald-gradient text-white"
+                    >
+                      {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      Confirm Update
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </Card>
       </div>
