@@ -14,30 +14,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins } from "lucide-react"
+import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins, TrendingUp, Zap, Heart, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore } from "@/firebase"
 import { awardPoints } from "@/lib/gamification-utils"
+import confetti from 'canvas-confetti'
 
 const salamiList = [
-  { id: 1, category: "Very Close Junior", amount: 25 },
-  { id: 2, category: "Normal Junior", amount: 15 },
-  { id: 3, category: "Smart Junior", amount: 10 },
-  { id: 4, category: "Polite Junior", amount: 7 },
-  { id: 5, category: "Junior who only says Salam", amount: 5 },
-  { id: 6, category: "Junior who sends Eid message online", amount: 3 },
-  { id: 7, category: "Junior who asks for Salami directly", amount: 2 },
-  { id: 8, category: "Brother who says “Vaiya Salami den”", amount: 50 },
-  { id: 9, category: "If someone writes your name with Mehendi", amount: 100 },
+  { id: 1, category: "Very Close Junior", amount: 25, icon: "💎", color: "bg-emerald-500" },
+  { id: 2, category: "Normal Junior", amount: 15, icon: "🤝", color: "bg-amber-500" },
+  { id: 3, category: "Smart Junior", amount: 10, icon: "🧠", color: "bg-amber-500" },
+  { id: 4, category: "Polite Junior", amount: 7, icon: "🙏", color: "bg-orange-500" },
+  { id: 5, category: "Junior who only says Salam", amount: 5, icon: "🗣️", color: "bg-orange-500" },
+  { id: 6, category: "Junior who sends Eid message online", amount: 3, icon: "📱", color: "bg-slate-400" },
+  { id: 7, category: "Junior who asks for Salami directly", amount: 2, icon: "💸", color: "bg-slate-400" },
+  { id: 8, category: "Brother who says “Vaiya Salami den”", amount: 50, icon: "👑", color: "bg-emerald-500" },
+  { id: 9, category: "If someone writes your name with Mehendi", amount: 100, icon: "🌿", color: "bg-emerald-500" },
 ]
 
 export default function SalamiCalculatorPage() {
@@ -46,15 +39,30 @@ export default function SalamiCalculatorPage() {
   const { toast } = useToast()
   const [selectedId, setSelectedId] = useState<string>("")
   const [result, setResult] = useState<{ amount: number; category: string } | null>(null)
+  const [isCalculating, setIsCalculating] = useState(false)
 
   const handleCalculate = () => {
+    setIsCalculating(true)
     const item = salamiList.find((s) => s.id.toString() === selectedId)
-    if (item) {
-      setResult({ amount: item.amount, category: item.category })
-      if (user && db) {
-        awardPoints(db, user.uid, 'SalamiCalc')
+    
+    setTimeout(() => {
+      if (item) {
+        setResult({ amount: item.amount, category: item.category })
+        
+        // Celebration
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#fbbf24', '#065f46', '#ffffff']
+        })
+
+        if (user && db) {
+          awardPoints(db, user.uid, 'SalamiCalc')
+        }
       }
-    }
+      setIsCalculating(false)
+    }, 800)
   }
 
   const getSalamiLevel = (amount: number) => {
@@ -76,71 +84,67 @@ export default function SalamiCalculatorPage() {
     }
   }
 
-  const copyResult = () => {
-    if (!result) return
-    const text = `EidSpark বলছে আমাকে ${result.amount} টাকা সালামি দিতে হবে 😂`
-    navigator.clipboard.writeText(text)
-    toast({ title: "Result copied to clipboard!" })
-  }
-
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-0 selection:bg-secondary selection:text-primary">
+    <div className="min-h-screen bg-background islamic-pattern pb-20 selection:bg-secondary selection:text-primary">
       <Navbar />
       
-      <main className="max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <header className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-secondary/10 text-primary text-xs font-black uppercase tracking-[0.2em] border border-primary/20 shadow-sm backdrop-blur-md">
+      <main className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <header className="text-center mb-24 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
+          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-secondary/10 text-primary text-[10px] font-black uppercase tracking-[0.3em] border border-secondary/20 shadow-sm backdrop-blur-md">
             <Laugh className="w-4 h-4 text-secondary fill-secondary" />
             <span>Fun Feature • Eid 2026 Edition</span>
           </div>
-          <h1 className="text-5xl lg:text-8xl font-black text-primary dark:text-white tracking-tighter leading-[0.9]">
-            Eid Salami <br />
-            <span className="text-secondary drop-shadow-sm">List 2026</span>
+          <h1 className="text-6xl lg:text-[110px] font-black text-primary dark:text-white tracking-tighter leading-[0.85]">
+            Salami <br />
+            <span className="text-secondary drop-shadow-sm">Registry</span>
           </h1>
-          <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
-            The unofficial, totally non-binding, and hilarious guide to Eid Salami.
+          <p className="text-2xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
+            The unofficial, totally non-binding, and hilarious community-driven guide to Eid Salami.
           </p>
         </header>
 
-        <div className="grid lg:grid-cols-12 gap-10">
-          {/* Table Section */}
-          <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-left duration-700">
-            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20">
-              <CardHeader className="p-10 border-b border-secondary/10 bg-secondary/5">
-                <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
-                  <Gift className="w-6 h-6 text-secondary" />
-                  Official Rates
-                </CardTitle>
-                <CardDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Market rates for 2026</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-none bg-slate-50 dark:bg-slate-800/50">
-                      <TableHead className="w-[80px] font-black uppercase text-[10px] tracking-widest pl-10">Serial</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest">Category</TableHead>
-                      <TableHead className="text-right font-black uppercase text-[10px] tracking-widest pr-10">Amount (BDT)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salamiList.map((item) => (
-                      <TableRow key={item.id} className="border-secondary/5 hover:bg-secondary/5 transition-colors group">
-                        <TableCell className="font-bold text-muted-foreground pl-10">{item.id.toString().padStart(2, '0')}</TableCell>
-                        <TableCell className="font-black text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors whitespace-nowrap">{item.category}</TableCell>
-                        <TableCell className="text-right font-black text-secondary pr-10">৳{item.amount}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+        <div className="grid lg:grid-cols-12 gap-12">
+          {/* Table Section (Now Cards) */}
+          <div className="lg:col-span-7 space-y-10 animate-in fade-in slide-in-from-left duration-700">
+            <div className="flex items-center justify-between px-4">
+              <div className="flex items-center gap-3">
+                <Gift className="w-8 h-8 text-secondary fill-secondary" />
+                <h2 className="text-3xl font-black text-primary tracking-tight">Official Rates</h2>
+              </div>
+              <div className="bg-primary/5 px-4 py-1.5 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] border border-primary/10">Standard 2026</div>
+            </div>
 
-            <div className="bg-amber-50 dark:bg-amber-900/10 p-8 rounded-[3rem] border-2 border-amber-100 dark:border-amber-900/20 flex gap-5 items-start shadow-xl backdrop-blur-md">
-              <Info className="w-8 h-8 text-amber-600 shrink-0 mt-1" />
+            <div className="grid sm:grid-cols-2 gap-6">
+              {salamiList.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl group hover:-translate-y-3 transition-all duration-500 border border-transparent hover:border-secondary/20 cursor-pointer"
+                  onClick={() => setSelectedId(item.id.toString())}
+                >
+                  <CardContent className="p-8 flex items-center justify-between">
+                    <div className="flex items-center gap-5">
+                      <div className={cn("w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-3xl shadow-lg transition-transform group-hover:scale-110", item.color + "/10")}>
+                        {item.icon}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-black text-slate-800 text-lg group-hover:text-primary transition-colors">{item.category}</h4>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Recommended Gift</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-black text-primary tracking-tighter">৳{item.amount}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="bg-secondary/5 p-10 rounded-[3rem] border-2 border-secondary/20 flex gap-6 items-start shadow-2xl backdrop-blur-md group hover:bg-secondary/[0.08] transition-all">
+              <Info className="w-10 h-10 text-secondary shrink-0 mt-1" />
               <div className="space-y-2">
-                <p className="text-sm font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest">Disclaimer</p>
-                <p className="text-lg font-bold text-amber-700/80 dark:text-amber-200/60 leading-relaxed italic">
-                  "This list is only for fun 😂. Use it at your own risk! EidSpark is not responsible for family drama."
+                <p className="text-sm font-black text-secondary uppercase tracking-[0.3em]">Critical Disclaimer</p>
+                <p className="text-xl font-bold text-primary leading-relaxed italic">
+                  "This list is generated for entertainment purposes only 😂. Use it at your own risk! EidSpark is not liable for family tension or stinginess reports."
                 </p>
               </div>
             </div>
@@ -148,35 +152,35 @@ export default function SalamiCalculatorPage() {
 
           {/* Calculator Section */}
           <aside className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right duration-700">
-            <Card className="border-none shadow-2xl rounded-[3rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 overflow-hidden sticky top-24">
-              <div className="p-10 gold-gradient text-primary relative overflow-hidden">
-                <Moon className="absolute -right-4 -top-4 w-32 h-32 opacity-10 rotate-12" />
-                <div className="relative z-10 space-y-2">
-                  <div className="inline-flex items-center gap-2 bg-white/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                    <Sparkles className="w-3 h-3 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Interactive Tool</span>
+            <Card className="border-none shadow-[0_64px_128px_-12px_rgba(6,95,70,0.15)] rounded-[3.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-4 border-white overflow-hidden sticky top-24">
+              <div className="p-12 gold-gradient text-primary relative overflow-hidden">
+                <Moon className="absolute -right-10 -top-10 w-48 h-48 opacity-10 rotate-12" />
+                <div className="relative z-10 space-y-4">
+                  <div className="inline-flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 shadow-sm">
+                    <Sparkles className="w-4 h-4 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Decision Assistant</span>
                   </div>
-                  <CardTitle className="text-3xl font-black tracking-tight">Salami Calc</CardTitle>
-                  <CardDescription className="text-primary/70 font-bold uppercase text-[10px] tracking-widest">Quick decision assistant</CardDescription>
+                  <CardTitle className="text-5xl font-black tracking-tight leading-none">Salami <br />Calculator</CardTitle>
+                  <CardDescription className="text-primary/70 font-black uppercase text-[10px] tracking-[0.3em] mt-2">v2.0 Community Algorithm</CardDescription>
                 </div>
               </div>
 
-              <CardContent className="p-10 space-y-8">
-                <div className="bg-primary/5 p-4 rounded-2xl border border-primary/5 flex items-center justify-center gap-2">
-                  <Star className="w-4 h-4 text-secondary fill-secondary" />
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">Earn +2 points per calculation</span>
+              <CardContent className="p-12 space-y-10">
+                <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/5 flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-primary shadow-lg"><Star className="w-5 h-5 fill-primary" /></div>
+                  <span className="text-[11px] font-black uppercase text-primary tracking-widest">+2 XP per session</span>
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Who are you giving to?</Label>
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em] ml-2">Whom are you addressing?</Label>
                   <Select value={selectedId} onValueChange={setSelectedId}>
-                    <SelectTrigger className="h-14 rounded-2xl border-2 border-secondary/10 bg-slate-50 focus:border-secondary/30 transition-all font-bold px-6 text-slate-800">
-                      <SelectValue placeholder="Select a situation..." />
+                    <SelectTrigger className="h-20 rounded-[2rem] border-4 border-slate-50 bg-slate-50 focus:border-secondary/30 transition-all font-black px-8 text-xl text-slate-800 shadow-inner">
+                      <SelectValue placeholder="Select relative status..." />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-secondary/10">
+                    <SelectContent className="rounded-[2rem] border-secondary/10 shadow-2xl p-2">
                       {salamiList.map((item) => (
-                        <SelectItem key={item.id} value={item.id.toString()} className="font-bold rounded-xl m-1">
-                          {item.category}
+                        <SelectItem key={item.id} value={item.id.toString()} className="font-black rounded-[1.5rem] m-1 text-lg py-4 px-6 cursor-pointer">
+                          {item.icon} {item.category}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -185,38 +189,46 @@ export default function SalamiCalculatorPage() {
 
                 <Button 
                   onClick={handleCalculate}
-                  disabled={!selectedId}
-                  className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-[1.02] transition-transform active:scale-95 group"
+                  disabled={!selectedId || isCalculating}
+                  className="w-full h-24 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-[0_20px_50px_rgba(217,119,6,0.3)] hover:scale-105 transition-all active:scale-95 group relative overflow-hidden"
                 >
-                  <Calculator className="w-6 h-6 mr-3 group-hover:rotate-12 transition-transform" />
-                  Calculate My Salami
+                  {isCalculating ? (
+                    <Loader2 className="w-10 h-10 animate-spin" />
+                  ) : (
+                    <span className="flex items-center gap-4">
+                      <Calculator className="w-10 h-10 group-hover:rotate-12 transition-transform" />
+                      Get Result
+                    </span>
+                  )}
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </Button>
 
-                {result && (
-                  <div className="animate-in zoom-in duration-500 space-y-6">
-                    <div className="bg-secondary/10 border-2 border-secondary/20 p-8 rounded-[2.5rem] text-center space-y-4 relative overflow-hidden">
-                      <Coins className="absolute -left-4 -top-4 w-16 h-16 text-secondary/20 animate-bounce" />
-                      <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto text-primary shadow-lg animate-bounce">
-                        <Gift className="w-8 h-8" />
+                {result && !isCalculating && (
+                  <div className="animate-in zoom-in duration-500 space-y-10">
+                    <div className="bg-secondary/10 border-4 border-secondary/20 p-12 rounded-[3.5rem] text-center space-y-6 relative overflow-hidden shadow-inner">
+                      <div className="absolute inset-0 opacity-5 pointer-events-none islamic-pattern"></div>
+                      <Coins className="absolute -left-6 -top-6 w-32 h-32 text-secondary/20 animate-bounce" />
+                      <div className="w-24 h-24 bg-secondary rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-2xl relative z-10 animate-float">
+                        <Gift className="w-12 h-12" />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-3xl font-black text-primary leading-tight">৳{result.amount}</p>
-                        <p className="text-xs font-bold text-primary/60 uppercase tracking-widest">Recommended Amount</p>
+                      <div className="space-y-2 relative z-10">
+                        <p className="text-6xl font-black text-primary tracking-tighter leading-none">৳{result.amount}</p>
+                        <p className="text-[10px] font-black text-primary/60 uppercase tracking-[0.4em]">Suggested Blessing</p>
                       </div>
                       
-                      <div className="pt-4 border-t border-secondary/10">
-                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2">Salami Level</p>
-                        <div className="flex justify-center gap-4">
+                      <div className="pt-8 border-t border-secondary/10 relative z-10">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.4em] mb-4">Salami Generosity Meter</p>
+                        <div className="flex justify-center gap-6">
                           {["Low", "Medium", "High"].map((lvl) => {
                             const current = getSalamiLevel(result.amount)
                             const isActive = current.label === lvl
                             return (
                               <div key={lvl} className={cn(
-                                "flex flex-col items-center gap-1 transition-all",
-                                isActive ? "opacity-100 scale-110" : "opacity-30 scale-90 grayscale"
+                                "flex flex-col items-center gap-2 transition-all duration-500",
+                                isActive ? "opacity-100 scale-125 translate-y-[-5px]" : "opacity-20 scale-90 grayscale"
                               )}>
-                                <span className="text-xl">{lvl === "Low" ? "💸" : lvl === "Medium" ? "💰" : "🤑"}</span>
-                                <span className={cn("text-[8px] font-black uppercase tracking-tighter", isActive ? current.color : "")}>{lvl}</span>
+                                <span className="text-3xl">{lvl === "Low" ? "💸" : lvl === "Medium" ? "💰" : "🤑"}</span>
+                                <span className={cn("text-[9px] font-black uppercase tracking-tighter", isActive ? current.color : "")}>{lvl}</span>
                               </div>
                             )
                           })}
@@ -224,17 +236,17 @@ export default function SalamiCalculatorPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4 text-slate-800">
-                      <p className="text-[10px] font-black uppercase text-center text-muted-foreground tracking-[0.3em]">Share Your Result</p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50" onClick={() => shareSocial('fb')}>
-                          <Facebook className="w-4 h-4 mr-2" /> FB
+                    <div className="space-y-6">
+                      <p className="text-[10px] font-black uppercase text-center text-muted-foreground tracking-[0.5em]">Viral Sharing Center</p>
+                      <div className="flex flex-wrap gap-3 justify-center">
+                        <Button variant="outline" className="rounded-full h-16 px-10 border-4 border-blue-50 text-blue-600 font-black text-lg hover:bg-blue-50 transition-all shadow-sm" onClick={() => shareSocial('fb')}>
+                          <Facebook className="w-6 h-6 mr-3" /> FB
                         </Button>
-                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 border-green-100 text-green-600 font-bold hover:bg-green-50" onClick={() => shareSocial('wa')}>
-                          <MessageCircle className="w-4 h-4 mr-2" /> WA
+                        <Button variant="outline" className="rounded-full h-16 px-10 border-4 border-green-50 text-green-600 font-black text-lg hover:bg-green-50 transition-all shadow-sm" onClick={() => shareSocial('wa')}>
+                          <MessageCircle className="w-6 h-6 mr-3" /> WA
                         </Button>
-                        <Button variant="outline" className="flex-1 rounded-xl h-12 border-2 font-bold" onClick={copyResult}>
-                          <Copy className="w-4 h-4 mr-2" /> Copy
+                        <Button variant="outline" className="rounded-full h-16 w-16 border-4 border-slate-50 font-black hover:bg-slate-50" onClick={() => { navigator.clipboard.writeText(`EidSpark বলছে আমাকে ${result.amount} টাকা সালামি দিতে হবে 😂`); toast({title: "Copied!"}) }}>
+                          <Copy className="w-6 h-6" />
                         </Button>
                       </div>
                     </div>

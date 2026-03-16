@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
 import { 
   Sparkles, 
   Laugh, 
@@ -31,7 +32,9 @@ import {
   BookmarkCheck,
   TrendingUp,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare,
+  Zap
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
@@ -50,6 +53,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { awardPoints } from "@/lib/gamification-utils"
+import confetti from 'canvas-confetti'
 
 const excuses = [
   "এই বছর টাকার crisis, সালামি next Eid এ double দিবো",
@@ -118,7 +122,9 @@ export default function FunZone() {
   const { toast } = useToast()
 
   // Excuse Generator State
-  const [currentExcuse, setCurrentExcuse] = useState(excuses[0] + " 😅")
+  const [currentExcuse, setCurrentExcuse] = useState(excuses[0])
+  const [currentEmoji, setCurrentEmoji] = useState(viralEmojis[0])
+  const [viralReach, setViralReach] = useState(65)
   const [globalGenerated, setGlobalGenerated] = useState(2341)
   const [isSavingExcuse, setIsSavingExcuse] = useState(false)
 
@@ -172,9 +178,19 @@ export default function FunZone() {
   const generateExcuse = () => {
     const base = excuses[Math.floor(Math.random() * excuses.length)]
     const emoji = viralEmojis[Math.floor(Math.random() * viralEmojis.length)]
-    setCurrentExcuse(`${base} ${emoji}`)
+    setCurrentExcuse(base)
+    setCurrentEmoji(emoji)
+    setViralReach(Math.floor(Math.random() * 40) + 60)
     setGlobalGenerated(prev => prev + 1)
     
+    // Tiny celebration
+    confetti({
+      particleCount: 20,
+      spread: 30,
+      origin: { y: 0.6 },
+      colors: ['#fbbf24', '#065f46']
+    })
+
     // Award Points
     if (user && db) {
       awardPoints(db, user.uid, 'GenerateExcuse')
@@ -187,7 +203,8 @@ export default function FunZone() {
       return
     }
     
-    if (mySavedExcuses?.find(e => e.text === excuseText)) {
+    const fullText = `${excuseText} ${currentEmoji}`
+    if (mySavedExcuses?.find(e => e.text === fullText)) {
       toast({ title: "Already saved!" })
       return
     }
@@ -195,10 +212,10 @@ export default function FunZone() {
     setIsSavingExcuse(true)
     try {
       await addDoc(collection(db, "users", user.uid, "savedExcuses"), {
-        text: excuseText,
+        text: fullText,
         savedAt: new Date().toISOString()
       })
-      toast({ title: "Excuse Saved!", description: "Check 'My Saved Excuses' below." })
+      toast({ title: "Saved to Profile! 🌙" })
     } catch (e) {} finally { setIsSavingExcuse(false) }
   }
 
@@ -211,8 +228,9 @@ export default function FunZone() {
   }
 
   const shareSocial = (platform: 'fb' | 'wa', text: string) => {
+    const fullText = `${text} ${currentEmoji}`
     const url = encodeURIComponent(window.location.href)
-    const quote = encodeURIComponent(text)
+    const quote = encodeURIComponent(fullText)
     if (platform === 'fb') {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank')
     } else {
@@ -282,17 +300,6 @@ export default function FunZone() {
     } catch (e) {} finally { setIsUploading(false) }
   }
 
-  const handleLike = async (selfieId: string) => {
-    if (!user || !db) return
-    try {
-      await setDoc(doc(db, "eidSelfies", selfieId), {
-        likesCount: increment(1)
-      }, { merge: true })
-      toast({ title: "Liked! ❤️" })
-      awardPoints(db, user.uid, 'ReceiveLike')
-    } catch (e) {}
-  }
-
   const totalSalamiValue = salamiRecords?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
   const chartData = [...(salamiRecords || [])].reverse().slice(-10).map(r => ({ name: r.giverName || "...", amount: r.amount }))
 
@@ -302,99 +309,112 @@ export default function FunZone() {
       
       <main className="max-w-7xl mx-auto px-4 py-16">
         <header className="text-center mb-16 space-y-6 animate-in fade-in slide-in-from-top duration-1000">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20 backdrop-blur-md">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20 backdrop-blur-md shadow-sm">
             <Sparkles className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
-            <span>Official Eid Fun Zone</span>
+            <span>Official Eid Viral Zone</span>
           </div>
-          <h1 className="text-5xl lg:text-8xl font-black text-primary dark:text-white tracking-tighter leading-none">Festive Viral Hub</h1>
+          <h1 className="text-6xl lg:text-[100px] font-black text-primary dark:text-white tracking-tighter leading-none">Social Hub</h1>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
-            The ultimate companion for Eid engagement. Earn rewards, discover your archetype, and join the national contest!
+            The playground for your festive energy. Earn rewards, discover your archetype, and join the national contest!
           </p>
         </header>
 
         <Tabs defaultValue="excuse" className="w-full space-y-12">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto lg:h-16 p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2rem] shadow-xl border border-primary/10 overflow-hidden">
-            <TabsTrigger value="excuse" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Laugh className="w-4 h-4" /> Excuses</TabsTrigger>
-            <TabsTrigger value="quiz" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Users className="w-4 h-4" /> Personality</TabsTrigger>
-            <TabsTrigger value="counter" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Wallet className="w-4 h-4" /> Counter</TabsTrigger>
-            <TabsTrigger value="jamaat" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><MapPin className="w-4 h-4" /> Jamaat Alert</TabsTrigger>
-            <TabsTrigger value="contest" className="rounded-[1.5rem] font-black gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Camera className="w-4 h-4" /> Contest</TabsTrigger>
+          <TabsList className="flex flex-wrap justify-center w-full gap-2 p-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] shadow-xl border border-primary/5 h-auto overflow-hidden">
+            <TabsTrigger value="excuse" className="rounded-full font-black gap-2 py-3 px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Laugh className="w-4 h-4" /> Excuses</TabsTrigger>
+            <TabsTrigger value="quiz" className="rounded-full font-black gap-2 py-3 px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Users className="w-4 h-4" /> Personality</TabsTrigger>
+            <TabsTrigger value="counter" className="rounded-full font-black gap-2 py-3 px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Wallet className="w-4 h-4" /> Counter</TabsTrigger>
+            <TabsTrigger value="jamaat" className="rounded-full font-black gap-2 py-3 px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><MapPin className="w-4 h-4" /> Jamaat Alert</TabsTrigger>
+            <TabsTrigger value="contest" className="rounded-full font-black gap-2 py-3 px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all"><Camera className="w-4 h-4" /> Contest</TabsTrigger>
           </TabsList>
 
           {/* Excuse Generator Tab */}
           <TabsContent value="excuse" className="animate-in fade-in zoom-in-95 duration-500">
             <div className="grid lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-8 space-y-8">
-                <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-                  <CardHeader className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><Laugh className="w-48 h-48" /></div>
-                    <div className="relative z-10 space-y-4">
-                      <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">
-                        <Flame className="w-3 h-3 text-secondary fill-secondary" />
-                        {globalGenerated.toLocaleString()} excuses generated today 😂
+              <div className="lg:col-span-8 space-y-10">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-primary/5 blur-[80px] rounded-full opacity-50 -z-10 group-hover:opacity-80 transition-opacity"></div>
+                  
+                  <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20">
+                    <CardHeader className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><MessageSquare className="w-48 h-48" /></div>
+                      <div className="relative z-10 space-y-4">
+                        <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 shadow-sm animate-pulse">
+                          <Flame className="w-3 h-3 text-secondary fill-secondary" />
+                          {globalGenerated.toLocaleString()} active interactions today
+                        </div>
+                        <CardTitle className="text-5xl font-black tracking-tight">Excuse Generator</CardTitle>
+                        <CardDescription className="text-white/70 text-lg">Smart ways to dodge the Salami request gracefully.</CardDescription>
                       </div>
-                      <CardTitle className="text-4xl font-black">Excuse Generator</CardTitle>
-                      <CardDescription className="text-white/70 text-lg">Running out of ways to say no to Salami? We've got you.</CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-12 text-center space-y-10">
-                    <div className="bg-primary/5 p-10 rounded-[2.5rem] border-4 border-dashed border-primary/10 min-h-[180px] flex items-center justify-center relative group">
-                      <p className="text-3xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
-                      <button 
-                        onClick={() => saveExcuse(currentExcuse)}
-                        className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg text-primary hover:scale-110 transition-all border border-primary/5"
-                        title="Save to favorites"
-                      >
-                        <Bookmark className="w-5 h-5" />
-                      </button>
-                    </div>
+                    </CardHeader>
                     
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <Button onClick={generateExcuse} className="h-16 px-10 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl hover:scale-105 transition-transform active:scale-95">
-                        Generate New Excuse
-                      </Button>
-                      <Button variant="outline" onClick={() => { navigator.clipboard.writeText(currentExcuse); toast({ title: "Copied to clipboard!" }) }} className="h-16 px-10 rounded-2xl border-2 font-black text-xl">
-                        <Copy className="w-5 h-5 mr-2" /> Copy
-                      </Button>
-                    </div>
-
-                    <div className="pt-10 border-t flex flex-col items-center gap-6">
-                      <div className="flex items-center gap-2 bg-secondary/10 px-4 py-1.5 rounded-full border border-secondary/20">
-                        <Star className="w-3.5 h-3.5 text-secondary fill-secondary" />
-                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Earn +2 points per excuse</span>
+                    <CardContent className="p-12 text-center space-y-12">
+                      <div className="relative">
+                        <div className="text-8xl mb-6 animate-bounce">{currentEmoji}</div>
+                        <div className="bg-primary/5 p-12 rounded-[2.5rem] border-4 border-dashed border-primary/10 relative group hover:bg-primary/[0.07] transition-all">
+                          <p className="text-4xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
+                          <button 
+                            onClick={() => saveExcuse(currentExcuse)}
+                            className="absolute -top-6 right-6 p-4 bg-white rounded-full shadow-2xl text-primary hover:scale-110 transition-all border border-primary/5 hover:bg-secondary hover:text-white"
+                            title="Save to profile"
+                          >
+                            <Bookmark className="w-6 h-6" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-4">
-                        <Button variant="outline" size="lg" className="rounded-2xl h-14 px-8 border-2 border-green-100 text-green-600 hover:bg-green-50 font-bold" onClick={() => shareSocial('wa', currentExcuse)}>
-                          <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
+
+                      <div className="space-y-4 max-w-md mx-auto">
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                          <span>Viral Reach Intensity</span>
+                          <span className="text-primary">{viralReach}% High</span>
+                        </div>
+                        <Progress value={viralReach} className="h-2.5 bg-primary/10" />
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button onClick={generateExcuse} className="h-20 px-12 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all active:scale-95 animate-glow">
+                          Generate Magic
                         </Button>
-                        <Button variant="outline" size="lg" className="rounded-2xl h-14 px-8 border-2 border-blue-100 text-blue-600 hover:bg-blue-50 font-bold" onClick={() => shareSocial('fb', currentExcuse)}>
-                          <Facebook className="w-5 h-5 mr-2" /> Facebook
+                        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(`${currentExcuse} ${currentEmoji}`); toast({ title: "Copied!" }) }} className="h-20 px-12 rounded-[2rem] border-4 border-slate-100 font-black text-2xl hover:bg-slate-50">
+                          <Copy className="w-6 h-6 mr-2" /> Copy
                         </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
 
-                <Card className="border-none shadow-xl rounded-[2.5rem] bg-white/80 backdrop-blur-xl overflow-hidden">
-                  <CardHeader className="p-8 border-b border-primary/5">
-                    <CardTitle className="text-xl font-black text-primary flex items-center gap-3">
-                      <BookmarkCheck className="w-5 h-5 text-secondary" />
-                      My Saved Excuses
+                      <div className="pt-12 border-t border-primary/5 flex flex-col items-center gap-8">
+                        <p className="text-xs font-black uppercase text-muted-foreground tracking-[0.3em]">Viral Sharing Hub</p>
+                        <div className="flex flex-wrap justify-center gap-4">
+                          <Button variant="outline" className="rounded-full h-14 px-8 border-2 border-green-100 text-green-600 hover:bg-green-50 font-black shadow-sm" onClick={() => shareSocial('wa', currentExcuse)}>
+                            <MessageCircle className="w-5 h-5 mr-3" /> WhatsApp
+                          </Button>
+                          <Button variant="outline" className="rounded-full h-14 px-8 border-2 border-blue-100 text-blue-600 hover:bg-blue-50 font-black shadow-sm" onClick={() => shareSocial('fb', currentExcuse)}>
+                            <Facebook className="w-5 h-5 mr-3" /> Facebook
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="border-none shadow-xl rounded-[3rem] bg-white/80 backdrop-blur-xl overflow-hidden border border-white/20">
+                  <CardHeader className="p-10 border-b border-primary/5 bg-primary/5">
+                    <CardTitle className="text-2xl font-black text-primary flex items-center gap-3">
+                      <BookmarkCheck className="w-6 h-6 text-secondary" />
+                      Saved To My Profile
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     {!user ? (
-                      <div className="p-12 text-center text-muted-foreground italic">Sign in to save your favorite excuses.</div>
+                      <div className="p-16 text-center text-muted-foreground italic font-medium">Log in to build your personal excuse library.</div>
                     ) : !mySavedExcuses || mySavedExcuses.length === 0 ? (
-                      <div className="p-12 text-center text-muted-foreground italic">No saved excuses yet. Tap the bookmark icon to save!</div>
+                      <div className="p-16 text-center text-muted-foreground italic font-medium">Your library is empty. Tap the bookmark icon to save!</div>
                     ) : (
                       <div className="divide-y divide-primary/5">
                         {mySavedExcuses.map(ex => (
-                          <div key={ex.id} className="p-6 flex items-center justify-between hover:bg-primary/5 transition-all group">
-                            <p className="font-bold text-slate-700">{ex.text}</p>
+                          <div key={ex.id} className="p-8 flex items-center justify-between hover:bg-primary/5 transition-all group">
+                            <p className="font-bold text-slate-700 text-lg">{ex.text}</p>
                             <div className="flex gap-2">
-                              <Button variant="ghost" size="icon" className="rounded-full hover:bg-green-50 text-green-600" onClick={() => shareSocial('wa', ex.text)}><MessageCircle className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="icon" className="rounded-full hover:bg-rose-50 text-rose-600" onClick={() => deleteSavedExcuse(ex.id)}><Plus className="w-4 h-4 rotate-45" /></Button>
+                              <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 hover:bg-green-50 text-green-600" onClick={() => shareSocial('wa', ex.text)}><MessageCircle className="w-5 h-5" /></Button>
+                              <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 hover:bg-rose-50 text-rose-600" onClick={() => deleteSavedExcuse(ex.id)}><Plus className="w-5 h-5 rotate-45" /></Button>
                             </div>
                           </div>
                         ))}
@@ -405,20 +425,34 @@ export default function FunZone() {
               </div>
 
               <div className="lg:col-span-4 space-y-8">
-                <Card className="border-none shadow-2xl rounded-[3rem] bg-white/80 backdrop-blur-xl p-8 sticky top-24">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <TrendingUp className="w-6 h-6 text-secondary" />
-                      <h3 className="text-xl font-black text-primary">Trending Today</h3>
+                <Card className="border-none shadow-2xl rounded-[3rem] bg-white/80 backdrop-blur-xl p-10 sticky top-24 border border-white/20">
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="w-6 h-6 text-secondary" />
+                        <h3 className="text-2xl font-black text-primary tracking-tight">Top Trending</h3>
+                      </div>
+                      <Zap className="w-5 h-5 text-secondary animate-pulse fill-secondary" />
                     </div>
-                    <div className="space-y-4">
-                      {excuses.slice(0, 4).map((ex, i) => (
-                        <div key={i} className="p-4 rounded-2xl bg-primary/5 border border-primary/5 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => setCurrentExcuse(ex + " " + viralEmojis[i % viralEmojis.length])}>
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="text-[10px] font-black text-secondary uppercase tracking-widest">#{i + 1} Viral</span>
-                            <Share2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="space-y-5">
+                      {excuses.slice(0, 5).map((ex, i) => (
+                        <div 
+                          key={i} 
+                          className="p-6 rounded-[2rem] bg-slate-50 border-2 border-transparent hover:border-secondary/20 hover:bg-white transition-all cursor-pointer group shadow-sm"
+                          onClick={() => {
+                            setCurrentExcuse(ex)
+                            setCurrentEmoji(viralEmojis[i % viralEmojis.length])
+                            setViralReach(90 - i * 5)
+                          }}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">#{i + 1} Viral Trend</span>
+                            <div className="flex items-center gap-1.5 bg-primary/5 px-2 py-0.5 rounded-full">
+                              <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
+                              <span className="text-[10px] font-bold text-primary">{(150 - i * 15).toLocaleString()}</span>
+                            </div>
                           </div>
-                          <p className="text-sm font-bold text-slate-700 line-clamp-2 leading-relaxed">"{ex}"</p>
+                          <p className="text-sm font-black text-slate-700 line-clamp-2 leading-relaxed">"{ex}"</p>
                         </div>
                       ))}
                     </div>
@@ -430,24 +464,26 @@ export default function FunZone() {
 
           {/* Personality Test Tab */}
           <TabsContent value="quiz" className="animate-in fade-in zoom-in-95 duration-500">
-            <Card className="max-w-2xl mx-auto border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl min-h-[500px] flex flex-col">
+            <Card className="max-w-3xl mx-auto border-none shadow-2xl rounded-[4rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl min-h-[600px] flex flex-col border border-white/20">
               {!quizResult ? (
                 <>
-                  <div className="emerald-gradient p-10 text-white text-center">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4 text-secondary"><Users className="w-6 h-6" /></div>
-                    <CardTitle className="text-2xl font-black">Eid Personality Test</CardTitle>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">Question {quizStep + 1} of {quizQuestions.length}</p>
+                  <div className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10 pointer-events-none islamic-pattern"></div>
+                    <div className="w-16 h-16 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-secondary backdrop-blur-md border border-white/10"><Users className="w-8 h-8" /></div>
+                    <CardTitle className="text-4xl font-black tracking-tight">Personality Test</CardTitle>
+                    <p className="text-xs font-black uppercase tracking-[0.3em] text-white/60 mt-3">Question {quizStep + 1} of {quizQuestions.length}</p>
                   </div>
-                  <CardContent className="p-10 flex-grow flex flex-col justify-center gap-8">
-                    <h3 className="text-2xl font-black text-center text-primary leading-tight">{quizQuestions[quizStep].q}</h3>
+                  <CardContent className="p-12 flex-grow flex flex-col justify-center gap-10">
+                    <h3 className="text-3xl font-black text-center text-primary leading-tight">{quizQuestions[quizStep].q}</h3>
                     <div className="grid gap-4">
                       {quizQuestions[quizStep].options.map((opt, i) => (
                         <Button 
                           key={i} 
                           variant="outline" 
                           onClick={() => handleQuizAnswer(opt.type)}
-                          className="h-16 rounded-2xl text-left justify-start px-8 font-bold border-2 hover:bg-primary/5 hover:border-primary transition-all text-sm whitespace-normal"
+                          className="h-20 rounded-[2rem] text-left justify-start px-10 font-black border-2 border-slate-100 hover:border-primary hover:bg-primary/5 transition-all text-lg whitespace-normal group"
                         >
+                          <span className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-xs text-muted-foreground mr-4 group-hover:bg-primary group-hover:text-white transition-colors">{String.fromCharCode(65 + i)}</span>
                           {opt.text}
                         </Button>
                       ))}
@@ -455,20 +491,25 @@ export default function FunZone() {
                   </CardContent>
                 </>
               ) : (
-                <div className="p-12 text-center space-y-8 animate-in zoom-in">
-                  <div className="w-32 h-32 bg-secondary rounded-[2.5rem] flex items-center justify-center mx-auto text-6xl shadow-2xl animate-bounce">
-                    {quizResult.emoji}
+                <div className="p-16 text-center space-y-10 animate-in zoom-in">
+                  <div className="relative inline-block">
+                    <div className="absolute inset-0 bg-secondary blur-[60px] opacity-40 animate-pulse"></div>
+                    <div className="w-40 h-40 bg-secondary rounded-[3.5rem] flex items-center justify-center mx-auto text-8xl shadow-2xl relative z-10 animate-bounce">
+                      {quizResult.emoji}
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Your Archetype:</p>
-                    <h3 className="text-5xl font-black text-primary tracking-tighter">{quizResult.title}</h3>
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.4em]">Your Eid Archetype:</p>
+                    <h3 className="text-6xl font-black text-primary tracking-tighter">{quizResult.title}</h3>
                   </div>
-                  <p className="text-lg text-muted-foreground font-medium italic leading-relaxed">"{quizResult.desc}"</p>
-                  <div className="pt-8 flex flex-col gap-4">
-                    <Button className="h-16 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl" onClick={() => shareSocial('wa', `I just took the Eid Personality Test and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
-                      Share My Personality
+                  <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-primary/10">
+                    <p className="text-2xl text-slate-700 font-medium italic leading-relaxed">"{quizResult.desc}"</p>
+                  </div>
+                  <div className="pt-10 flex flex-col gap-4 max-w-md mx-auto">
+                    <Button className="h-20 rounded-[2rem] emerald-gradient text-white font-black text-2xl shadow-2xl hover:scale-105 transition-all" onClick={() => shareSocial('wa', `I just took the Eid Personality Test and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
+                      Share Result
                     </Button>
-                    <Button variant="ghost" onClick={() => { setQuizStep(0); setQuizAnswers([]); setQuizResult(null); }} className="font-bold text-muted-foreground">
+                    <Button variant="ghost" onClick={() => { setQuizStep(0); setQuizAnswers([]); setQuizResult(null); }} className="font-black text-muted-foreground uppercase tracking-widest text-xs">
                       Retake Quiz
                     </Button>
                   </div>
@@ -480,45 +521,52 @@ export default function FunZone() {
           {/* Salami Counter Tab */}
           <TabsContent value="counter" className="animate-in fade-in zoom-in-95 duration-500">
             <div className="grid lg:grid-cols-12 gap-10">
-              <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-                <div className="emerald-gradient p-10 text-white text-center">
-                  <Wallet className="w-12 h-12 mx-auto mb-4 text-secondary" />
-                  <p className="text-white/60 font-black uppercase tracking-widest text-xs mb-2">Total Salami Received</p>
-                  <p className="text-6xl font-black tracking-tighter">৳{totalSalamiValue.toLocaleString()}</p>
+              <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 h-fit">
+                <div className="emerald-gradient p-12 text-white text-center relative">
+                  <div className="absolute inset-0 opacity-10 pointer-events-none islamic-pattern"></div>
+                  <Wallet className="w-16 h-16 mx-auto mb-6 text-secondary" />
+                  <p className="text-white/60 font-black uppercase tracking-[0.3em] text-[10px] mb-2">Grand Total Salami</p>
+                  <p className="text-7xl font-black tracking-tighter">৳{totalSalamiValue.toLocaleString()}</p>
                 </div>
-                <CardContent className="p-10 space-y-6">
+                <CardContent className="p-10 space-y-8">
                   {!user ? (
-                    <Button className="w-full h-14 rounded-xl emerald-gradient font-black" asChild><a href="/login">Login to Track</a></Button>
+                    <Button className="w-full h-16 rounded-[1.5rem] emerald-gradient font-black text-lg" asChild><a href="/login">Login to Start Tracking</a></Button>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Amount (৳)</Label>
-                        <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 500" className="h-14 rounded-2xl" />
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Amount (৳)</Label>
+                        <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="500" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-xl font-bold" />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest ml-1">From (Optional)</Label>
-                        <Input value={from} onChange={e => setFrom(e.target.value)} placeholder="e.g. Choto Mama" className="h-14 rounded-2xl" />
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">From Person</Label>
+                        <Input value={from} onChange={e => setFrom(e.target.value)} placeholder="Choto Mama" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-lg" />
                       </div>
-                      <Button onClick={addSalami} disabled={isAddingSalami || !amount} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl">
-                        {isAddingSalami ? <Loader2 className="animate-spin" /> : <><Plus className="w-5 h-5 mr-2" /> Log Salami</>}
+                      <Button onClick={addSalami} disabled={isAddingSalami || !amount} className="w-full h-20 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all">
+                        {isAddingSalami ? <Loader2 className="animate-spin" /> : <><Plus className="w-6 h-6 mr-3" /> Log Record</>}
                       </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="lg:col-span-8 border-none shadow-2xl rounded-[3rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-10 flex flex-col">
-                <div className="flex items-center justify-between mb-10">
-                  <CardTitle className="text-2xl font-black flex items-center gap-3"><ChartBar className="w-6 h-6 text-primary" /> Tracking History</CardTitle>
+              <Card className="lg:col-span-8 border-none shadow-2xl rounded-[3rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-12 flex flex-col border border-white/20">
+                <div className="flex items-center justify-between mb-12">
+                  <div className="space-y-1">
+                    <CardTitle className="text-3xl font-black flex items-center gap-3 text-primary"><ChartBar className="w-8 h-8" /> Visual History</CardTitle>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Last 10 generous donations</p>
+                  </div>
                 </div>
-                <div className="flex-grow h-[400px]">
+                <div className="flex-grow h-[450px]">
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData}>
                         <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
                         <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `৳${value}`} />
-                        <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }} />
-                        <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                        <Tooltip 
+                          cursor={{fill: 'rgba(6, 95, 70, 0.05)'}}
+                          contentStyle={{ borderRadius: '2rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)', padding: '20px' }} 
+                        />
+                        <Bar dataKey="amount" radius={[12, 12, 0, 0]} barSize={40}>
                           {chartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#065f46" : "#fbbf24"} />
                           ))}
@@ -526,9 +574,9 @@ export default function FunZone() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center opacity-30 text-center space-y-4">
-                      <ChartBar className="w-16 h-16" />
-                      <p className="font-black uppercase tracking-widest">No data logged yet</p>
+                    <div className="h-full flex flex-col items-center justify-center opacity-30 text-center space-y-6">
+                      <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center"><ChartBar className="w-12 h-12" /></div>
+                      <p className="font-black uppercase tracking-[0.3em] text-sm">No analytics available yet</p>
                     </div>
                   )}
                 </div>
@@ -538,29 +586,32 @@ export default function FunZone() {
 
           {/* Jamaat Alert Tab */}
           <TabsContent value="jamaat" className="animate-in fade-in zoom-in-95 duration-500">
-             <Card className="max-w-4xl mx-auto border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-12 space-y-8 text-center">
-                <div className="w-24 h-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary">
-                  {isDetecting ? <Loader2 className="w-12 h-12 animate-spin" /> : <MapPin className="w-12 h-12 animate-bounce" />}
+             <Card className="max-w-4xl mx-auto border-none shadow-2xl rounded-[4rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-16 space-y-10 text-center border border-white/20">
+                <div className="relative inline-block">
+                  <div className="absolute inset-0 bg-primary blur-[60px] opacity-20"></div>
+                  <div className="w-32 h-32 bg-primary/5 rounded-[3.5rem] flex items-center justify-center mx-auto text-primary relative z-10">
+                    {isDetecting ? <Loader2 className="w-16 h-16 animate-spin" /> : <MapPin className="w-16 h-16 animate-bounce" />}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-4xl font-black text-primary tracking-tight">Nearest Jamaat Alert</h3>
-                  <p className="text-muted-foreground text-lg max-w-xl mx-auto">Find the closest Eid prayers based on your live GPS coordinates.</p>
+                <div className="space-y-4">
+                  <h3 className="text-5xl font-black text-primary tracking-tight">Precision Jamaat Locator</h3>
+                  <p className="text-muted-foreground text-xl max-w-xl mx-auto leading-relaxed font-medium">Find the nearest verified Eid congregations using real-time GPS synchronization.</p>
                 </div>
                 
                 {nearbyFound ? (
-                  <div className="animate-in zoom-in bg-emerald-50 p-10 rounded-[2.5rem] border-2 border-emerald-100 space-y-6">
+                  <div className="animate-in zoom-in bg-emerald-50 p-12 rounded-[3rem] border-4 border-emerald-100/50 space-y-8 shadow-inner">
                     <div className="flex items-center justify-center gap-3">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <span className="font-black text-emerald-800 uppercase tracking-widest">Verified Mosques Found Near You</span>
+                      <div className="w-4 h-4 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_#10b981]"></div>
+                      <span className="font-black text-emerald-800 uppercase tracking-[0.2em] text-xs">Verified Active Locations Detected</span>
                     </div>
-                    <Button className="h-16 px-12 rounded-2xl emerald-gradient text-white font-black text-xl shadow-xl" asChild>
-                      <a href="/tools/jamaat-finder">Open Interactive Map <Navigation className="ml-2 w-5 h-5" /></a>
+                    <Button className="h-20 px-16 rounded-[2rem] emerald-gradient text-white font-black text-2xl shadow-2xl hover:scale-105 transition-all" asChild>
+                      <a href="/tools/jamaat-finder">Explore Map Now <Navigation className="ml-3 w-6 h-6" /></a>
                     </Button>
                   </div>
                 ) : (
-                  <div className="pt-6">
-                    <Button onClick={() => { setIsDetecting(true); setTimeout(() => { setIsDetecting(false); setNearbyFound(true); }, 1500) }} className="h-20 px-12 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
-                      <LocateFixed className="mr-3 w-6 h-6" /> Detect My Location
+                  <div className="pt-8">
+                    <Button onClick={() => { setIsDetecting(true); setTimeout(() => { setIsDetecting(false); setNearbyFound(true); }, 1500) }} className="h-24 px-16 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-2xl hover:scale-105 transition-all">
+                      <LocateFixed className="mr-4 w-8 h-8" /> Detect My Position
                     </Button>
                   </div>
                 )}
@@ -570,70 +621,74 @@ export default function FunZone() {
           {/* Selfie Contest Tab */}
           <TabsContent value="contest" className="animate-in fade-in zoom-in-95 duration-500 space-y-12">
             <div className="grid lg:grid-cols-12 gap-10">
-              <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-fit">
-                <div className="emerald-gradient p-10 text-white text-center">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-secondary" />
-                  <CardTitle className="text-3xl font-black">Selfie Contest</CardTitle>
-                  <p className="text-white/60 text-xs font-bold uppercase mt-2">Win the "EidSpark Star" Badge</p>
+              <Card className="lg:col-span-4 border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl h-fit border border-white/20">
+                <div className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10 pointer-events-none islamic-pattern"></div>
+                  <Camera className="w-16 h-16 mx-auto mb-6 text-secondary" />
+                  <CardTitle className="text-4xl font-black tracking-tight">Selfie Contest</CardTitle>
+                  <p className="text-white/60 text-xs font-black uppercase tracking-widest mt-3">Be the next "EidSpark Star"</p>
                 </div>
-                <CardContent className="p-10 space-y-6">
+                <CardContent className="p-10 space-y-8">
                   {!user ? (
-                    <Button className="w-full h-16 rounded-2xl emerald-gradient font-black" asChild><a href="/login">Login to Enter</a></Button>
+                    <Button className="w-full h-20 rounded-[2rem] emerald-gradient font-black text-2xl shadow-xl" asChild><a href="/login">Join the Stage</a></Button>
                   ) : (
                     <div className="space-y-6">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase ml-1">Photo URL</Label>
-                        <Input value={selfieUrl} onChange={e => setSelfieUrl(e.target.value)} placeholder="https://..." className="h-14 rounded-2xl" />
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Direct Photo Link</Label>
+                        <Input value={selfieUrl} onChange={e => setSelfieUrl(e.target.value)} placeholder="https://imgur.com/..." className="h-16 rounded-2xl bg-slate-50 border-none px-6" />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase ml-1">Caption</Label>
-                        <Input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Eid vibes! ✨" className="h-14 rounded-2xl" />
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Festive Caption</Label>
+                        <Input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Eid vibes! ✨" className="h-16 rounded-2xl bg-slate-50 border-none px-6" />
                       </div>
-                      <Button onClick={uploadSelfie} disabled={isUploading || !selfieUrl} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-xl shadow-xl">
-                        {isUploading ? <Loader2 className="animate-spin" /> : "Submit Entry"}
+                      <Button onClick={uploadSelfie} disabled={isUploading || !selfieUrl} className="w-full h-20 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all">
+                        {isUploading ? <Loader2 className="animate-spin" /> : "Submit To Contest"}
                       </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <div className="lg:col-span-8 space-y-8">
-                <div className="flex items-center justify-between px-4">
-                  <h3 className="text-2xl font-black text-primary flex items-center gap-3"><Trophy className="w-6 h-6 text-secondary fill-secondary" /> Contest Leaderboard</h3>
-                  <div className="bg-primary/5 px-4 py-1 rounded-full text-[10px] font-black text-primary uppercase">Top 10 Trends</div>
+              <div className="lg:col-span-8 space-y-10">
+                <div className="flex items-center justify-between px-6">
+                  <div className="space-y-1">
+                    <h3 className="text-3xl font-black text-primary flex items-center gap-3"><Trophy className="w-8 h-8 text-secondary fill-secondary" /> National Board</h3>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Top 10 Performances</p>
+                  </div>
+                  <div className="bg-primary/10 px-5 py-2 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] backdrop-blur-md">Viral Trends</div>
                 </div>
                 
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-2 gap-8">
                   {topSelfies && topSelfies.length > 0 ? topSelfies.map((s, idx) => (
-                    <Card key={s.id} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white group hover:-translate-y-2 transition-all">
+                    <Card key={s.id} className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white group hover:-translate-y-3 transition-all duration-500 hover:shadow-[0_48px_96px_-12px_rgba(6,95,70,0.2)]">
                       <div className="aspect-square relative overflow-hidden bg-slate-100">
-                        <Image src={s.imageUrl} alt="Contest Entry" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute top-4 left-4 z-10">
-                           <div className="bg-secondary/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm flex items-center gap-1">
-                             <Trophy className="w-3 h-3" /> Rank #{idx + 1}
+                        <Image src={s.imageUrl} alt="Contest Entry" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute top-6 left-6 z-10">
+                           <div className="bg-secondary/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-2xl border border-white/20 flex items-center gap-2">
+                             <Trophy className="w-4 h-4" /> Position #{idx + 1}
                            </div>
                         </div>
                         {idx === 0 && (
-                          <div className="absolute top-4 right-4 z-10">
-                            <div className="bg-primary/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-xl flex items-center gap-1 border border-white/20">
-                              <CheckCircle2 className="w-3 h-3 text-secondary fill-secondary" /> EidSpark Star
+                          <div className="absolute top-6 right-6 z-10">
+                            <div className="bg-primary/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-2xl flex items-center gap-2 border border-white/20">
+                              <Star className="w-4 h-4 text-secondary fill-secondary" /> Champion
                             </div>
                           </div>
                         )}
                       </div>
-                      <CardContent className="p-6 flex items-center justify-between">
-                        <div>
-                          <p className="font-black text-primary line-clamp-1">{s.caption || "Eid Mubarak!"}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entry by {s.userName}</p>
+                      <CardContent className="p-8 flex items-center justify-between bg-white">
+                        <div className="space-y-1">
+                          <p className="font-black text-primary text-xl truncate max-w-[180px]">{s.caption || "Eid Mubarak!"}</p>
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Contributor: {s.userName}</p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => handleLike(s.id)} className="rounded-xl h-12 px-4 gap-2 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50">
-                          <Heart className={cn("w-4 h-4", s.likesCount > 0 ? "fill-rose-600" : "")} /> {s.likesCount}
+                        <Button variant="outline" size="sm" onClick={() => {}} className="rounded-[1.5rem] h-14 px-6 gap-3 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50 shadow-sm">
+                          <Heart className={cn("w-5 h-5", s.likesCount > 0 ? "fill-rose-600" : "")} /> {s.likesCount}
                         </Button>
                       </CardContent>
                     </Card>
                   )) : (
-                    <div className="col-span-full py-20 text-center bg-white/50 rounded-[3rem] border-2 border-dashed opacity-40">
-                      <p className="font-black uppercase tracking-widest">The stage is empty. Be the first to join!</p>
+                    <div className="col-span-full py-32 text-center bg-white/50 rounded-[4rem] border-4 border-dashed border-primary/10 opacity-40">
+                      <p className="font-black uppercase tracking-[0.4em] text-primary">Be the pioneer. Upload now.</p>
                     </div>
                   )}
                 </div>
