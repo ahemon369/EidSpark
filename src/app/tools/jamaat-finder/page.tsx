@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
@@ -30,7 +31,8 @@ import {
   ThumbsUp,
   AlertCircle,
   Star,
-  Share2
+  Share2,
+  ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
@@ -73,6 +75,7 @@ export default function JamaatFinderPage() {
   const [selectedMosqueId, setSelectedMosqueId] = useState<string | null>(null)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [isDetecting, setIsDetecting] = useState(false)
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false)
   
   // Filters
   const [filterVerified, setFilterVerified] = useState(false)
@@ -141,7 +144,6 @@ export default function JamaatFinderPage() {
     })
   }, [allMosques, searchQuery, userLocation, filterVerified, filterGrounds, distanceRadius])
 
-  // Improved Trending Score Logic: Saves + Confirmations + Popularity
   const trendingMosques = useMemo(() => {
     return [...filteredMosques].sort((a, b) => {
       const scoreA = (a.savesCount || 0) * 3 + (a.confirmations || 0) * 2 + (a.popularityCount || 0)
@@ -219,8 +221,24 @@ export default function JamaatFinderPage() {
       <Navbar />
       
       <main className="flex-grow flex flex-col lg:flex-row relative pt-[80px]">
-        {/* Left Panel */}
-        <aside className="w-full lg:w-[450px] bg-white dark:bg-slate-950 border-r flex flex-col shadow-2xl z-20 relative">
+        {/* Left Panel (Side Sheet Style) */}
+        <aside className={cn(
+          "fixed inset-x-0 bottom-0 z-40 bg-white dark:bg-slate-950 transition-transform duration-500 lg:relative lg:inset-auto lg:w-[450px] lg:translate-y-0 border-r flex flex-col shadow-2xl",
+          isMobilePanelOpen ? "h-[85vh] translate-y-0" : "h-[80px] translate-y-0 lg:h-full"
+        )}>
+          {/* Mobile Bottom Sheet Handle */}
+          <div 
+            className="lg:hidden h-[80px] flex items-center justify-center cursor-pointer border-b px-6 gap-4"
+            onClick={() => setIsMobilePanelOpen(!isMobilePanelOpen)}
+          >
+            <div className="flex-grow">
+              <p className="font-black text-primary text-sm uppercase tracking-widest flex items-center gap-2">
+                <Navigation2 className="w-4 h-4" /> 
+                {isMobilePanelOpen ? "Close Registry" : `Show ${filteredMosques.length} Locations`}
+              </p>
+            </div>
+            {isMobilePanelOpen ? <ChevronDown className="w-6 h-6 text-slate-400" /> : <ChevronUp className="w-6 h-6 text-slate-400" />}
+          </div>
           
           <Tabs defaultValue="explore" className="flex flex-col h-full">
             <div className="p-6 pb-0 bg-white dark:bg-slate-950 sticky top-0 z-30">
@@ -279,7 +297,7 @@ export default function JamaatFinderPage() {
                   className="rounded-full text-[9px] font-black uppercase h-8 px-4 border-2"
                   onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
                 >
-                  {"< 5km"}
+                  &lt; 5km
                 </Button>
               </div>
 
@@ -297,32 +315,6 @@ export default function JamaatFinderPage() {
                         <p className="text-sm font-black leading-tight">
                           The nearest Jamaat is <span className="text-secondary">{nearestMosque.distance! < 1000 ? `${Math.round(nearestMosque.distance!)}m` : `${(nearestMosque.distance! / 1000).toFixed(1)}km`}</span> away at {nearestMosque.name}.
                         </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Trending Section */}
-                  {trendingMosques.length > 0 && !searchQuery && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 px-2">
-                        <TrendingUp className="w-4 h-4 text-rose-500" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Trending Today</h3>
-                      </div>
-                      <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
-                        {trendingMosques.map(m => (
-                          <div 
-                            key={m.id} 
-                            onClick={() => setSelectedMosqueId(m.id)}
-                            className="min-w-[200px] bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border-2 border-transparent hover:border-primary/20 transition-all cursor-pointer group shadow-sm"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <Badge className="bg-white text-primary text-[8px] border-none shadow-sm h-5">🔥 {m.savesCount || 0} Saves</Badge>
-                              <TrendingUp className="w-3 h-3 text-rose-500 animate-pulse" />
-                            </div>
-                            <h4 className="font-black text-sm text-slate-800 dark:text-white truncate">{m.name}</h4>
-                            <p className="text-[9px] text-muted-foreground font-bold mt-1 uppercase tracking-tighter">{m.district}</p>
-                          </div>
-                        ))}
                       </div>
                     </div>
                   )}
@@ -473,7 +465,7 @@ export default function JamaatFinderPage() {
         </aside>
 
         {/* Right Map Panel */}
-        <section className="flex-grow relative z-10">
+        <section className="flex-grow relative z-10 h-full">
           <JamaatMap 
             mosques={filteredMosques} 
             onSelectMosque={setSelectedMosqueId} 
@@ -484,19 +476,13 @@ export default function JamaatFinderPage() {
           {/* Floating Indicators */}
           <div className="absolute top-6 right-6 z-[1000] flex flex-col gap-3 items-end">
              <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full border-2 border-primary/10 shadow-2xl flex items-center gap-3">
-               <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
+               <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">GPS Sync Active</p>
              </div>
              <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full border-2 border-secondary/10 shadow-2xl flex items-center gap-3">
                <Sparkles className="w-4 h-4 text-secondary fill-secondary animate-twinkle" />
                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Crowd-Powered Registry</p>
              </div>
-          </div>
-
-          <div className="lg:hidden absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000]">
-             <Button className="rounded-full h-14 px-10 font-black gap-3 shadow-2xl glass-card text-primary border-primary/20 backdrop-blur-xl animate-bounce">
-               <ChevronUp className="w-5 h-5" /> Explore {filteredMosques.length} Locations
-             </Button>
           </div>
         </section>
       </main>

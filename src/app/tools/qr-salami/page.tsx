@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -39,6 +39,7 @@ export default function QRSalamiTool() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+  const qrRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState({
     username: "",
@@ -111,12 +112,35 @@ export default function QRSalamiTool() {
     }
   }
 
-  // Updated to point to /salami/ for public profiles
   const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/salami/${formData.username || 'yourname'}` : ""
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl)
     toast({ title: "Link Copied!" })
+  }
+
+  const handleDownloadQR = () => {
+    const svg = qrRef.current?.querySelector("svg")
+    if (!svg) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    const img = new Image()
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const pngUrl = canvas.toDataURL("image/png")
+      const downloadLink = document.createElement("a")
+      downloadLink.href = pngUrl
+      downloadLink.download = `${formData.username}-salami-qr.png`
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+    }
+    img.src = "data:image/svg+xml;base64," + btoa(svgData)
+    toast({ title: "QR Code Downloaded" })
   }
 
   const handleShare = (platform: 'fb' | 'wa') => {
@@ -134,25 +158,24 @@ export default function QRSalamiTool() {
   }
 
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] islamic-pattern pb-20">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 py-16">
         <header className="text-center mb-16 space-y-6">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/20 backdrop-blur-md shadow-sm">
-            <QrCode className="w-4 h-4 text-secondary fill-secondary" />
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-emerald-50 text-emerald-700 text-xs font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
+            <QrCode className="w-4 h-4 text-emerald-600" />
             <span>Digital QR Salami System</span>
           </div>
-          <h1 className="text-5xl lg:text-[80px] font-black text-primary tracking-tighter leading-none">QR Generator</h1>
-          <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
+          <h1 className="text-5xl lg:text-[80px] font-black text-slate-900 tracking-tighter leading-none">QR Generator</h1>
+          <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
             Create your personal Salami page, share your QR, and climb the collectors leaderboard!
           </p>
         </header>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* Creator Form */}
           <section className="lg:col-span-7 space-y-8">
-            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20">
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white border border-slate-100">
               <CardHeader className="emerald-gradient p-10 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><Wallet className="w-48 h-48" /></div>
                 <CardTitle className="text-3xl font-black flex items-center gap-3">
@@ -237,7 +260,6 @@ export default function QRSalamiTool() {
               </CardContent>
             </Card>
 
-            {/* Public Link Card */}
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 border-2 border-primary/5">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="space-y-1 text-center sm:text-left">
@@ -252,14 +274,13 @@ export default function QRSalamiTool() {
             </Card>
           </section>
 
-          {/* QR & Share Section */}
           <aside className="lg:col-span-5 space-y-8 lg:sticky lg:top-24">
-            <Card className="border-none shadow-2xl rounded-[3.5rem] bg-white p-12 text-center space-y-10 relative overflow-hidden">
+            <Card className="border-none shadow-2xl rounded-[3.5rem] bg-white p-12 text-center space-y-10 relative overflow-hidden border border-slate-100">
               <div className="absolute inset-0 opacity-5 pointer-events-none islamic-pattern"></div>
               
               <div className="relative inline-block">
                 <div className="absolute inset-0 bg-secondary blur-[60px] opacity-20"></div>
-                <div className="bg-white p-8 rounded-[3rem] shadow-2xl border-8 border-slate-50 relative z-10 group">
+                <div ref={qrRef} className="bg-white p-8 rounded-[3rem] shadow-2xl border-8 border-slate-50 relative z-10 group">
                   {formData.username ? (
                     <QRCodeSVG 
                       value={publicUrl} 
@@ -278,8 +299,8 @@ export default function QRSalamiTool() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-3xl font-black text-primary tracking-tight">Your Custom QR</h3>
-                <p className="text-sm text-muted-foreground font-medium max-w-[280px] mx-auto leading-relaxed">
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Your Custom QR</h3>
+                <p className="text-sm text-slate-500 font-medium max-w-[280px] mx-auto leading-relaxed">
                   Download this QR and post it on your Instagram or WhatsApp story to collect Salami!
                 </p>
               </div>
@@ -289,18 +310,17 @@ export default function QRSalamiTool() {
                   <MessageCircle className="w-6 h-6" /> Share on WhatsApp
                 </Button>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold gap-2" onClick={() => handleShare('fb')}>
-                    <Facebook className="w-5 h-5" /> Facebook
+                  <Button variant="outline" className="h-14 rounded-2xl border-2 border-slate-200 font-bold gap-2" onClick={handleDownloadQR}>
+                    <Download className="w-5 h-5" /> Download
                   </Button>
-                  <Button variant="outline" className="h-14 rounded-2xl border-2 font-bold gap-2" onClick={handleCopyLink}>
+                  <Button variant="outline" className="h-14 rounded-2xl border-2 border-slate-200 font-bold gap-2" onClick={handleCopyLink}>
                     <LinkIcon className="w-5 h-5" /> Copy Link
                   </Button>
                 </div>
               </div>
             </Card>
 
-            {/* Stats Card */}
-            <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary p-10 text-white relative overflow-hidden">
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-emerald-600 p-10 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-10"><Trophy className="w-32 h-32" /></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="space-y-1">

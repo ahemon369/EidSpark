@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -169,7 +170,7 @@ export default function Home() {
                   </h1>
                   
                   <p className="text-xl text-slate-600 max-w-xl leading-relaxed font-medium">
-                    Modern smart tools built for the Muslim community. Find Eid Jamaat, calculate Zakat, and design Greetings together.
+                    Modern smart tools built for the Muslim community. Find Eid Jamaat, calculate Zakat, design Greetings together.
                   </p>
                 </div>
                 
