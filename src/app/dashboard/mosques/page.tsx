@@ -2,7 +2,7 @@
 "use client"
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy, deleteDoc, doc } from "firebase/firestore"
+import { collection, query, orderBy, deleteDoc, doc, updateDoc, increment } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Trash2, Navigation, ExternalLink, Loader2, Sparkles, Map as MapIcon, Plus } from "lucide-react"
@@ -23,11 +23,17 @@ export default function SavedMosques() {
 
   const { data: mosques, isLoading } = useCollection(mosqueRef)
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (savedDoc: any) => {
     if (!db || !user) return
-    setIsDeleting(id)
+    setIsDeleting(savedDoc.id)
     try {
-      await deleteDoc(doc(db, "users", user.uid, "savedMosques", id))
+      await deleteDoc(doc(db, "users", user.uid, "savedMosques", savedDoc.id))
+      // Decrement global save count
+      if (savedDoc.mosqueId) {
+        await updateDoc(doc(db, "mosques", savedDoc.mosqueId), {
+          savesCount: increment(-1)
+        })
+      }
       toast({ title: "Mosque Removed" })
     } catch (error) {}
     setIsDeleting(null)
@@ -50,7 +56,7 @@ export default function SavedMosques() {
           <p className="text-muted-foreground font-medium">Quick access to your saved prayer locations.</p>
         </div>
         <Button className="emerald-gradient text-white h-12 rounded-xl font-black px-8" asChild>
-          <Link href="/tools/mosque">
+          <Link href="/tools/jamaat-finder">
             <Plus className="w-4 h-4 mr-2" /> Find More
           </Link>
         </Button>
@@ -64,11 +70,11 @@ export default function SavedMosques() {
           <div className="space-y-2">
             <h3 className="text-xl font-bold text-slate-800">No mosques saved yet</h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Use the Mosque Finder to discover and save your favorite prayer locations across Bangladesh.
+              Use the Jamaat Finder to discover and save your favorite prayer locations across Bangladesh.
             </p>
           </div>
           <Button className="emerald-gradient text-white h-14 rounded-2xl font-black px-10 shadow-xl" asChild>
-            <Link href="/tools/mosque">Explore Map</Link>
+            <Link href="/tools/jamaat-finder">Explore Map</Link>
           </Button>
         </Card>
       ) : (
@@ -104,7 +110,7 @@ export default function SavedMosques() {
                   <Button 
                     variant="ghost" 
                     className="rounded-xl h-11 w-11 p-0 text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDelete(m.id)}
+                    onClick={() => handleDelete(m)}
                     disabled={isDeleting === m.id}
                   >
                     {isDeleting === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}

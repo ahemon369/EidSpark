@@ -27,17 +27,20 @@ import {
   Heart,
   Navigation2,
   TrendingUp,
-  ShieldAlert
+  ShieldAlert,
+  ThumbsUp,
+  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc, query, where, addDoc, getDocs, orderBy, limit } from "firebase/firestore"
+import { collection, doc, query, where, addDoc, getDocs, orderBy, limit, updateDoc, increment } from "firebase/firestore"
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { awardPoints } from "@/lib/gamification-utils"
 
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ssr: false,
@@ -166,7 +169,24 @@ export default function JamaatFinderPage() {
         lon: mosque.longitude,
         savedAt: new Date().toISOString()
       })
+      await updateDoc(doc(db, "mosques", mosque.id), {
+        savesCount: increment(1)
+      })
       toast({ title: "Saved to Favorites" })
+    } catch (e) {}
+  }
+
+  const handleConfirmJamaat = async (id: string) => {
+    if (!user || !db) {
+      toast({ title: "Login Required" })
+      return
+    }
+    try {
+      await updateDoc(doc(db, "mosques", id), {
+        confirmations: increment(1)
+      })
+      awardPoints(db, user.uid, 'AddJamaat')
+      toast({ title: "Jamaat Confirmed!", description: "+6 points awarded for verification." })
     } catch (e) {}
   }
 
@@ -235,7 +255,7 @@ export default function JamaatFinderPage() {
                   className="rounded-full text-[9px] font-black uppercase h-8 px-4 border-2"
                   onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
                 >
-                  &lt; 5km
+                  {"<"} 5km
                 </Button>
               </div>
 
@@ -262,7 +282,7 @@ export default function JamaatFinderPage() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 px-2">
                         <TrendingUp className="w-4 h-4 text-rose-500" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Trending in Community</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Trending Today</h3>
                       </div>
                       <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
                         {trendingMosques.map(m => (
@@ -272,7 +292,7 @@ export default function JamaatFinderPage() {
                             className="min-w-[200px] bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border-2 border-transparent hover:border-primary/20 transition-all cursor-pointer group shadow-sm"
                           >
                             <div className="flex items-center justify-between mb-2">
-                              <Badge className="bg-white text-primary text-[8px] border-none shadow-sm h-5">#{m.savesCount || 0} Saves</Badge>
+                              <Badge className="bg-white text-primary text-[8px] border-none shadow-sm h-5">🔥 {m.savesCount || 0} Saves</Badge>
                               <TrendingUp className="w-3 h-3 text-rose-500 animate-pulse" />
                             </div>
                             <h4 className="font-black text-sm text-slate-800 dark:text-white truncate">{m.name}</h4>
@@ -285,7 +305,7 @@ export default function JamaatFinderPage() {
 
                   {/* Main List */}
                   <div className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">All Registry Results ({filteredMosques.length})</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Registry Results ({filteredMosques.length})</h3>
                     {loadingMosques ? (
                       <div className="py-20 text-center space-y-4">
                         <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary/40" />
@@ -310,9 +330,6 @@ export default function JamaatFinderPage() {
                                   ) : (
                                     <Badge variant="outline" className="text-[8px] font-black px-2 h-5 uppercase tracking-tighter bg-amber-50/50 border-amber-100 text-amber-700">Community Added</Badge>
                                   )}
-                                  {/ground|maidan|stadium|field|eidgah/i.test(mosque.name) && (
-                                    <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-100 text-[8px] font-black px-2 h-5 uppercase tracking-tighter">Ground</Badge>
-                                  )}
                                 </div>
                                 <h3 className="font-black text-lg text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors">{mosque.name}</h3>
                                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest flex items-center gap-1.5">
@@ -333,7 +350,7 @@ export default function JamaatFinderPage() {
                                 </div>
                                 <div>
                                   <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Jamaat Time</p>
-                                  <span className="text-sm font-black text-primary">{mosque.eid_prayer_time || "Registry Pending"}</span>
+                                  <span className="text-sm font-black text-primary">{mosque.eid_prayer_time || "Pending"}</span>
                                 </div>
                               </div>
                               <div className="flex gap-2">
@@ -356,6 +373,26 @@ export default function JamaatFinderPage() {
                                   Directions
                                 </Button>
                               </div>
+                            </div>
+
+                            {/* Crowd Voting Actions */}
+                            <div className="grid grid-cols-2 gap-2 pt-2">
+                               <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="rounded-xl h-10 text-[9px] font-black uppercase gap-2 hover:bg-emerald-50 hover:text-emerald-600 border-emerald-100"
+                                onClick={(e) => { e.stopPropagation(); handleConfirmJamaat(mosque.id); }}
+                               >
+                                 <ThumbsUp className="w-3 h-3" /> Confirmed
+                               </Button>
+                               <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="rounded-xl h-10 text-[9px] font-black uppercase gap-2 hover:bg-rose-50 hover:text-rose-600 border-rose-100"
+                                onClick={(e) => { e.stopPropagation(); toast({ title: "Report Sent", description: "Moderators will review this entry." }); }}
+                               >
+                                 <AlertCircle className="w-3 h-3" /> Wrong Info
+                               </Button>
                             </div>
                           </CardContent>
                         </Card>
