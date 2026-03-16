@@ -1,10 +1,9 @@
 
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,27 +17,32 @@ import {
   Globe,
   LocateFixed,
   Sparkles,
-  Info,
   Clock,
   Landmark,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Filter,
+  ChevronUp,
+  Map as MapIcon,
+  Heart,
+  Navigation2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc, query, where, addDoc, getDocs } from "firebase/firestore"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AddJamaatTimeModal } from "@/components/add-jamaat-time-modal"
-import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
 import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center space-y-4 animate-pulse rounded-[3rem]">
+    <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center space-y-4 animate-pulse">
       <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-black text-primary/40 uppercase tracking-widest">Initialising Professional Registry...</p>
+      <p className="font-black text-primary/40 uppercase tracking-widest">Loading Map Interface...</p>
     </div>
   ),
 })
@@ -64,22 +68,20 @@ export default function JamaatFinderPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [isDetecting, setIsDetecting] = useState(false)
   
+  // Filters
+  const [filterVerified, setFilterVerified] = useState(false)
+  const [filterGrounds, setFilterGrounds] = useState(false)
+  const [distanceRadius, setDistanceRadius] = useState<number | null>(null) // in meters
+
   const mosquesRef = useMemoFirebase(() => {
     if (!db) return null
     return collection(db, "mosques")
   }, [db])
   const { data: allMosques, isLoading: loadingMosques } = useCollection(mosquesRef)
 
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user) return null
-    return doc(db, "roles_admin", user.uid)
-  }, [db, user])
-  const { data: adminDoc } = useDoc(adminRoleRef)
-  const isAdmin = !!adminDoc
-
   const handleFindNearMe = useCallback(() => {
     if (!navigator.geolocation) {
-      toast({ variant: "destructive", title: "Not Supported", description: "Geolocation is not supported by your browser." })
+      toast({ variant: "destructive", title: "Not Supported", description: "GPS not supported." })
       return
     }
     setIsDetecting(true)
@@ -88,201 +90,258 @@ export default function JamaatFinderPage() {
         const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude]
         setUserLocation(loc)
         setIsDetecting(false)
-        toast({ title: "Location Locked", description: "Filtering nearest verified mosques." })
+        toast({ title: "Location Locked", description: "Syncing nearby Jamaat locations." })
       },
       () => {
         setIsDetecting(false)
-        toast({ variant: "destructive", title: "Location Error", description: "GPS access denied. Please enter area manually." })
+        toast({ variant: "destructive", title: "GPS Error", description: "Please enable location access." })
       }
     )
   }, [toast])
 
   const filteredMosques = useMemo(() => {
     if (!allMosques) return []
-    let mosques = [...allMosques]
+    let mosques = allMosques.map(m => {
+      let dist = undefined
+      if (userLocation) {
+        dist = calculateDistance(userLocation[0], userLocation[1], m.latitude, m.longitude)
+      }
+      return { ...m, distance: dist }
+    })
+
     if (userLocation) {
-      mosques = mosques.map(m => ({
-        ...m,
-        distance: calculateDistance(userLocation[0], userLocation[1], m.latitude, m.longitude)
-      }))
       mosques.sort((a, b) => (a.distance || 0) - (b.distance || 0))
     }
-    if (!searchQuery) return mosques
-    const q = searchQuery.toLowerCase()
-    return mosques.filter(m => 
-      m.name.toLowerCase().includes(q) ||
-      m.district.toLowerCase().includes(q) ||
-      (m.area && m.area.toLowerCase().includes(q))
-    )
-  }, [allMosques, searchQuery, userLocation])
+
+    return mosques.filter(m => {
+      const matchesSearch = !searchQuery || 
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.area && m.area.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      const matchesVerified = !filterVerified || m.isApprovedByAdmin
+      const matchesGround = !filterGrounds || /ground|maidan|stadium|field|eidgah/i.test(m.name)
+      const matchesDistance = !distanceRadius || !m.distance || m.distance <= distanceRadius
+
+      return matchesSearch && matchesVerified && matchesGround && matchesDistance
+    })
+  }, [allMosques, searchQuery, userLocation, filterVerified, filterGrounds, distanceRadius])
+
+  const nearestMosque = useMemo(() => {
+    if (!userLocation || filteredMosques.length === 0) return null
+    return filteredMosques[0]
+  }, [userLocation, filteredMosques])
+
+  const handleSaveMosque = async (mosque: any) => {
+    if (!user || !db) {
+      toast({ title: "Login Required", description: "Please sign in to save favorites." })
+      return
+    }
+    try {
+      const q = query(collection(db, "users", user.uid, "savedMosques"), where("mosqueId", "==", mosque.id))
+      const snap = await getDocs(q)
+      if (!snap.empty) {
+        toast({ title: "Already Saved" })
+        return
+      }
+      await addDoc(collection(db, "users", user.uid, "savedMosques"), {
+        mosqueId: mosque.id,
+        name: mosque.name,
+        address: mosque.area || mosque.district,
+        lat: mosque.latitude,
+        lon: mosque.longitude,
+        savedAt: new Date().toISOString()
+      })
+      toast({ title: "Saved to Favorites" })
+    } catch (e) {}
+  }
 
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-0 transition-colors duration-500">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Navbar />
       
-      <main className="max-w-[1800px] mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-16 animate-in fade-in slide-in-from-top duration-1000">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 text-primary dark:text-secondary text-xs font-black uppercase tracking-widest border border-primary/10 backdrop-blur-md">
-              <Landmark className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
-              <span>Professional Islamic Map Registry</span>
+      <main className="flex-grow flex flex-col lg:flex-row relative pt-[80px]">
+        {/* Left Results Panel */}
+        <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white dark:bg-slate-950 border-r flex flex-col shadow-2xl z-20 relative">
+          
+          {/* Search & Header */}
+          <div className="p-6 space-y-6 bg-white dark:bg-slate-950 sticky top-0 border-b">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-black text-primary flex items-center gap-2">
+                <Navigation2 className="w-6 h-6 text-secondary fill-secondary" />
+                Jamaat Finder
+              </h1>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Real-time Eid Prayer Registry</p>
             </div>
-            <h1 className="text-5xl lg:text-[90px] font-black text-primary dark:text-white tracking-tighter leading-[0.9]">Find Eid Prayers</h1>
-            <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed">
-              Explore a multi-tiered registry of mosques, grounds, and stadiums verified for Eid-ul-Fitr celebrations across Bangladesh.
-            </p>
-          </div>
 
-          <div className="flex flex-wrap gap-4 lg:pb-4">
-            <div className="relative w-full sm:w-96 group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input 
-                placeholder="Search mosque, maidan or area..." 
-                className="h-16 pl-14 rounded-[2rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl border-primary/5 focus:border-primary/20 transition-all text-lg font-medium"
+                placeholder="Search area, mosque or maidan..." 
+                className="h-12 pl-11 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-primary/20 text-sm font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex gap-4 w-full sm:w-auto">
+
+            <div className="flex flex-wrap gap-2">
               <Button 
-                variant="outline" 
-                className={cn(
-                  "flex-1 sm:flex-none h-16 rounded-[2rem] border-2 font-black px-8 shadow-xl transition-all hover:scale-105 active:scale-95",
-                  userLocation ? "border-emerald-500 bg-emerald-500/5 text-emerald-600" : "border-slate-200"
-                )}
-                onClick={handleFindNearMe}
-                disabled={isDetecting}
+                variant={filterVerified ? "default" : "outline"} 
+                size="sm" 
+                className="rounded-full text-[10px] font-black uppercase h-8 px-4"
+                onClick={() => setFilterVerified(!filterVerified)}
               >
-                {isDetecting ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <LocateFixed className="w-5 h-5 mr-3" />}
-                Near Me
+                Verified Only
+              </Button>
+              <Button 
+                variant={filterGrounds ? "default" : "outline"} 
+                size="sm" 
+                className="rounded-full text-[10px] font-black uppercase h-8 px-4"
+                onClick={() => setFilterGrounds(!filterGrounds)}
+              >
+                Big Grounds
+              </Button>
+              <Button 
+                variant={distanceRadius ? "default" : "outline"} 
+                size="sm" 
+                className="rounded-full text-[10px] font-black uppercase h-8 px-4"
+                onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
+              >
+                < 5km
+              </Button>
+            </div>
+
+            {nearestMosque && userLocation && (
+              <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-center gap-3 animate-in slide-in-from-left duration-500">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest leading-none mb-1">Proximity Alert</p>
+                  <p className="text-xs font-bold text-slate-700">
+                    You are <span className="text-primary">{nearestMosque.distance! < 1000 ? `${Math.round(nearestMosque.distance!)}m` : `${(nearestMosque.distance! / 1000).toFixed(1)}km`}</span> from the nearest Jamaat.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Results List */}
+          <ScrollArea className="flex-grow">
+            <div className="p-4 space-y-4">
+              {loadingMosques ? (
+                <div className="py-20 text-center space-y-4">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary/40" />
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Syncing Registry...</p>
+                </div>
+              ) : filteredMosques.length > 0 ? (
+                filteredMosques.map((mosque) => (
+                  <Card 
+                    key={mosque.id} 
+                    className={cn(
+                      "border-2 transition-all duration-300 cursor-pointer rounded-[1.5rem] overflow-hidden group",
+                      selectedMosqueId === mosque.id ? "border-primary shadow-xl ring-4 ring-primary/5" : "border-transparent bg-white dark:bg-slate-900 shadow-sm hover:border-slate-200"
+                    )}
+                    onClick={() => setSelectedMosqueId(mosque.id)}
+                  >
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1 flex-grow">
+                          <div className="flex items-center gap-2 mb-1">
+                            {mosque.isApprovedByAdmin ? (
+                              <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-100 text-[8px] font-black px-2 h-5 uppercase tracking-tighter">Verified</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[8px] font-black px-2 h-5 uppercase tracking-tighter">Community</Badge>
+                            )}
+                            {/ground|maidan|stadium|field|eidgah/i.test(mosque.name) && (
+                              <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-100 text-[8px] font-black px-2 h-5 uppercase tracking-tighter">Ground</Badge>
+                            )}
+                          </div>
+                          <h3 className="font-black text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors">{mosque.name}</h3>
+                          <p className="text-xs text-muted-foreground font-medium">{mosque.area || mosque.district}, {mosque.district}</p>
+                        </div>
+                        {mosque.distance !== undefined && (
+                          <div className="bg-secondary/10 text-secondary px-2 py-1 rounded-lg text-[10px] font-black shrink-0">
+                            {mosque.distance < 1000 ? `${Math.round(mosque.distance)}m` : `${(mosque.distance / 1000).toFixed(1)}km`}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-slate-50 dark:border-slate-800 pt-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-primary/40" />
+                          <span className="text-sm font-black text-primary">{mosque.eid_prayer_time || "Pending"}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSaveMosque(mosque)
+                            }}
+                          >
+                            <Heart className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            className="h-10 rounded-xl font-black text-xs emerald-gradient px-4"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank")
+                            }}
+                          >
+                            Directions
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="py-20 text-center opacity-40 space-y-4">
+                  <Globe className="w-12 h-12 mx-auto text-primary" />
+                  <p className="text-sm font-bold uppercase tracking-widest leading-relaxed">No prayer locations found <br /> matching your filters.</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+
+          {/* Quick Actions Footer */}
+          <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md">
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={handleFindNearMe} 
+                disabled={isDetecting}
+                className="w-full h-14 rounded-2xl gold-gradient text-primary font-black shadow-xl hover:scale-[1.02] transition-transform"
+              >
+                {isDetecting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <LocateFixed className="w-5 h-5 mr-2" />}
+                Sync My Position
               </Button>
               <AddMosqueModal />
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Legend Panel */}
-        <div className="mb-10 flex flex-wrap gap-6 items-center bg-white/50 backdrop-blur-md p-6 rounded-[2rem] border border-primary/5">
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-lg shadow-emerald-500/20"></div>
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Verified Mosque</span>
+        {/* Right Map Panel */}
+        <section className="flex-grow relative z-10">
+          <JamaatMap 
+            mosques={filteredMosques} 
+            onSelectMosque={setSelectedMosqueId} 
+            userLocation={userLocation}
+            selectedId={selectedMosqueId}
+          />
+          
+          {/* Floating Mobile Bottom Sheet Toggle (Desktop hides) */}
+          <div className="lg:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+             <Button className="rounded-full h-12 px-8 font-black gap-2 shadow-2xl glass-card text-primary border-primary/20">
+               <ChevronUp className="w-4 h-4" /> View Results
+             </Button>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow-lg shadow-amber-500/20"></div>
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Community Added</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg shadow-blue-500/20"></div>
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Big Jamaat Ground</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[8px] font-black uppercase text-emerald-700 tracking-[0.2em]">Real-Time Sync Active</span>
-          </div>
-        </div>
-
-        <Tabs defaultValue="map" className="w-full">
-          <div className="flex justify-between items-center mb-10">
-            <TabsList className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-primary/5 p-1 rounded-[2.5rem] h-16 shadow-2xl">
-              <TabsTrigger value="map" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Map Interface</TabsTrigger>
-              <TabsTrigger value="list" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl">Registry View</TabsTrigger>
-              {isAdmin && <TabsTrigger value="admin" className="rounded-[2rem] font-black px-10 h-full text-base transition-all data-[state=active]:bg-secondary data-[state=active]:text-primary">Admin Control</TabsTrigger>}
-            </TabsList>
-          </div>
-
-          <TabsContent value="map" className="animate-in fade-in zoom-in duration-1000 h-[750px] rounded-[4rem] overflow-hidden border-[12px] border-white dark:border-slate-900 shadow-[0_64px_128px_-12px_rgba(0,0,0,0.1)]">
-            <JamaatMap mosques={filteredMosques} onSelectMosque={setSelectedMosqueId} userLocation={userLocation} />
-          </TabsContent>
-
-          <TabsContent value="list" className="animate-in fade-in slide-in-from-bottom-10 duration-1000">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-              {filteredMosques.length > 0 ? filteredMosques.map((mosque) => (
-                <MosqueCard key={mosque.id} mosque={mosque} isAdmin={isAdmin} />
-              )) : (
-                <div className="col-span-full py-32 text-center space-y-6">
-                  <div className="w-24 h-24 bg-primary/5 rounded-[3rem] flex items-center justify-center mx-auto">
-                    <Globe className="w-12 h-12 text-primary/20" />
-                  </div>
-                  <p className="text-2xl font-black text-muted-foreground">No records found matching your search</p>
-                  <Button variant="ghost" onClick={() => setSearchQuery("")} className="font-bold">Reset Filters</Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="admin" className="animate-in fade-in duration-700">
-              <AdminJamaatPanel />
-            </TabsContent>
-          )}
-        </Tabs>
+        </section>
       </main>
-      <Footer />
     </div>
-  )
-}
-
-function MosqueCard({ mosque, isAdmin }: { mosque: any, isAdmin: boolean }) {
-  const isBigGround = /ground|maidan|stadium|field|eidgah/i.test(mosque.name);
-  
-  return (
-    <Card className="border-none shadow-xl rounded-[3.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl group hover:-translate-y-3 transition-all duration-500 hover:shadow-[0_48px_96px_-12px_rgba(6,95,70,0.15)] border border-transparent hover:border-primary/10">
-      <div className={cn(
-        "p-10 text-white relative overflow-hidden transition-all duration-500",
-        isBigGround ? "bg-blue-600" : (mosque.isApprovedByAdmin ? "emerald-gradient" : "bg-amber-500")
-      )}>
-        <Landmark className="absolute -top-4 -right-4 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
-        <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            {mosque.isApprovedByAdmin ? (
-              <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                <CheckCircle2 className="w-3 h-3 text-secondary fill-secondary" />
-                <span className="text-[8px] font-black uppercase tracking-widest">Verified</span>
-              </div>
-            ) : (
-              <div className="bg-black/10 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                <AlertTriangle className="w-3 h-3 text-white" />
-                <span className="text-[8px] font-black uppercase tracking-widest">Pending</span>
-              </div>
-            )}
-            {isBigGround && (
-              <div className="bg-blue-400/30 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
-                <Landmark className="w-3 h-3 text-white" />
-                <span className="text-[8px] font-black uppercase tracking-widest">Ground</span>
-              </div>
-            )}
-          </div>
-          <h3 className="text-2xl font-black tracking-tight leading-tight">{mosque.name}</h3>
-          <p className="text-xs font-bold opacity-80 uppercase tracking-[0.2em]">{mosque.area || mosque.district}, {mosque.district}</p>
-        </div>
-      </div>
-      <CardContent className="p-10 space-y-8">
-        <div className="flex items-center justify-between border-b border-primary/5 pb-4">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary opacity-40" />
-            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Registry Jamaat</p>
-          </div>
-          <AddJamaatTimeModal mosqueId={mosque.id} mosqueName={mosque.name} />
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-primary/5 p-4 rounded-[1.5rem] border border-primary/5 flex flex-col items-center group/time hover:bg-primary transition-all duration-300">
-            <span className="text-lg font-black text-primary group-hover/time:text-white">{mosque.eid_prayer_time || "Registry Pending"}</span>
-            {mosque.isApprovedByAdmin && (
-              <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 group-hover/time:text-emerald-200 uppercase tracking-tighter mt-1">
-                <CheckCircle2 className="w-2.5 h-2.5" /> Registry Confirmed
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Button 
-          className="w-full h-14 font-black emerald-gradient rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95 text-white" 
-          onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank")}
-        >
-          <Navigation className="w-5 h-5 mr-3" /> Get Directions
-        </Button>
-      </CardContent>
-    </Card>
   )
 }
