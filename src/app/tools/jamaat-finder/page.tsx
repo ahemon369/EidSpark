@@ -29,7 +29,8 @@ import {
   TrendingUp,
   ShieldAlert,
   ThumbsUp,
-  AlertCircle
+  AlertCircle,
+  Star
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
@@ -140,8 +141,13 @@ export default function JamaatFinderPage() {
     })
   }, [allMosques, searchQuery, userLocation, filterVerified, filterGrounds, distanceRadius])
 
+  // Improved Trending Score Logic: Saves + Confirmations + Popularity
   const trendingMosques = useMemo(() => {
-    return [...filteredMosques].sort((a, b) => (b.savesCount || 0) - (a.savesCount || 0)).slice(0, 3)
+    return [...filteredMosques].sort((a, b) => {
+      const scoreA = (a.savesCount || 0) * 3 + (a.confirmations || 0) * 2 + (a.popularityCount || 0)
+      const scoreB = (b.savesCount || 0) * 3 + (b.confirmations || 0) * 2 + (b.popularityCount || 0)
+      return scoreB - scoreA
+    }).slice(0, 3)
   }, [filteredMosques])
 
   const nearestMosque = useMemo(() => {
@@ -188,6 +194,24 @@ export default function JamaatFinderPage() {
       awardPoints(db, user.uid, 'AddJamaat')
       toast({ title: "Jamaat Confirmed!", description: "+6 points awarded for verification." })
     } catch (e) {}
+  }
+
+  const handleVotePopular = async (id: string) => {
+    if (!user || !db) {
+      toast({ title: "Login Required" })
+      return
+    }
+    try {
+      await updateDoc(doc(db, "mosques", id), {
+        popularityCount: increment(1)
+      })
+      toast({ title: "Voted Popular! ⭐" })
+    } catch (e) {}
+  }
+
+  const handleShare = (mosque: any) => {
+    const text = `Join the Eid Jamaat at ${mosque.name} (${mosque.eid_prayer_time}) in ${mosque.district}! Check it on the crowd-powered map: ${window.location.origin}/tools/jamaat-finder?id=${mosque.id}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
   return (
@@ -255,7 +279,7 @@ export default function JamaatFinderPage() {
                   className="rounded-full text-[9px] font-black uppercase h-8 px-4 border-2"
                   onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
                 >
-                  {"<"} 5km
+                  &lt; 5km
                 </Button>
               </div>
 
@@ -376,11 +400,11 @@ export default function JamaatFinderPage() {
                             </div>
 
                             {/* Crowd Voting Actions */}
-                            <div className="grid grid-cols-2 gap-2 pt-2">
+                            <div className="grid grid-cols-3 gap-2 pt-2">
                                <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="rounded-xl h-10 text-[9px] font-black uppercase gap-2 hover:bg-emerald-50 hover:text-emerald-600 border-emerald-100"
+                                className="rounded-xl h-10 text-[8px] font-black uppercase gap-1.5 hover:bg-emerald-50 hover:text-emerald-600 border-emerald-100"
                                 onClick={(e) => { e.stopPropagation(); handleConfirmJamaat(mosque.id); }}
                                >
                                  <ThumbsUp className="w-3 h-3" /> Confirmed
@@ -388,12 +412,27 @@ export default function JamaatFinderPage() {
                                <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="rounded-xl h-10 text-[9px] font-black uppercase gap-2 hover:bg-rose-50 hover:text-rose-600 border-rose-100"
+                                className="rounded-xl h-10 text-[8px] font-black uppercase gap-1.5 hover:bg-secondary/10 hover:text-secondary border-secondary/10"
+                                onClick={(e) => { e.stopPropagation(); handleVotePopular(mosque.id); }}
+                               >
+                                 <Star className="w-3 h-3" /> Popular
+                               </Button>
+                               <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="rounded-xl h-10 text-[8px] font-black uppercase gap-1.5 hover:bg-rose-50 hover:text-rose-600 border-rose-100"
                                 onClick={(e) => { e.stopPropagation(); toast({ title: "Report Sent", description: "Moderators will review this entry." }); }}
                                >
-                                 <AlertCircle className="w-3 h-3" /> Wrong Info
+                                 <AlertCircle className="w-3 h-3" /> Wrong
                                </Button>
                             </div>
+                            <Button 
+                              variant="ghost" 
+                              className="w-full text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors"
+                              onClick={(e) => { e.stopPropagation(); handleShare(mosque); }}
+                            >
+                              <Share2 className="w-3 h-3 mr-2" /> Share Jamaat Location
+                            </Button>
                           </CardContent>
                         </Card>
                       ))

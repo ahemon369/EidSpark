@@ -111,7 +111,8 @@ export default function QRSalamiTool() {
     }
   }
 
-  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/qr/${formData.username || 'yourname'}` : ""
+  // Updated to point to /salami/ for public profiles
+  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/salami/${formData.username || 'yourname'}` : ""
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl)
@@ -245,7 +246,7 @@ export default function QRSalamiTool() {
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                   <Button variant="outline" className="flex-1 rounded-xl h-12 font-bold gap-2 border-2" onClick={handleCopyLink}><Copy className="w-4 h-4" /> Copy</Button>
-                  <Button className="flex-1 rounded-xl h-12 font-bold gap-2 emerald-gradient text-white" asChild><Link href={`/qr/${formData.username || ''}`}><ExternalLink className="w-4 h-4" /> Preview</Link></Button>
+                  <Button className="flex-1 rounded-xl h-12 font-bold gap-2 emerald-gradient text-white" asChild><Link href={`/salami/${formData.username || ''}`}><ExternalLink className="w-4 h-4" /> Preview</Link></Button>
                 </div>
               </div>
             </Card>
