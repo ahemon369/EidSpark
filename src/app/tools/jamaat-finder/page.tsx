@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
@@ -44,6 +43,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { awardPoints } from "@/lib/gamification-utils"
+import { BackButton } from "@/components/back-button"
 
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ssr: false,
@@ -221,6 +221,8 @@ export default function JamaatFinderPage() {
       <Navbar />
       
       <main className="flex-grow flex flex-col lg:flex-row relative pt-[80px]">
+        <BackButton />
+        
         {/* Left Panel (Side Sheet Style) */}
         <aside className={cn(
           "fixed inset-x-0 bottom-0 z-40 bg-white dark:bg-slate-950 transition-transform duration-500 lg:relative lg:inset-auto lg:w-[450px] lg:translate-y-0 border-r flex flex-col shadow-2xl",

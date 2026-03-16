@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
@@ -38,6 +37,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore } from "@/firebase"
 import { collection, addDoc } from "firebase/firestore"
+import { BackButton } from "@/components/back-button"
 
 // --- Types ---
 type ElementType = 'text' | 'sticker' | 'image'
@@ -435,281 +435,285 @@ export default function CanvaGreetingGenerator() {
     <div className="min-h-screen bg-background islamic-pattern pb-20">
       <Navbar />
       
-      <main className="max-w-[1600px] mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8 h-[calc(100vh-80px)]">
-        {/* Left Toolbar */}
-        <aside className="lg:col-span-3 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-          <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl">
-            <CardHeader className="p-6 border-b">
-              <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
-                <Layout className="w-5 h-5 text-secondary" />
-                Studio Assets
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <Tabs defaultValue="ai" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 bg-primary/5 rounded-xl h-12">
-                  <TabsTrigger value="ai" className="text-xs font-bold">AI</TabsTrigger>
-                  <TabsTrigger value="layers" className="text-xs font-bold">Layers</TabsTrigger>
-                  <TabsTrigger value="theme" className="text-xs font-bold">Theme</TabsTrigger>
-                </TabsList>
+      <div className="relative pt-[80px]">
+        <BackButton />
+        
+        <main className="max-w-[1600px] mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8 h-[calc(100vh-80px)]">
+          {/* Left Toolbar */}
+          <aside className="lg:col-span-3 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+            <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl">
+              <CardHeader className="p-6 border-b">
+                <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
+                  <Layout className="w-5 h-5 text-secondary" />
+                  Studio Assets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Tabs defaultValue="ai" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6 bg-primary/5 rounded-xl h-12">
+                    <TabsTrigger value="ai" className="text-xs font-bold">AI</TabsTrigger>
+                    <TabsTrigger value="layers" className="text-xs font-bold">Layers</TabsTrigger>
+                    <TabsTrigger value="theme" className="text-xs font-bold">Theme</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="ai" className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recipient Name</Label>
-                    <Input 
-                      value={aiName}
-                      onChange={(e) => setAiName(e.target.value)}
-                      placeholder="Name" 
-                      className="rounded-xl h-12" 
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Style & Language</Label>
+                  <TabsContent value="ai" className="space-y-4">
+                    <div className="space-y-3">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recipient Name</Label>
+                      <Input 
+                        value={aiName}
+                        onChange={(e) => setAiName(e.target.value)}
+                        placeholder="Name" 
+                        className="rounded-xl h-12" 
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Style & Language</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Select value={aiLang} onValueChange={aiLang}>
+                          <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bangla">Bengali</SelectItem>
+                            <SelectItem value="english">English</SelectItem>
+                            <SelectItem value="arabic">Arabic</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={aiStyle} onValueChange={aiStyle}>
+                          <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="heartfelt">Heartfelt</SelectItem>
+                            <SelectItem value="blessing">Blessing</SelectItem>
+                            <SelectItem value="formal">Formal</SelectItem>
+                            <SelectItem value="simple">Simple</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full emerald-gradient h-12 font-black rounded-xl"
+                      onClick={handleAiGenerate}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" /> Magic Text</>}
+                    </Button>
+                  </TabsContent>
+
+                  <TabsContent value="layers" className="space-y-4">
                     <div className="grid grid-cols-2 gap-2">
-                      <Select value={aiLang} onValueChange={setAiLang}>
-                        <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
+                      <Button variant="outline" onClick={() => addElement('text', 'New Text')} className="h-12 rounded-xl text-xs font-bold">
+                        <Plus className="w-4 h-4 mr-2" /> Add Text
+                      </Button>
+                      <label htmlFor="file-upload" className="flex items-center justify-center border-2 border-dashed rounded-xl h-12 cursor-pointer hover:bg-primary/5 transition-colors text-xs font-bold text-primary">
+                        <ImageIcon className="w-4 h-4 mr-2" /> Upload
+                      </label>
+                      <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                    </div>
+                    
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Manage Layers</Label>
+                      {elements.map(el => (
+                        <div key={el.id} className={cn(
+                          "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer",
+                          selectedId === el.id ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-slate-50"
+                        )} onClick={() => setSelectedId(el.id)}>
+                          <div className="flex items-center gap-3">
+                            {el.type === 'text' ? <Type className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                            <span className="text-xs font-bold truncate max-w-[120px]">{el.content}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="theme" className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Select Template</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {templates.map(t => (
+                        <button key={t.id} onClick={() => setTemplate(t)} className={cn(
+                          "h-14 rounded-xl border-2 transition-all flex items-center justify-between px-4",
+                          template.id === t.id ? "border-primary bg-primary/5" : "border-transparent bg-slate-100"
+                        )}>
+                          <span className="text-xs font-bold">{t.name}</span>
+                          <div className={cn("w-4 h-4 rounded-full", t.bg)} />
+                        </button>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Style Controls (Conditional) */}
+            {selectedElement && selectedElement.type === 'text' && (
+              <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl animate-in slide-in-from-left duration-300">
+                <CardHeader className="p-6 border-b">
+                  <CardTitle className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
+                    <Type className="w-4 h-4 text-secondary" /> Style Layer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold">Content</Label>
+                    <Input value={selectedElement.content} onChange={(e) => updateElement(selectedElement.id, { content: e.target.value })} className="rounded-xl h-12" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold">Font Family</Label>
+                      <Select value={selectedElement.style.fontFamily} onValueChange={(val) => updateStyle(selectedElement.id, { fontFamily: val })}>
+                        <SelectTrigger className="rounded-xl h-10"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="bangla">Bengali</SelectItem>
-                          <SelectItem value="english">English</SelectItem>
-                          <SelectItem value="arabic">Arabic</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select value={aiStyle} onValueChange={setAiStyle}>
-                        <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="heartfelt">Heartfelt</SelectItem>
-                          <SelectItem value="blessing">Blessing</SelectItem>
-                          <SelectItem value="formal">Formal</SelectItem>
-                          <SelectItem value="simple">Simple</SelectItem>
+                          {fonts.map(f => <SelectItem key={f.value} value={f.value}>{f.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold">Font Size</Label>
+                      <Slider value={[selectedElement.style.fontSize || 40]} onValueChange={([val]) => updateStyle(selectedElement.id, { fontSize: val })} min={10} max={200} step={2} />
+                    </div>
                   </div>
-                  <Button 
-                    className="w-full emerald-gradient h-12 font-black rounded-xl"
-                    onClick={handleAiGenerate}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" /> Magic Text</>}
-                  </Button>
-                </TabsContent>
 
-                <TabsContent value="layers" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={() => addElement('text', 'New Text')} className="h-12 rounded-xl text-xs font-bold">
-                      <Plus className="w-4 h-4 mr-2" /> Add Text
-                    </Button>
-                    <label htmlFor="file-upload" className="flex items-center justify-center border-2 border-dashed rounded-xl h-12 cursor-pointer hover:bg-primary/5 transition-colors text-xs font-bold text-primary">
-                      <ImageIcon className="w-4 h-4 mr-2" /> Upload
-                    </label>
-                    <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                  <div className="flex justify-between items-center gap-2">
+                     <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        <Button variant={selectedElement.style.textAlign === 'left' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'left' })}><AlignLeft className="w-4 h-4" /></Button>
+                        <Button variant={selectedElement.style.textAlign === 'center' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'center' })}><AlignCenter className="w-4 h-4" /></Button>
+                        <Button variant={selectedElement.style.textAlign === 'right' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'right' })}><AlignRight className="w-4 h-4" /></Button>
+                     </div>
+                     <input type="color" value={selectedElement.style.color} onChange={(e) => updateStyle(selectedElement.id, { color: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border-none" />
                   </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between"><Label className="text-xs font-bold">Rotation</Label> <span className="text-xs font-mono">{selectedElement.rotation}°</span></div>
+                    <Slider value={[selectedElement.rotation]} onValueChange={([val]) => updateElement(selectedElement.id, { rotation: val })} min={-180} max={180} step={1} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </aside>
+
+          {/* Center Canvas Area */}
+          <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/50 rounded-[3rem] border-4 border-dashed border-primary/5 p-8 relative group">
+            <div 
+              ref={containerRef}
+              className="relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] w-full max-w-[600px] aspect-square bg-white overflow-hidden select-none cursor-default"
+              onMouseDown={() => setSelectedId(null)}
+            >
+              {/* Background Layer */}
+              <div className={cn("absolute inset-0 transition-all duration-500", template.bg)}>
+                <div className="absolute inset-0 opacity-20 pointer-events-none islamic-pattern"></div>
+              </div>
+
+              {/* Elements Rendering */}
+              {elements.map(el => (
+                <div
+                  key={el.id}
+                  onMouseDown={(e) => handleMouseDown(e, el)}
+                  style={{
+                    position: 'absolute',
+                    left: `${(el.x / 1080) * 100}%`,
+                    top: `${(el.y / 1080) * 100}%`,
+                    width: `${(el.width / 1080) * 100}%`,
+                    transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
+                    zIndex: selectedId === el.id ? 50 : 10,
+                    outline: selectedId === el.id ? '2px solid #fbbf24' : 'none',
+                    outlineOffset: '4px',
+                    cursor: isDragging ? 'grabbing' : 'grab'
+                  }}
+                  className="group"
+                >
+                  {el.type === 'text' ? (
+                    <div style={{
+                      color: el.style.color,
+                      fontSize: `${(el.style.fontSize! / 1080) * 100}cqw`,
+                      fontFamily: el.style.fontFamily,
+                      textAlign: el.style.textAlign,
+                      fontWeight: 'bold',
+                      lineHeight: 1.2,
+                      wordWrap: 'break-word',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      {el.content}
+                    </div>
+                  ) : (
+                    <img src={el.content} alt="Element" className="w-full h-auto" draggable={false} />
+                  )}
                   
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Manage Layers</Label>
-                    {elements.map(el => (
-                      <div key={el.id} className={cn(
-                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer",
-                        selectedId === el.id ? "border-primary bg-primary/5 shadow-sm" : "border-transparent bg-slate-50"
-                      )} onClick={() => setSelectedId(el.id)}>
-                        <div className="flex items-center gap-3">
-                          {el.type === 'text' ? <Type className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
-                          <span className="text-xs font-bold truncate max-w-[120px]">{el.content}</span>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}>
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                  {selectedId === el.id && (
+                    <>
+                      <div className="absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
+                      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/80 p-1 rounded-full shadow-lg">
+                         <RotateCw className="w-4 h-4 text-primary" />
                       </div>
-                    ))}
-                  </div>
-                </TabsContent>
+                    </>
+                  )}
+                </div>
+              ))}
 
-                <TabsContent value="theme" className="space-y-4">
-                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Select Template</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {templates.map(t => (
-                      <button key={t.id} onClick={() => setTemplate(t)} className={cn(
-                        "h-14 rounded-xl border-2 transition-all flex items-center justify-between px-4",
-                        template.id === t.id ? "border-primary bg-primary/5" : "border-transparent bg-slate-100"
-                      )}>
-                        <span className="text-xs font-bold">{t.name}</span>
-                        <div className={cn("w-4 h-4 rounded-full", t.bg)} />
-                      </button>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+              {/* Hidden Canvas for Export */}
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+            
+            <div className="mt-8 flex gap-4">
+               <Button variant="ghost" onClick={handleReset} className="rounded-xl font-bold text-muted-foreground"><RefreshCcw className="w-4 h-4 mr-2" /> Reset Card</Button>
+               <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/40 uppercase tracking-widest">
+                 <Move className="w-3 h-3" /> Drag to move • <RotateCw className="w-3 h-3" /> Edit in sidebar
+               </div>
+            </div>
+          </div>
 
-          {/* Style Controls (Conditional) */}
-          {selectedElement && selectedElement.type === 'text' && (
-            <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl animate-in slide-in-from-left duration-300">
-              <CardHeader className="p-6 border-b">
-                <CardTitle className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
-                  <Type className="w-4 h-4 text-secondary" /> Style Layer
+          {/* Right Panel: Export & Social */}
+          <aside className="lg:col-span-3 space-y-6">
+            <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl h-full">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
+                  <Download className="w-5 h-5 text-secondary" />
+                  Export Design
                 </CardTitle>
+                <CardDescription>Share your masterpiece</CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold">Content</Label>
-                  <Input value={selectedElement.content} onChange={(e) => updateElement(selectedElement.id, { content: e.target.value })} className="rounded-xl h-12" />
+              <CardContent className="p-8 space-y-8">
+                <div className="space-y-4">
+                  <Button onClick={handleDownload} className="w-full h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
+                    <Download className="w-6 h-6 mr-2" /> Download PNG
+                  </Button>
+                  <Button onClick={handleSaveToGallery} disabled={isSaving} variant="outline" className="w-full h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
+                    {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
+                  </Button>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold">Font Family</Label>
-                    <Select value={selectedElement.style.fontFamily} onValueChange={(val) => updateStyle(selectedElement.id, { fontFamily: val })}>
-                      <SelectTrigger className="rounded-xl h-10"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {fonts.map(f => <SelectItem key={f.value} value={f.value}>{f.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold">Font Size</Label>
-                    <Slider value={[selectedElement.style.fontSize || 40]} onValueChange={([val]) => updateStyle(selectedElement.id, { fontSize: val })} min={10} max={200} step={2} />
+
+                <div className="pt-8 border-t border-primary/10 space-y-4">
+                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Share</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Eid Mubarak! Check out my card: ' + window.location.href)}`, '_blank')} className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
+                      <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
+                    </Button>
+                    <Button variant="outline" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')} className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
+                      <Facebook className="w-5 h-5 mr-2" /> Facebook
+                    </Button>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center gap-2">
-                   <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                      <Button variant={selectedElement.style.textAlign === 'left' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'left' })}><AlignLeft className="w-4 h-4" /></Button>
-                      <Button variant={selectedElement.style.textAlign === 'center' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'center' })}><AlignCenter className="w-4 h-4" /></Button>
-                      <Button variant={selectedElement.style.textAlign === 'right' ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={() => updateStyle(selectedElement.id, { textAlign: 'right' })}><AlignRight className="w-4 h-4" /></Button>
+                <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                   <div className="flex items-center gap-3 mb-2">
+                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                       <Star className="w-4 h-4 text-white fill-white" />
+                     </div>
+                     <span className="text-xs font-black text-primary uppercase">Pro Tip</span>
                    </div>
-                   <input type="color" value={selectedElement.style.color} onChange={(e) => updateStyle(selectedElement.id, { color: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border-none" />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between"><Label className="text-xs font-bold">Rotation</Label> <span className="text-xs font-mono">{selectedElement.rotation}°</span></div>
-                  <Slider value={[selectedElement.rotation]} onValueChange={([val]) => updateElement(selectedElement.id, { rotation: val })} min={-180} max={180} step={1} />
+                   <p className="text-xs text-primary/70 font-medium leading-relaxed">
+                     Use the **Magic Text** button in the sidebar to have our AI write a beautiful blessing for you!
+                   </p>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </aside>
-
-        {/* Center Canvas Area */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/50 rounded-[3rem] border-4 border-dashed border-primary/5 p-8 relative group">
-          <div 
-            ref={containerRef}
-            className="relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] w-full max-w-[600px] aspect-square bg-white overflow-hidden select-none cursor-default"
-            onMouseDown={() => setSelectedId(null)}
-          >
-            {/* Background Layer */}
-            <div className={cn("absolute inset-0 transition-all duration-500", template.bg)}>
-              <div className="absolute inset-0 opacity-20 pointer-events-none islamic-pattern"></div>
-            </div>
-
-            {/* Elements Rendering */}
-            {elements.map(el => (
-              <div
-                key={el.id}
-                onMouseDown={(e) => handleMouseDown(e, el)}
-                style={{
-                  position: 'absolute',
-                  left: `${(el.x / 1080) * 100}%`,
-                  top: `${(el.y / 1080) * 100}%`,
-                  width: `${(el.width / 1080) * 100}%`,
-                  transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
-                  zIndex: selectedId === el.id ? 50 : 10,
-                  outline: selectedId === el.id ? '2px solid #fbbf24' : 'none',
-                  outlineOffset: '4px',
-                  cursor: isDragging ? 'grabbing' : 'grab'
-                }}
-                className="group"
-              >
-                {el.type === 'text' ? (
-                  <div style={{
-                    color: el.style.color,
-                    fontSize: `${(el.style.fontSize! / 1080) * 100}cqw`,
-                    fontFamily: el.style.fontFamily,
-                    textAlign: el.style.textAlign,
-                    fontWeight: 'bold',
-                    lineHeight: 1.2,
-                    wordWrap: 'break-word',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                  }}>
-                    {el.content}
-                  </div>
-                ) : (
-                  <img src={el.content} alt="Element" className="w-full h-auto" draggable={false} />
-                )}
-                
-                {selectedId === el.id && (
-                  <>
-                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
-                    <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-primary rounded-full" />
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/80 p-1 rounded-full shadow-lg">
-                       <RotateCw className="w-4 h-4 text-primary" />
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-
-            {/* Hidden Canvas for Export */}
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
-          
-          <div className="mt-8 flex gap-4">
-             <Button variant="ghost" onClick={handleReset} className="rounded-xl font-bold text-muted-foreground"><RefreshCcw className="w-4 h-4 mr-2" /> Reset Card</Button>
-             <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/40 uppercase tracking-widest">
-               <Move className="w-3 h-3" /> Drag to move • <RotateCw className="w-3 h-3" /> Edit in sidebar
-             </div>
-          </div>
-        </div>
-
-        {/* Right Panel: Export & Social */}
-        <aside className="lg:col-span-3 space-y-6">
-          <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl h-full">
-            <CardHeader className="p-8 pb-4">
-              <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
-                <Download className="w-5 h-5 text-secondary" />
-                Export Design
-              </CardTitle>
-              <CardDescription>Share your masterpiece</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              <div className="space-y-4">
-                <Button onClick={handleDownload} className="w-full h-16 rounded-2xl gold-gradient text-white font-black text-lg shadow-xl hover:scale-105 transition-transform">
-                  <Download className="w-6 h-6 mr-2" /> Download PNG
-                </Button>
-                <Button onClick={handleSaveToGallery} disabled={isSaving} variant="outline" className="w-full h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
-                  {isSaving ? <Loader2 className="animate-spin" /> : <><Save className="w-6 h-6 mr-2" /> Save to Gallery</>}
-                </Button>
-              </div>
-
-              <div className="pt-8 border-t border-primary/10 space-y-4">
-                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Share</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Eid Mubarak! Check out my card: ' + window.location.href)}`, '_blank')} className="h-14 rounded-2xl border-2 border-green-100 text-green-600 font-bold hover:bg-green-50">
-                    <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp
-                  </Button>
-                  <Button variant="outline" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')} className="h-14 rounded-2xl border-2 border-blue-100 text-blue-600 font-bold hover:bg-blue-50">
-                    <Facebook className="w-5 h-5 mr-2" /> Facebook
-                  </Button>
-                </div>
-              </div>
-
-              <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
-                 <div className="flex items-center gap-3 mb-2">
-                   <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                     <Star className="w-4 h-4 text-white fill-white" />
-                   </div>
-                   <span className="text-xs font-black text-primary uppercase">Pro Tip</span>
-                 </div>
-                 <p className="text-xs text-primary/70 font-medium leading-relaxed">
-                   Use the **Magic Text** button in the sidebar to have our AI write a beautiful blessing for you!
-                 </p>
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
-      </main>
+          </aside>
+        </main>
+      </div>
     </div>
   )
 }
