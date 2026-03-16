@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins, TrendingUp, Zap, Heart, CheckCircle2 } from "lucide-react"
+import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins, TrendingUp, Zap, Heart, CheckCircle2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore } from "@/firebase"
