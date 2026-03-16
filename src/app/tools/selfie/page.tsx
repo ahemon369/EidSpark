@@ -40,6 +40,7 @@ import { collection, addDoc } from "firebase/firestore"
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
 import { BackButton } from "@/components/back-button"
+import { PlaceHolderImages } from "@/lib/placeholder-images"
 
 const frames = [
   { id: 'royal', name: 'Royal Gold Arch', primary: '#0f172a', secondary: '#fbbf24', accent: '#f59e0b' },
@@ -198,7 +199,31 @@ export default function SelfiePosterStudio() {
       setAiGeneratedImage(result.generatedImageUrl)
       toast({ title: "Poster Perfected!", description: "AI background successfully updated." })
     } catch (error: any) {
-      toast({ title: "Background generation failed", description: error.message, variant: "destructive" })
+      console.error("AI Generation failed, using fallback:", error);
+      
+      // Map themes to fallbacks
+      const fallbackMap: Record<string, string> = {
+        'grand_mosque_night': 'fallback-eid-mosque',
+        'kaaba_night': 'fallback-eid-mosque',
+        'lantern_festival': 'fallback-night-lantern',
+        'golden_crescent': 'fallback-crescent-moon',
+        'eid_fireworks': 'fallback-fireworks-sky',
+        'islamic_palace': 'fallback-islamic-pattern',
+        'bangladesh_village': 'fallback-islamic-pattern'
+      };
+
+      const fallbackId = fallbackMap[selectedTheme.id] || 'fallback-crescent-moon';
+      const fallback = PlaceHolderImages.find(img => img.id === fallbackId);
+
+      if (fallback) {
+        setAiGeneratedImage(fallback.imageUrl);
+        toast({ 
+          title: "AI Studio Busy", 
+          description: "We've applied a high-quality festive backdrop as a fallback.",
+        });
+      } else {
+        toast({ title: "Background generation failed", description: error.message, variant: "destructive" });
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -295,6 +320,7 @@ export default function SelfiePosterStudio() {
       // 2. Draw Subject Image
       if (currentDisplayImage) {
         const img = new Image()
+        img.crossOrigin = "anonymous"
         img.src = currentDisplayImage
         img.onload = () => {
           ctx.save()

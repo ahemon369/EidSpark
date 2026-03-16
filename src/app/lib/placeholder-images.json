@@ -20,7 +20,7 @@
       "imageHint": "traditional pattern"
     },
     {
-      "id": "tara-masjid",
+      "id": "tara-mosjid",
       "description": "Tara Masjid (Star Mosque) in Dhaka",
       "imageUrl": "https://picsum.photos/seed/tara-masjid/600/400",
       "imageHint": "star mosque"
@@ -42,6 +42,54 @@
       "description": "Preview of the Mosque Finder Map",
       "imageUrl": "https://picsum.photos/seed/preview-map/600/400",
       "imageHint": "mosque map"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "User profile avatar placeholder",
+      "imageUrl": "https://picsum.photos/seed/user-1/100/100",
+      "imageHint": "user face"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "User profile avatar placeholder",
+      "imageUrl": "https://picsum.photos/seed/user-2/100/100",
+      "imageHint": "user profile"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Team member placeholder",
+      "imageUrl": "https://picsum.photos/seed/team-1/150/150",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "fallback-crescent-moon",
+      "description": "Premium crescent moon backdrop",
+      "imageUrl": "https://picsum.photos/seed/moon-bg/1080/1080",
+      "imageHint": "crescent moon"
+    },
+    {
+      "id": "fallback-eid-mosque",
+      "description": "Majestic mosque backdrop",
+      "imageUrl": "https://picsum.photos/seed/mosque-bg/1080/1080",
+      "imageHint": "mosque night"
+    },
+    {
+      "id": "fallback-night-lantern",
+      "description": "Glowing lanterns backdrop",
+      "imageUrl": "https://picsum.photos/seed/lantern-bg/1080/1080",
+      "imageHint": "eid lanterns"
+    },
+    {
+      "id": "fallback-fireworks-sky",
+      "description": "Festive fireworks backdrop",
+      "imageUrl": "https://picsum.photos/seed/fireworks-bg/1080/1080",
+      "imageHint": "fireworks sky"
+    },
+    {
+      "id": "fallback-islamic-pattern",
+      "description": "Elegant geometric pattern backdrop",
+      "imageUrl": "https://picsum.photos/seed/pattern-bg/1080/1080",
+      "imageHint": "islamic pattern"
     }
   ]
 }
