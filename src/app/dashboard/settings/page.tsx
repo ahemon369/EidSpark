@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useUser, useAuth, useFirestore } from "@/firebase"
@@ -19,7 +18,7 @@ import {
   DialogFooter,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { User, Shield, Bell, Moon, Camera, Save, Loader2, Lock, CheckCircle2 } from "lucide-center"
+import { User, Shield, Bell, Moon, Camera, Save, Loader2, Lock, CheckCircle2 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
