@@ -4,8 +4,8 @@
 import { use, useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, limit, doc, getCountFromServer } from "firebase/firestore"
+import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
+import { collection, query, where, limit, doc, getCountFromServer, getDocs } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,7 +23,10 @@ import {
   Loader2,
   Lock,
   ArrowRight,
-  Flame
+  Flame,
+  Twitter,
+  Download,
+  Smartphone
 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { getLevelInfo } from "@/lib/gamification-utils"
@@ -52,7 +55,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         setProfileUser(userData)
         
         // Fetch Rank
-        const rankQ = query(collection(db, "users"), where("totalPoints", ">", userData.totalPoints))
+        const rankQ = query(collection(db, "users"), where("totalPoints", ">", userData.totalPoints || 0))
         const rankSnap = await getCountFromServer(rankQ)
         setGlobalRank(rankSnap.data().count + 1)
       }
@@ -75,15 +78,38 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   }, [db, profileUser])
   const { data: salamiProfile } = useDoc(salamiRef)
 
-  const handleShare = (platform: 'fb' | 'wa' | 'copy') => {
+  const handleShare = (platform: 'fb' | 'wa' | 'tw' | 'copy') => {
     const url = window.location.href
     const text = `Eid Mubarak! Check out ${profileUser?.username}'s EidSpark profile 🎉`
     if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
     else if (platform === 'wa') window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank')
+    else if (platform === 'tw') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')
     else {
       navigator.clipboard.writeText(url)
       toast({ title: "Link Copied!" })
     }
+  }
+
+  const downloadQR = () => {
+    const svg = document.getElementById('public-salami-qr');
+    if (!svg) return;
+    
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new window.Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `EidSpark-QR-${profileUser.username}.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    toast({ title: "QR Code Downloaded!" });
   }
 
   if (isLoading) {
@@ -155,7 +181,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Points Collected</p>
-                      <p className="text-3xl font-black text-slate-800">{profileUser.totalPoints.toLocaleString()} XP</p>
+                      <p className="text-3xl font-black text-slate-800">{(profileUser.totalPoints || 0).toLocaleString()} XP</p>
                     </div>
                   </div>
                   
@@ -190,6 +216,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                     </Button>
                     <Button variant="outline" className="flex-1 rounded-2xl h-14 font-bold border-2 gap-2 text-blue-600 hover:bg-blue-50" onClick={() => handleShare('fb')}>
                       <Facebook className="w-5 h-5" /> Share
+                    </Button>
+                    <Button variant="outline" className="h-14 w-14 rounded-2xl border-2 text-slate-600" onClick={() => handleShare('tw')}>
+                      <Twitter className="w-5 h-5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl bg-slate-50 text-slate-400 hover:bg-white border-2" onClick={() => handleShare('copy')}>
                       <Copy className="w-5 h-5" />
@@ -271,8 +300,15 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
               <Card className="border-none shadow-2xl rounded-[3.5rem] bg-white p-10 text-center space-y-8 relative overflow-hidden group">
                 <div className="absolute inset-0 opacity-5 pointer-events-none islamic-pattern group-hover:scale-110 transition-transform duration-1000"></div>
                 <div className="relative z-10 space-y-8">
-                  <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl border-8 border-slate-50 inline-block group-hover:rotate-2 transition-transform">
-                    <QRCodeSVG value={window.location.href} size={200} level="H" />
+                  <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl border-8 border-slate-50 inline-block group-hover:rotate-2 transition-transform relative">
+                    <QRCodeSVG id="public-salami-qr" value={`${window.location.origin}/salami/${profileUser.username}`} size={200} level="H" />
+                    <Button 
+                      size="icon" 
+                      className="absolute -bottom-4 -right-4 rounded-full emerald-gradient shadow-xl border-4 border-white h-12 w-12"
+                      onClick={downloadQR}
+                    >
+                      <Download className="w-5 h-5" />
+                    </Button>
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-2xl font-black text-slate-900">Send Me Eid Salami 🎁</h3>
@@ -280,9 +316,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                   </div>
                   
                   <div className="space-y-4 pt-6 border-t">
-                    <div className="bg-[#E2136E]/5 p-5 rounded-2xl border border-[#E2136E]/10 flex items-center justify-between">
+                    <div className="bg-[#E2136E]/5 p-5 rounded-2xl border border-[#E2136E]/10 flex items-center justify-between group/row">
                       <div className="flex items-center gap-3">
-                        <Wallet className="w-5 h-5 text-[#E2136E]" />
+                        <div className="w-10 h-10 rounded-xl bg-[#E2136E] flex items-center justify-center text-white shadow-lg group-hover/row:scale-110 transition-transform">
+                          <Wallet className="w-5 h-5" />
+                        </div>
                         <div className="text-left">
                           <p className="text-[10px] font-black uppercase text-[#E2136E] tracking-widest">bKash</p>
                           <p className="font-black text-slate-800">{salamiProfile.bkashNumber}</p>
@@ -293,15 +331,33 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                       </Button>
                     </div>
                     {salamiProfile.nagadNumber && (
-                      <div className="bg-[#F7941D]/5 p-5 rounded-2xl border border-[#F7941D]/10 flex items-center justify-between">
+                      <div className="bg-[#F7941D]/5 p-5 rounded-2xl border border-[#F7941D]/10 flex items-center justify-between group/row">
                         <div className="flex items-center gap-3">
-                          <Wallet className="w-5 h-5 text-[#F7941D]" />
+                          <div className="w-10 h-10 rounded-xl bg-[#F7941D] flex items-center justify-center text-white shadow-lg group-hover/row:scale-110 transition-transform">
+                            <Smartphone className="w-5 h-5" />
+                          </div>
                           <div className="text-left">
                             <p className="text-[10px] font-black uppercase text-[#F7941D] tracking-widest">Nagad</p>
                             <p className="font-black text-slate-800">{salamiProfile.nagadNumber}</p>
                           </div>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(salamiProfile.nagadNumber); toast({title: "Copied!"}) }} className="rounded-xl text-[#F7941D] hover:bg-[#F7941D]/10">
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {salamiProfile.rocketNumber && (
+                      <div className="bg-purple-50 p-5 rounded-2xl border border-purple-100 flex items-center justify-between group/row">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg group-hover/row:scale-110 transition-transform">
+                            <Smartphone className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[10px] font-black uppercase text-purple-600 tracking-widest">Rocket</p>
+                            <p className="font-black text-slate-800">{salamiProfile.rocketNumber}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(salamiProfile.rocketNumber); toast({title: "Copied!"}) }} className="rounded-xl text-purple-600 hover:bg-purple-100">
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
@@ -326,6 +382,3 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     </div>
   )
 }
-
-import { getDocs } from "firebase/firestore"
-import { useDoc } from "@/firebase"

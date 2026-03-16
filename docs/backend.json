@@ -32,6 +32,7 @@
         "displayName": { "type": "string" },
         "bkashNumber": { "type": "string" },
         "nagadNumber": { "type": "string" },
+        "rocketNumber": { "type": "string" },
         "message": { "type": "string" },
         "totalSalami": { "type": "number" },
         "donorsCount": { "type": "number" },

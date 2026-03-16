@@ -176,21 +176,21 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
 
                 <div className="space-y-6">
                   <p className="text-[10px] font-black uppercase text-center text-muted-foreground tracking-[0.3em]">Payment Instructions</p>
-                  <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card className="border-none shadow-xl rounded-[2rem] bg-[#E2136E] text-white overflow-hidden group">
                       <div className="p-8 flex flex-col items-center text-center space-y-4">
                         <SmartphoneNfc className="w-10 h-10 opacity-80" />
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase opacity-60">bKash (Send Money)</p>
-                          <p className="text-2xl font-black tracking-tight">{profile.bkashNumber}</p>
+                          <p className="text-[10px] font-black uppercase opacity-60">bKash</p>
+                          <p className="text-xl font-black tracking-tight">{profile.bkashNumber}</p>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border-none h-10 px-6"
+                          className="rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border-none h-10 px-4"
                           onClick={() => copyToClipboard(profile.bkashNumber)}
                         >
-                          <Copy className="w-4 h-4 mr-2" /> Copy Number
+                          <Copy className="w-4 h-4 mr-2" /> Copy
                         </Button>
                       </div>
                     </Card>
@@ -200,16 +200,36 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
                         <div className="p-8 flex flex-col items-center text-center space-y-4">
                           <Smartphone className="w-10 h-10 opacity-80" />
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase opacity-60">Nagad (Send Money)</p>
-                            <p className="text-2xl font-black tracking-tight">{profile.nagadNumber}</p>
+                            <p className="text-[10px] font-black uppercase opacity-60">Nagad</p>
+                            <p className="text-xl font-black tracking-tight">{profile.nagadNumber}</p>
                           </div>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border-none h-10 px-6"
+                            className="rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border-none h-10 px-4"
                             onClick={() => copyToClipboard(profile.nagadNumber)}
                           >
-                            <Copy className="w-4 h-4 mr-2" /> Copy Number
+                            <Copy className="w-4 h-4 mr-2" /> Copy
+                          </Button>
+                        </div>
+                      </Card>
+                    )}
+
+                    {profile.rocketNumber && (
+                      <Card className="border-none shadow-xl rounded-[2rem] bg-purple-600 text-white overflow-hidden">
+                        <div className="p-8 flex flex-col items-center text-center space-y-4">
+                          <Smartphone className="w-10 h-10 opacity-80" />
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase opacity-60">Rocket</p>
+                            <p className="text-xl font-black tracking-tight">{profile.rocketNumber}</p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="rounded-xl font-bold bg-white/10 hover:bg-white/20 text-white border-none h-10 px-4"
+                            onClick={() => copyToClipboard(profile.rocketNumber)}
+                          >
+                            <Copy className="w-4 h-4 mr-2" /> Copy
                           </Button>
                         </div>
                       </Card>
