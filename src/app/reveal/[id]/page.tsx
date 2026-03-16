@@ -35,22 +35,26 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
     
     let url = card.paymentLink.trim();
     
-    if (url.includes('<') || url.includes('>')) {
-      console.warn("Invalid payment link detected:", url);
+    // Security: Prevent javascript: or data: URIs
+    if (url.toLowerCase().startsWith('javascript:') || url.toLowerCase().startsWith('data:')) {
+      console.warn("Security blocked: Invalid URL protocol.");
       return;
     }
 
+    // Attempt to normalize URL
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      // If it's a number, it's likely a phone number for bKash/Nagad, not a link
       if (/^\d+$/.test(url)) {
-        console.warn("Payment link is just a number, cannot open as URL.");
         return;
       }
       url = `https://${url}`;
     }
 
     try {
-      new URL(url);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const validUrl = new URL(url);
+      if (validUrl.protocol === 'http:' || validUrl.protocol === 'https:') {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     } catch (e) {
       console.error("Malformed URL:", url);
     }
@@ -58,7 +62,7 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-emerald-950 flex flex-col items-center justify-center gap-6">
+      <div className="min-h-screen bg-[#022c22] flex flex-col items-center justify-center gap-6">
         <div className="w-16 h-16 border-4 border-secondary border-t-transparent rounded-full animate-spin"></div>
         <p className="text-secondary font-black tracking-widest uppercase text-xs">Unsealing Blessing...</p>
       </div>
@@ -67,7 +71,7 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
 
   if (!card) {
     return (
-      <div className="min-h-screen bg-emerald-950 text-white flex flex-col items-center justify-center p-8 text-center space-y-6">
+      <div className="min-h-screen bg-[#022c22] text-white flex flex-col items-center justify-center p-8 text-center space-y-6">
         <Moon className="w-16 h-16 text-secondary animate-float" />
         <h1 className="text-4xl font-black">Envelope Not Found</h1>
         <p className="text-white/60">This magic link may have expired or is incorrect.</p>
@@ -111,7 +115,7 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
-        <div className="w-full relative perspective-1000">
+        <div className="w-full relative">
           {!isOpen ? (
             /* Closed Envelope Animation */
             <div 
@@ -169,7 +173,7 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
                     <div className="relative">
                       <div className="absolute -top-4 -left-2 text-6xl text-primary/10 font-serif">"</div>
                       <p className="text-xl text-slate-700 font-medium italic leading-relaxed px-4">
-                        {card.message || "Sending you warm wishes and digital blessings on this joyous day. May your life be filled with happiness and prosperity."}
+                        {card.message || "Sending you warm wishes and digital blessings on this joyous day."}
                       </p>
                       <div className="absolute -bottom-10 -right-2 text-6xl text-primary/10 font-serif">"</div>
                     </div>
@@ -208,15 +212,6 @@ export default function SalamiRevealPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </main>
-
-      <style jsx global>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .islamic-pattern {
-          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 30-15 30-15-30z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
-        }
-      `}</style>
     </div>
   )
 }

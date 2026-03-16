@@ -165,11 +165,17 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav Overlay */}
       <div className={cn(
-        "fixed inset-0 bg-white lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
+        "fixed inset-0 bg-white lg:hidden transition-all duration-500 ease-in-out z-[60] flex flex-col items-center justify-center",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
+        <button
+          onClick={() => setIsOpen(false)}
+          className="absolute top-6 right-6 p-2 rounded-xl text-primary bg-primary/5"
+        >
+          <X className="h-6 w-6" />
+        </button>
         <div className="space-y-6 w-full max-w-xs text-center">
           {user && (
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/10 border-2 border-secondary/20 mb-8">

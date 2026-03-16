@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
-import { Upload, Sparkles, Loader2, Camera } from "lucide-react"
+import { Upload, Sparkles, Loader2, Camera, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -39,6 +39,16 @@ export default function SelfieStudioPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Proper Cleanup for Camera Tracks
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setShowCamera(false);
+  }, []);
+
   const startCamera = async () => {
     try { 
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }); 
@@ -51,15 +61,33 @@ export default function SelfieStudioPage() {
 
   const capturePhoto = () => {
     if (videoRef.current) {
-      const v = videoRef.current; const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; const ctx = c.getContext('2d')
-      if (ctx) { ctx.drawImage(v, 0, 0); setOriginalImage(c.toDataURL('image/png')); setAiGeneratedImage(null); if (v.srcObject) (v.srcObject as MediaStream).getTracks().forEach(t => t.stop()); setShowCamera(false) }
+      const v = videoRef.current; 
+      const c = document.createElement('canvas'); 
+      c.width = v.videoWidth; 
+      c.height = v.videoHeight; 
+      const ctx = c.getContext('2d')
+      if (ctx) { 
+        ctx.drawImage(v, 0, 0); 
+        setOriginalImage(c.toDataURL('image/png')); 
+        setAiGeneratedImage(null); 
+        stopCamera();
+      }
     }
   };
 
+  useEffect(() => {
+    return () => stopCamera(); // Cleanup on unmount
+  }, [stopCamera]);
+
   const handleGenerateAiBackground = async () => {
     if (!originalImage) { toast({ title: "No Photo" }); return }
-    const now = Date.now(); if (now - lastAiRequestTime < 5000) { toast({ title: "AI generation temporarily busy. Please try again in a moment." }); return }
-    setIsGenerating(true); setLastAiRequestTime(now)
+    const now = Date.now(); 
+    if (now - lastAiRequestTime < 5000) { 
+      toast({ title: "AI generation temporarily busy. Please try again in a moment." }); 
+      return 
+    }
+    setIsGenerating(true); 
+    setLastAiRequestTime(now)
     try {
       const result = await generateSelfieBackground({ photoDataUri: originalImage, theme: selectedTheme.id as any })
       setAiGeneratedImage(result.generatedImageUrl); toast({ title: "Poster Perfected!" })
@@ -110,7 +138,17 @@ export default function SelfieStudioPage() {
                     <Button onClick={startCamera} className="w-full h-14 rounded-xl emerald-gradient font-black">Open Camera</Button>
                   ) : (
                     <div className="space-y-4">
-                      <video ref={videoRef} autoPlay className="w-full rounded-2xl bg-black aspect-square object-cover" />
+                      <div className="relative group rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+                        <video ref={videoRef} autoPlay className="w-full bg-black aspect-square object-cover" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-2 right-2 bg-black/50 text-white rounded-full hover:bg-black/70"
+                          onClick={stopCamera}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                       <Button onClick={capturePhoto} className="w-full h-14 rounded-xl gold-gradient font-black">Snap Photo</Button>
                     </div>
                   )}

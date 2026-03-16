@@ -14,18 +14,17 @@ import {
   Navigation2, 
   ChevronUp, 
   ChevronDown,
-  Share2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { collection, doc, query, where, addDoc, getDocs, updateDoc, increment } from "firebase/firestore"
+import { collection, doc, query } from "firebase/firestore"
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
 import { useToast } from "@/hooks/use-toast"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { awardPoints } from "@/lib/gamification-utils"
 import { BackButton } from "@/components/back-button"
+import { calculateDistance } from "@/lib/geo-utils"
 
 const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
   ssr: false,
@@ -36,17 +35,6 @@ const JamaatMap = dynamic(() => import("@/components/jamaat-map"), {
     </div>
   ),
 })
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371e3 
-  const φ1 = (lat1 * Math.PI) / 180
-  const φ2 = (lat2 * Math.PI) / 180
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
 
 export default function JamaatFinderPage() {
   const { user } = useUser()
@@ -87,11 +75,15 @@ export default function JamaatFinderPage() {
 
   const filteredMosques = useMemo(() => {
     if (!allMosques) return []
-    let mosques = allMosques.map(m => ({ ...m, distance: userLocation ? calculateDistance(userLocation[0], userLocation[1], m.latitude, m.longitude) : undefined }))
+    let mosques = allMosques.map(m => ({ 
+      ...m, 
+      distance: userLocation ? calculateDistance(userLocation[0], userLocation[1], m.latitude, m.longitude) : undefined 
+    }))
     if (userLocation) { mosques.sort((a, b) => (a.distance || 0) - (b.distance || 0)) }
     return mosques.filter(m => {
-      const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.district.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesSearch
+      const nameMatch = m.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      const districtMatch = m.district?.toLowerCase().includes(searchQuery.toLowerCase())
+      return !searchQuery || nameMatch || districtMatch
     })
   }, [allMosques, searchQuery, userLocation])
 
