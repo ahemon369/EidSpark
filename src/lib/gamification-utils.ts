@@ -88,7 +88,7 @@ export function awardPoints(db: Firestore, userId: string, action: ActionType) {
       const bonusConfig = CHALLENGE_BONUS[action];
       
       if (!snap.exists()) {
-        const isComplete = bonusConfig && bonusConfig.target === 1;
+        const isComplete = !!(bonusConfig && bonusConfig.target === 1);
         setDoc(progressRef, {
           userId,
           challengeId: action,
@@ -98,19 +98,19 @@ export function awardPoints(db: Firestore, userId: string, action: ActionType) {
           createdAt: serverTimestamp()
         });
         
-        if (isComplete) awardBonus(db, userId, action, bonusConfig.reward);
+        if (isComplete && bonusConfig) awardBonus(db, userId, action, bonusConfig.reward);
       } else {
         const data = snap.data();
         if (!data.isCompleted) {
           const newCount = (data.currentCount || 0) + 1;
-          const isNowComplete = bonusConfig && newCount >= bonusConfig.target;
+          const isNowComplete = !!(bonusConfig && newCount >= bonusConfig.target);
           
           updateDoc(progressRef, {
             currentCount: newCount,
             isCompleted: isNowComplete
           });
 
-          if (isNowComplete) awardBonus(db, userId, action, bonusConfig.reward);
+          if (isNowComplete && bonusConfig) awardBonus(db, userId, action, bonusConfig.reward);
         }
       }
     });
