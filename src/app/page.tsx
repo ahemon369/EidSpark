@@ -113,9 +113,9 @@ export default function Home() {
       const now = new Date().getTime()
       const diff = targetDate.getTime() - now
       setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        days: Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24))),
+        hours: Math.max(0, Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
+        minutes: Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)))
       })
     }, 1000)
     return () => clearInterval(interval)
@@ -128,12 +128,10 @@ export default function Home() {
       <main className="flex-grow pt-[80px]">
         {/* Light SaaS Hero Section */}
         <section className="relative overflow-hidden pt-20 pb-32 lg:pt-40 lg:pb-52">
-          {/* Background Elements */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-50 via-white to-white"></div>
             <div className="absolute inset-0 opacity-[0.02] islamic-pattern"></div>
             
-            {/* Floating Celestial Icons */}
             <motion.div 
               animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }} 
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -185,7 +183,6 @@ export default function Home() {
                   </Button>
                 </div>
 
-                {/* Trust Proof */}
                 <div className="pt-8 flex items-center gap-6">
                   <div className="flex -space-x-4">
                     {[1, 2, 3, 4].map(i => (
@@ -202,7 +199,6 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              {/* Hero Right: Modern Device Mockup */}
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -239,7 +235,6 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* Visual Atmosphere Blobs */}
                 <div className="absolute -top-20 -right-20 w-96 h-96 bg-emerald-100/50 rounded-full blur-[120px] -z-10 animate-pulse"></div>
                 <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-amber-100/50 rounded-full blur-[120px] -z-10 animate-pulse delay-700"></div>
               </motion.div>
