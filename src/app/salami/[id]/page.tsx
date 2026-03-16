@@ -22,8 +22,9 @@ import {
   Info,
   Star
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase"
 import { collection, query, where, limit, updateDoc, doc, increment } from "firebase/firestore"
+import { signInAnonymously } from "firebase/auth"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
@@ -34,6 +35,7 @@ const amounts = [10, 20, 50, 100, 500, 1000]
 export default function PublicSalamiProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const db = useFirestore()
+  const auth = useAuth()
   const { toast } = useToast()
   
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
@@ -51,7 +53,13 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
   const handleConfirm = async () => {
     if (!profile || !db || !selectedAmount) return
     setIsConfirming(true)
+    
     try {
+      // Ensure user is signed in (anonymously if needed) to satisfy security rules
+      if (auth && !auth.currentUser) {
+        await signInAnonymously(auth)
+      }
+
       await updateDoc(doc(db, "salamiProfiles", profile.id), {
         totalSalami: increment(selectedAmount),
         donorsCount: increment(1)
@@ -68,6 +76,7 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
       toast({ title: "Salami Confirmed! ✨", description: `Thank you for your generosity of ৳${selectedAmount}.` })
     } catch (error) {
       console.error(error)
+      toast({ variant: "destructive", title: "Confirmation Failed", description: "Please try again later." })
     } finally {
       setIsConfirming(false)
     }
@@ -211,7 +220,7 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-5xl font-black text-primary tracking-tighter">Blessing Sent!</h3>
-                  <p className="text-xl text-muted-foreground font-medium max-w-sm mx-auto leading-relaxed">
+                  <p className="text-xl text-muted-foreground font-medium max-sm:text-sm max-w-sm mx-auto leading-relaxed">
                     You've just made {profile.displayName}'s Eid a little brighter. May Allah reward your generosity!
                   </p>
                 </div>

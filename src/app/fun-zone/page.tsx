@@ -38,7 +38,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, addDoc, query, orderBy, limit, doc, increment, setDoc, deleteDoc } from "firebase/firestore"
+import { collection, addDoc, query, orderBy, limit, doc, increment, setDoc, deleteDoc, updateDoc } from "firebase/firestore"
 import { 
   BarChart, 
   Bar, 
@@ -142,10 +142,6 @@ export default function FunZone() {
   const [selfieUrl, setSelfieUrl] = useState("")
   const [caption, setCaption] = useState("")
   const [isUploading, setIsUploading] = useState(false)
-
-  // Jamaat Alert State
-  const [isDetecting, setIsDetecting] = useState(false)
-  const [nearbyFound, setNearbyFound] = useState(false)
 
   // Fetch Data
   const savedExcusesRef = useMemoFirebase(() => {
@@ -300,6 +296,19 @@ export default function FunZone() {
     } catch (e) {} finally { setIsUploading(false) }
   }
 
+  const handleLikeSelfie = async (id: string) => {
+    if (!db || !user) {
+      toast({ title: "Sign in required" });
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "eidSelfies", id), {
+        likesCount: increment(1)
+      });
+      awardPoints(db, user.uid, 'ReceiveLike');
+    } catch (e) {}
+  }
+
   const totalSalamiValue = salamiRecords?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
   const chartData = [...(salamiRecords || [])].reverse().slice(-10).map(r => ({ name: r.giverName || "...", amount: r.amount }))
 
@@ -351,15 +360,20 @@ export default function FunZone() {
                     <CardContent className="p-12 text-center space-y-12">
                       <div className="relative">
                         <div className="text-8xl mb-6 animate-bounce">{currentEmoji}</div>
-                        <div className="bg-primary/5 p-12 rounded-[2.5rem] border-4 border-dashed border-primary/10 relative group hover:bg-primary/[0.07] transition-all">
-                          <p className="text-4xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
-                          <button 
-                            onClick={() => saveExcuse(currentExcuse)}
-                            className="absolute -top-6 right-6 p-4 bg-white rounded-full shadow-2xl text-primary hover:scale-110 transition-all border border-primary/5 hover:bg-secondary hover:text-white"
-                            title="Save to profile"
-                          >
-                            <Bookmark className="w-6 h-6" />
-                          </button>
+                        {/* Chat-style speech bubble with CSS triangle */}
+                        <div className="relative">
+                          <div className="bg-primary/5 p-12 rounded-[2.5rem] border-4 border-dashed border-primary/10 relative group hover:bg-primary/[0.07] transition-all">
+                            <p className="text-4xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
+                            <button 
+                              onClick={() => saveExcuse(currentExcuse)}
+                              className="absolute -top-6 right-6 p-4 bg-white rounded-full shadow-2xl text-primary hover:scale-110 transition-all border border-primary/5 hover:bg-secondary hover:text-white"
+                              title="Save to profile"
+                            >
+                              <Bookmark className="w-6 h-6" />
+                            </button>
+                          </div>
+                          {/* Bubble Arrow */}
+                          <div className="absolute left-1/2 -bottom-4 -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[20px] border-t-primary/5"></div>
                         </div>
                       </div>
 
@@ -438,7 +452,7 @@ export default function FunZone() {
                       {excuses.slice(0, 5).map((ex, i) => (
                         <div 
                           key={i} 
-                          className="p-6 rounded-[2rem] bg-slate-50 border-2 border-transparent hover:border-secondary/20 hover:bg-white transition-all cursor-pointer group shadow-sm"
+                          className="p-6 rounded-[2rem] bg-slate-50 border-2 border-transparent hover:border-primary/20 hover:bg-white transition-all cursor-pointer group shadow-sm"
                           onClick={() => {
                             setCurrentExcuse(ex)
                             setCurrentEmoji(viralEmojis[i % viralEmojis.length])
@@ -590,7 +604,7 @@ export default function FunZone() {
                 <div className="relative inline-block">
                   <div className="absolute inset-0 bg-primary blur-[60px] opacity-20"></div>
                   <div className="w-32 h-32 bg-primary/5 rounded-[3.5rem] flex items-center justify-center mx-auto text-primary relative z-10">
-                    {isDetecting ? <Loader2 className="w-16 h-16 animate-spin" /> : <MapPin className="w-16 h-16 animate-bounce" />}
+                    <MapPin className="w-16 h-16 animate-bounce" />
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -598,23 +612,11 @@ export default function FunZone() {
                   <p className="text-muted-foreground text-xl max-w-xl mx-auto leading-relaxed font-medium">Find the nearest verified Eid congregations using real-time GPS synchronization.</p>
                 </div>
                 
-                {nearbyFound ? (
-                  <div className="animate-in zoom-in bg-emerald-50 p-12 rounded-[3rem] border-4 border-emerald-100/50 space-y-8 shadow-inner">
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_#10b981]"></div>
-                      <span className="font-black text-emerald-800 uppercase tracking-[0.2em] text-xs">Verified Active Locations Detected</span>
-                    </div>
-                    <Button className="h-20 px-16 rounded-[2rem] emerald-gradient text-white font-black text-2xl shadow-2xl hover:scale-105 transition-all" asChild>
-                      <a href="/tools/jamaat-finder">Explore Map Now <Navigation className="ml-3 w-6 h-6" /></a>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="pt-8">
-                    <Button onClick={() => { setIsDetecting(true); setTimeout(() => { setIsDetecting(false); setNearbyFound(true); }, 1500) }} className="h-24 px-16 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-2xl hover:scale-105 transition-all">
-                      <LocateFixed className="mr-4 w-8 h-8" /> Detect My Position
-                    </Button>
-                  </div>
-                )}
+                <div className="pt-8">
+                  <Button className="h-24 px-16 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-2xl hover:scale-105 transition-all" asChild>
+                    <a href="/tools/jamaat-finder"><LocateFixed className="mr-4 w-8 h-8" /> Detect Nearby Locations</a>
+                  </Button>
+                </div>
              </Card>
           </TabsContent>
 
@@ -681,7 +683,7 @@ export default function FunZone() {
                           <p className="font-black text-primary text-xl truncate max-w-[180px]">{s.caption || "Eid Mubarak!"}</p>
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Contributor: {s.userName}</p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => {}} className="rounded-[1.5rem] h-14 px-6 gap-3 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50 shadow-sm">
+                        <Button variant="outline" size="sm" onClick={() => handleLikeSelfie(s.id)} className="rounded-[1.5rem] h-14 px-6 gap-3 border-2 border-rose-100 text-rose-600 font-black hover:bg-rose-50 shadow-sm">
                           <Heart className={cn("w-5 h-5", s.likesCount > 0 ? "fill-rose-600" : "")} /> {s.likesCount}
                         </Button>
                       </CardContent>
