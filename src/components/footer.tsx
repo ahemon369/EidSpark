@@ -58,10 +58,10 @@ export function Footer() {
           <div className="space-y-8">
             <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit">Studio Tools</h4>
             <ul className="space-y-4 text-slate-500 font-bold text-sm">
-              <li><Link href="/tools/jamaat-finder" className="hover:text-primary transition-colors flex items-center gap-2">Jamaat Finder</Link></li>
-              <li><Link href="/tools/zakat" className="hover:text-primary transition-colors flex items-center gap-2">Zakat Assistant</Link></li>
-              <li><Link href="/tools/greeting" className="hover:text-primary transition-colors flex items-center gap-2">Greeting Designer</Link></li>
-              <li><Link href="/tools/selfie" className="hover:text-primary transition-colors flex items-center gap-2">Selfie Frame AI</Link></li>
+              <li><Link href="/tools/jamaat-finder" className="hover:text-primary transition-colors">Jamaat Finder</Link></li>
+              <li><Link href="/tools/zakat" className="hover:text-primary transition-colors">Zakat Assistant</Link></li>
+              <li><Link href="/tools/greeting" className="hover:text-primary transition-colors">Greeting Designer</Link></li>
+              <li><Link href="/tools/selfie" className="hover:text-primary transition-colors">Selfie Frame AI</Link></li>
             </ul>
           </div>
 
@@ -76,7 +76,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4 — Community & Newsletter */}
+          {/* Column 4 — Community */}
           <div className="space-y-8">
             <div>
               <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mb-6">Community</h4>
@@ -106,7 +106,7 @@ export function Footer() {
         
         <div className="pt-12 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-8">
           <p className="text-slate-400 font-bold text-xs tracking-tight">
-            © 2026 EidSpark Bangladesh. Crafted with <Heart className="w-3 h-3 inline fill-rose-500 text-rose-500 mx-1" /> for the community.
+            © 2026 EidSpark Bangladesh
           </p>
           <div className="flex items-center gap-4 text-emerald-600/40 font-black uppercase tracking-[0.2em] text-[9px]">
             <ShieldCheck className="w-4 h-4" /> Secured by Firebase Cloud

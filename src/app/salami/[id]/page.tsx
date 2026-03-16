@@ -127,8 +127,8 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
                 <span className="text-5xl">🌙</span>
               </div>
               
-              {/* Added QR Code to Profile Card as per instructions */}
-              <div className="bg-white p-3 rounded-2xl shadow-xl">
+              {/* QR Code visible on profile card */}
+              <div className="bg-white p-3 rounded-2xl shadow-xl hidden sm:block">
                 <QRCodeSVG value={publicUrl} size={100} level="H" />
               </div>
             </div>
@@ -140,6 +140,14 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
           <CardContent className="p-12 space-y-12">
             {!hasSent ? (
               <>
+                {/* QR Code for Mobile (Centered & Large) */}
+                <div className="sm:hidden flex flex-col items-center justify-center space-y-4">
+                  <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl border-8 border-slate-50">
+                    <QRCodeSVG value={publicUrl} size={200} level="H" />
+                  </div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em]">Scan to pay salami</p>
+                </div>
+
                 <div className="space-y-6">
                   <div className="flex items-center justify-between px-2">
                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em]">Choose Salami Amount</p>
@@ -148,13 +156,13 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
                       <span className="text-[10px] font-black text-primary uppercase">{profile.donorsCount || 0} People Sent Salami</span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-3 justify-center">
+                  <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar snap-x">
                     {amounts.map(amt => (
                       <button
                         key={amt}
                         onClick={() => setSelectedAmount(amt)}
                         className={cn(
-                          "h-16 px-8 rounded-2xl font-black text-xl transition-all shadow-sm flex items-center gap-2",
+                          "h-16 px-8 rounded-2xl font-black text-xl transition-all shadow-sm flex items-center gap-2 shrink-0 snap-center",
                           selectedAmount === amt 
                             ? "gold-gradient text-primary scale-110 shadow-xl" 
                             : "bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100"
