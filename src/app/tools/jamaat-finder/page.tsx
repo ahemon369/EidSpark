@@ -96,29 +96,39 @@ export default function JamaatFinderPage() {
     <div className="h-screen flex flex-col bg-background overflow-hidden selection:bg-secondary selection:text-primary transition-all duration-300">
       <Navbar />
       
-      <div className="pt-[100px] flex flex-col h-full overflow-hidden">
-        <BackButton />
+      <div className="pt-[70px] flex flex-col h-full overflow-hidden">
+        <div className="bg-white border-b py-4">
+          <BackButton className="mb-0" />
+        </div>
         
-        <main className="flex-grow flex flex-col lg:flex-row relative">
+        <main className="flex-grow flex flex-col lg:flex-row relative overflow-hidden">
           <aside className={cn(
-            "fixed inset-x-0 bottom-0 z-40 bg-white transition-transform duration-500 lg:relative lg:inset-auto lg:w-[450px] lg:translate-y-0 border-r flex flex-col shadow-2xl",
+            "fixed inset-x-0 bottom-0 z-40 bg-white transition-all duration-500 lg:relative lg:inset-auto lg:w-[400px] xl:w-[450px] lg:translate-y-0 border-r flex flex-col shadow-2xl",
             isMobilePanelOpen ? "h-[85vh] translate-y-0" : "h-[80px] translate-y-0 lg:h-full"
           )}>
-            <div className="lg:hidden h-[80px] flex items-center justify-center cursor-pointer border-b px-6 gap-4" onClick={() => setIsMobilePanelOpen(!isMobilePanelOpen)}>
-              <p className="font-black text-primary text-sm uppercase tracking-widest flex items-center gap-2"><Navigation2 className="w-4 h-4" /> {isMobilePanelOpen ? "Close Registry" : `Show ${filteredMosques.length} Locations`}</p>
-              {isMobilePanelOpen ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
+            {/* Mobile Panel Toggle */}
+            <div className="lg:hidden h-[80px] flex items-center justify-between cursor-pointer border-b px-6 gap-4" onClick={() => setIsMobilePanelOpen(!isMobilePanelOpen)}>
+              <p className="font-black text-primary text-sm uppercase tracking-widest flex items-center gap-2">
+                <Navigation2 className="w-4 h-4 text-secondary fill-secondary" /> 
+                {isMobilePanelOpen ? "Close Registry" : `Show ${filteredMosques.length} Locations`}
+              </p>
+              <div className="bg-primary/5 p-2 rounded-lg">
+                {isMobilePanelOpen ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronUp className="w-5 h-5 text-primary" />}
+              </div>
             </div>
             
-            <Tabs defaultValue="explore" className="flex flex-col h-full">
-              <div className="p-6 pb-0 bg-white sticky top-0 z-30">
-                <h1 className="text-2xl font-black text-primary flex items-center gap-2 mb-6"><Navigation2 className="w-6 h-6 text-secondary fill-secondary" /> Jamaat Finder</h1>
-                <div className="relative group mb-6">
+            <Tabs defaultValue="explore" className="flex flex-col h-full overflow-hidden">
+              <div className="p-6 pb-4 bg-white sticky top-0 z-30 space-y-6">
+                <h1 className="text-xl md:text-2xl font-black text-primary hidden lg:flex items-center gap-2">
+                  <Navigation2 className="w-6 h-6 text-secondary fill-secondary" /> Jamaat Finder
+                </h1>
+                <div className="relative group">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="Search area, mosque or maidan..." className="h-14 pl-11 rounded-2xl bg-slate-50 border-none shadow-inner" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                  <Input placeholder="Search area or mosque..." className="h-12 md:h-14 pl-11 rounded-2xl bg-slate-50 border-none shadow-inner text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 </div>
-                <TabsList className="grid w-full grid-cols-2 h-12 bg-primary/5 rounded-xl p-1 mb-6">
-                  <TabsTrigger value="explore" className="rounded-lg font-black text-[10px] uppercase tracking-widest">Explore Map</TabsTrigger>
-                  {isAdmin && <TabsTrigger value="admin" className="rounded-lg font-black text-[10px] uppercase tracking-widest">Moderation</TabsTrigger>}
+                <TabsList className="grid w-full grid-cols-2 h-11 bg-primary/5 rounded-xl p-1">
+                  <TabsTrigger value="explore" className="rounded-lg font-black text-[9px] md:text-[10px] uppercase tracking-widest">Explore Map</TabsTrigger>
+                  {isAdmin && <TabsTrigger value="admin" className="rounded-lg font-black text-[9px] md:text-[10px] uppercase tracking-widest">Moderation</TabsTrigger>}
                 </TabsList>
               </div>
 
@@ -126,19 +136,19 @@ export default function JamaatFinderPage() {
                 <ScrollArea className="flex-grow">
                   <div className="p-6 pt-0 space-y-6">
                     {nearestMosque && userLocation && (
-                      <div className="bg-primary p-6 rounded-[2rem] text-white shadow-xl flex items-center gap-4 relative overflow-hidden">
-                        <LocateFixed className="w-6 h-6 text-secondary shrink-0" />
-                        <p className="text-sm font-black leading-tight">The nearest Jamaat is <span className="text-secondary">{Math.round(nearestMosque.distance!)}m</span> away.</p>
+                      <div className="bg-primary p-5 rounded-2xl text-white shadow-xl flex items-center gap-4 relative overflow-hidden">
+                        <LocateFixed className="w-5 h-5 text-secondary shrink-0" />
+                        <p className="text-xs font-black leading-tight">Nearest: <span className="text-secondary">{Math.round(nearestMosque.distance!)}m</span> away.</p>
                       </div>
                     )}
-                    <div className="space-y-4">
+                    <div className="space-y-4 pb-20 lg:pb-4">
                       {filteredMosques.map((mosque) => (
-                        <Card key={mosque.id} className={cn("border-2 transition-all cursor-pointer rounded-[2rem] overflow-hidden", selectedMosqueId === mosque.id ? "border-primary shadow-2xl" : "border-transparent bg-white shadow-sm")} onClick={() => setSelectedMosqueId(mosque.id)}>
-                          <CardContent className="p-6 space-y-5">
-                            <h3 className="font-black text-lg text-slate-800">{mosque.name}</h3>
-                            <div className="flex items-center justify-between border-t pt-5">
-                              <span className="text-sm font-black text-primary">{mosque.eid_prayer_time || "Pending"}</span>
-                              <Button variant="default" className="h-11 rounded-xl font-black text-xs emerald-gradient px-6" onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank") }}>Directions</Button>
+                        <Card key={mosque.id} className={cn("border-2 transition-all cursor-pointer rounded-2xl lg:rounded-[2rem] overflow-hidden", selectedMosqueId === mosque.id ? "border-primary shadow-lg" : "border-transparent bg-white shadow-sm")} onClick={() => { setSelectedMosqueId(mosque.id); if (window.innerWidth < 1024) setIsMobilePanelOpen(false); }}>
+                          <CardContent className="p-5 md:p-6 space-y-4">
+                            <h3 className="font-black text-base md:text-lg text-slate-800 line-clamp-1">{mosque.name}</h3>
+                            <div className="flex items-center justify-between border-t pt-4">
+                              <span className="text-xs md:text-sm font-black text-primary">{mosque.eid_prayer_time || "Pending"}</span>
+                              <Button variant="default" size="sm" className="h-10 rounded-xl font-black text-[10px] emerald-gradient px-4" onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank") }}>Directions</Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -148,13 +158,17 @@ export default function JamaatFinderPage() {
                 </ScrollArea>
               </TabsContent>
               {isAdmin && <TabsContent value="admin" className="flex-grow flex flex-col overflow-hidden m-0"><ScrollArea className="flex-grow px-6"><AdminJamaatPanel /></ScrollArea></TabsContent>}
-              <div className="p-6 border-t bg-slate-50/50">
-                <Button onClick={handleFindNearMe} disabled={isDetecting} className="w-full h-14 rounded-2xl gold-gradient text-primary font-black shadow-xl text-lg">{isDetecting ? <Loader2 className="animate-spin" /> : <LocateFixed className="w-6 h-6 mr-3" />} Sync GPS Position</Button>
-                <div className="mt-3"><AddMosqueModal /></div>
+              
+              <div className="p-4 md:p-6 border-t bg-slate-50/50 space-y-3 shrink-0">
+                <Button onClick={handleFindNearMe} disabled={isDetecting} className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl gold-gradient text-primary font-black shadow-lg text-sm md:text-lg">
+                  {isDetecting ? <Loader2 className="animate-spin w-5 h-5" /> : <LocateFixed className="w-5 h-5 mr-3" />} GPS Sync
+                </Button>
+                <div className="w-full"><AddMosqueModal /></div>
               </div>
             </Tabs>
           </aside>
 
+          {/* Map Section */}
           <section className="flex-grow relative z-10 h-full">
             <JamaatMap mosques={filteredMosques} onSelectMosque={setSelectedMosqueId} userLocation={userLocation} selectedId={selectedMosqueId} />
           </section>

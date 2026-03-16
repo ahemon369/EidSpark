@@ -98,22 +98,6 @@ export default function GreetingStudioPage() {
     setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el))
   }
 
-  const addElement = (type: ElementType, content: string) => {
-    const newEl: CardElement = {
-      id: Math.random().toString(36).substr(2, 9),
-      type,
-      x: 540,
-      y: 540,
-      width: type === 'text' ? 600 : 200,
-      height: type === 'text' ? 100 : 200,
-      rotation: 0,
-      content,
-      style: type === 'text' ? { fontSize: 40, color: template.textColor, fontFamily: 'Hind Siliguri', textAlign: 'center' } : { opacity: 1 }
-    }
-    setElements(prev => [...prev, newEl])
-    setSelectedId(newEl.id)
-  }
-
   const handleAiGenerate = async () => {
     setIsLoading(true)
     try {
@@ -136,37 +120,58 @@ export default function GreetingStudioPage() {
     }
   }
 
-  const handleMouseDown = (e: React.MouseEvent, el: CardElement) => {
-    e.stopPropagation()
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, el: CardElement) => {
     setSelectedId(el.id)
     setIsDragging(true)
     if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const scale = 1080 / rect.width
-    const mouseX = (e.clientX - rect.left) * scale
-    const mouseY = (e.clientY - rect.top) * scale
+    
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    const mouseX = (clientX - rect.left) * scale
+    const mouseY = (clientY - rect.top) * scale
     setDragOffset({ x: mouseX - el.x, y: mouseY - el.y })
   }
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  const handleMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging || !selectedId || !containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const scale = 1080 / rect.width
-    const mouseX = (e.clientX - rect.left) * scale
-    const mouseY = (e.clientY - rect.top) * scale
+    const mouseX = (clientX - rect.left) * scale
+    const mouseY = (clientY - rect.top) * scale
     updateElement(selectedId, { x: mouseX - dragOffset.x, y: mouseY - dragOffset.y })
   }, [isDragging, selectedId, dragOffset])
 
-  const handleMouseUp = useCallback(() => setIsDragging(false), [])
-
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY)
+    const onTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault()
+        handleMove(e.touches[0].clientX, e.touches[0].clientY)
+      }
     }
-  }, [handleMouseMove, handleMouseUp])
+    const onEnd = () => setIsDragging(false)
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('touchmove', onTouchMove, { passive: false })
+    window.addEventListener('mouseup', onEnd)
+    window.addEventListener('touchend', onEnd)
+    
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('mouseup', onEnd)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [handleMove, isDragging])
 
   const renderCanvas = useCallback(async () => {
     const canvas = canvasRef.current
@@ -202,9 +207,6 @@ export default function GreetingStudioPage() {
         lines.push(line)
         const lineHeight = (el.style.fontSize || 40) * 1.2
         lines.forEach((l, i) => { ctx.fillText(l.trim(), 0, i * lineHeight - (lines.length * lineHeight) / 2) })
-      } else if (el.type === 'image') {
-        const img = new Image(); img.src = el.content
-        ctx.drawImage(img, -el.width / 2, -el.height / 2, el.width, el.height)
       }
       ctx.restore()
     }
@@ -233,13 +235,15 @@ export default function GreetingStudioPage() {
     <div className="min-h-screen bg-background islamic-pattern pb-20 flex flex-col transition-all duration-300">
       <Navbar />
       
-      <div className="pt-[100px] flex flex-col flex-grow">
-        <BackButton />
+      <div className="pt-[70px] flex flex-col flex-grow">
+        <div className="bg-white border-b py-4">
+          <BackButton className="mb-0" />
+        </div>
         
-        <main className="max-w-[1600px] mx-auto px-6 py-8 grid lg:grid-cols-12 gap-8 flex-grow">
-          {/* Toolbar */}
-          <aside className="lg:col-span-3 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-            <div className="space-y-2 mb-8">
+        <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+          {/* Toolbar Sidebar */}
+          <aside className="lg:col-span-3 space-y-6 order-2 lg:order-1">
+            <div className="space-y-2 mb-4 lg:mb-8 text-center lg:text-left">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Greeting Studio</h1>
               <p className="text-sm text-slate-500 font-medium">Design professional AI-powered Eid cards.</p>
             </div>
@@ -253,28 +257,24 @@ export default function GreetingStudioPage() {
               </CardHeader>
               <CardContent className="p-6">
                 <Tabs defaultValue="ai" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-6 bg-primary/5 rounded-xl h-12">
-                    <TabsTrigger value="ai" className="text-xs font-bold">AI</TabsTrigger>
-                    <TabsTrigger value="layers" className="text-xs font-bold">Layers</TabsTrigger>
-                    <TabsTrigger value="theme" className="text-xs font-bold">Theme</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-primary/5 rounded-xl h-12">
+                    <TabsTrigger value="ai" className="text-xs font-bold">AI Magic</TabsTrigger>
+                    <TabsTrigger value="theme" className="text-xs font-bold">Themes</TabsTrigger>
                   </TabsList>
                   <TabsContent value="ai" className="space-y-4">
                     <div className="space-y-3">
-                      <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Recipient Name</Label>
-                      <Input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="Name" className="rounded-xl h-12" />
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Recipient Name</Label>
+                      <Input value={aiName} onChange={(e) => setAiName(e.target.value)} placeholder="e.g. Abdullah" className="rounded-xl h-12" />
                     </div>
-                    <Button className="w-full emerald-gradient h-12 font-black rounded-xl" onClick={handleAiGenerate} disabled={isLoading}>
-                      {isLoading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" /> Magic Text</>}
+                    <Button className="w-full emerald-gradient h-12 font-black rounded-xl text-xs" onClick={handleAiGenerate} disabled={isLoading}>
+                      {isLoading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-4 h-4 mr-2" /> Generate Magic Text</>}
                     </Button>
                   </TabsContent>
-                  <TabsContent value="layers" className="space-y-4">
-                    <Button variant="outline" onClick={() => addElement('text', 'New Text')} className="w-full h-12 rounded-xl text-xs font-bold">Add Text</Button>
-                  </TabsContent>
-                  <TabsContent value="theme" className="space-y-4">
+                  <TabsContent value="theme" className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                     {templates.map(t => (
                       <button key={t.id} onClick={() => setTemplate(t)} className={cn("w-full h-14 rounded-xl border-2 flex items-center justify-between px-4 transition-all", template.id === t.id ? "border-primary bg-primary/5" : "border-transparent bg-slate-100")}>
                         <span className="text-xs font-bold">{t.name}</span>
-                        <div className={cn("w-4 h-4 rounded-full", t.bg)} />
+                        <div className={cn("w-5 h-5 rounded-full shadow-sm", t.bg)} />
                       </button>
                     ))}
                   </TabsContent>
@@ -283,32 +283,66 @@ export default function GreetingStudioPage() {
             </Card>
           </aside>
 
-          {/* Canvas */}
-          <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/50 rounded-[3rem] p-8 relative">
-            <div ref={containerRef} className="relative shadow-2xl w-full max-w-[600px] aspect-square bg-white overflow-hidden rounded-2xl" onMouseDown={() => setSelectedId(null)}>
+          {/* Canvas Main Area */}
+          <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/50 rounded-[2rem] lg:rounded-[3rem] p-4 md:p-8 order-1 lg:order-2">
+            <div 
+              ref={containerRef} 
+              className="relative shadow-2xl w-full max-w-[600px] aspect-square bg-white overflow-hidden rounded-2xl touch-none" 
+              onMouseDown={() => setSelectedId(null)}
+              onTouchStart={() => setSelectedId(null)}
+            >
               <div className={cn("absolute inset-0 transition-all duration-500", template.bg)}>
                 <div className="absolute inset-0 opacity-20 islamic-pattern"></div>
               </div>
               {elements.map(el => (
-                <div key={el.id} onMouseDown={(e) => handleMouseDown(e, el)} style={{ position: 'absolute', left: `${(el.x / 1080) * 100}%`, top: `${(el.y / 1080) * 100}%`, width: `${(el.width / 1080) * 100}%`, transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`, zIndex: selectedId === el.id ? 50 : 10, outline: selectedId === el.id ? '2px solid #fbbf24' : 'none', outlineOffset: '4px' }}>
-                  {el.type === 'text' ? (
-                    <div style={{ color: el.style.color, fontSize: `${(el.style.fontSize! / 1080) * 100}cqw`, fontFamily: el.style.fontFamily, textAlign: el.style.textAlign, fontWeight: 'bold', lineHeight: 1.2 }}>{el.content}</div>
-                  ) : (
-                    <img src={el.content} className="w-full h-auto" draggable={false} alt="Sticker" />
+                <div 
+                  key={el.id} 
+                  onMouseDown={(e) => handleMouseDown(e, el)} 
+                  onTouchStart={(e) => handleMouseDown(e, el)}
+                  className="cursor-move select-none"
+                  style={{ 
+                    position: 'absolute', 
+                    left: `${(el.x / 1080) * 100}%`, 
+                    top: `${(el.y / 1080) * 100}%`, 
+                    width: `${(el.width / 1080) * 100}%`, 
+                    transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`, 
+                    zIndex: selectedId === el.id ? 50 : 10, 
+                    outline: selectedId === el.id ? '3px solid #fbbf24' : 'none', 
+                    outlineOffset: '4px' 
+                  }}
+                >
+                  {el.type === 'text' && (
+                    <div style={{ 
+                      color: el.style.color, 
+                      fontSize: `${(el.style.fontSize! / 1080) * 100}cqw`, 
+                      fontFamily: el.style.fontFamily, 
+                      textAlign: el.style.textAlign, 
+                      fontWeight: 'bold', 
+                      lineHeight: 1.2 
+                    }}>
+                      {el.content}
+                    </div>
                   )}
                 </div>
               ))}
               <canvas ref={canvasRef} className="hidden" />
             </div>
+            <p className="mt-6 text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] animate-pulse">Drag elements to customize layout</p>
           </div>
 
-          {/* Sidebar Right */}
-          <aside className="lg:col-span-3 space-y-6">
-            <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl h-full p-8 space-y-8">
-              <Button onClick={handleDownload} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-lg shadow-xl hover:scale-105 transition-transform">Download PNG</Button>
-              <Button onClick={handleSaveToGallery} disabled={isSaving} variant="outline" className="w-full h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save to Gallery"}
+          {/* Action Sidebar */}
+          <aside className="lg:col-span-3 space-y-6 order-3">
+            <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl p-6 md:p-8 space-y-4 md:space-y-6">
+              <Button onClick={handleDownload} className="w-full h-14 md:h-16 rounded-2xl gold-gradient text-primary font-black text-lg shadow-xl active:scale-95 transition-transform">
+                <Download className="w-5 h-5 mr-2" /> Download PNG
               </Button>
+              <Button onClick={handleSaveToGallery} disabled={isSaving} variant="outline" className="w-full h-14 md:h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg active:scale-95 transition-transform">
+                {isSaving ? <Loader2 className="animate-spin w-5 h-5" /> : <><Save className="w-5 h-5 mr-2" /> Save to Gallery</>}
+              </Button>
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-center gap-4 text-[10px] font-black uppercase text-muted-foreground opacity-60">
+                <Sparkles className="w-3 h-3" />
+                <span>Premium Quality 1080x1080</span>
+              </div>
             </Card>
           </aside>
         </main>

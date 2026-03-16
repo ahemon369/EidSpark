@@ -84,6 +84,7 @@ export function Navbar() {
             <span className="text-xl font-black tracking-tight text-slate-900">EidSpark</span>
           </Link>
 
+          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
@@ -148,14 +149,16 @@ export function Navbar() {
             )}
           </div>
 
+          {/* Mobile Menu Toggle */}
           <div className="lg:hidden flex items-center gap-2 z-50">
-            <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl text-primary bg-primary/5">
+            <button onClick={() => setIsOpen(!isOpen)} className="p-2.5 rounded-xl text-primary bg-primary/5 active:scale-95 transition-transform" aria-label="Toggle Menu">
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Mobile Sidebar Navigation */}
       <div className={cn(
         "fixed inset-0 bg-white lg:hidden transition-all duration-500 ease-in-out z-[60] flex flex-col items-center justify-center",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
@@ -171,17 +174,22 @@ export function Navbar() {
             </div>
           )}
           {navItems.map((item) => (
-            <Link key={item.name} href={item.href} onClick={() => setIsOpen(false)} className="block py-3 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-3">
+            <Link key={item.name} href={item.href} onClick={() => setIsOpen(false)} className="block py-4 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-3 hover:text-primary">
               {item.name}
             </Link>
           ))}
-          <div className="pt-8">
+          <div className="pt-8 space-y-4">
             {user ? (
-              <Button asChild className="w-full h-14 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
+              <>
+                <Button asChild className="w-full h-16 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>
+                  <Link href="/dashboard">My Dashboard</Link>
+                </Button>
+                <Button variant="ghost" className="w-full h-14 font-bold text-destructive" onClick={() => { handleSignOut(); setIsOpen(false); }}>
+                  Sign Out
+                </Button>
+              </>
             ) : (
-              <Button asChild className="w-full h-14 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>
+              <Button asChild className="w-full h-16 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>
                 <Link href="/login">Join EidSpark</Link>
               </Button>
             )}

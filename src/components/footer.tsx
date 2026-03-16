@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link"
@@ -13,23 +12,23 @@ export function Footer() {
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
   return (
-    <footer className="bg-[#f8fafc] border-t border-slate-200/60 py-24 transition-colors duration-500 relative overflow-hidden">
+    <footer className="bg-[#f8fafc] border-t border-slate-200/60 py-16 md:py-24 transition-colors duration-500 relative overflow-hidden">
       {/* Subtle Crescent Background Illustration */}
       <motion.div 
         animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         className="absolute -bottom-20 -right-20 opacity-[0.03] pointer-events-none"
       >
-        <Moon className="w-96 h-96 text-primary fill-primary" />
+        <Moon className="w-64 h-64 md:w-96 md:h-96 text-primary fill-primary" />
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-20">
           
           {/* Column 1 — Brand */}
-          <div className="space-y-8">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-12 h-12 transition-transform group-hover:scale-110">
+          <div className="space-y-6 md:space-y-8 text-center sm:text-left">
+            <Link href="/" className="flex items-center justify-center sm:justify-start gap-3 group">
+              <div className="relative w-10 h-10 md:w-12 md:h-12 transition-transform group-hover:scale-110">
                 {logo?.imageUrl && (
                   <Image 
                     src={logo.imageUrl} 
@@ -40,12 +39,12 @@ export function Footer() {
                   />
                 )}
               </div>
-              <span className="text-2xl font-black tracking-tighter text-slate-900">EidSpark</span>
+              <span className="text-xl md:text-2xl font-black tracking-tighter text-slate-900">EidSpark</span>
             </Link>
-            <p className="text-slate-500 font-medium text-base leading-relaxed">
+            <p className="text-slate-500 font-medium text-sm md:text-base leading-relaxed max-w-xs mx-auto sm:mx-0">
               Empowering Eid celebrations with modern technology. Built for the Muslim community.
             </p>
-            <div className="flex gap-3">
+            <div className="flex justify-center sm:justify-start gap-3">
               {[
                 { icon: Facebook, href: "#", label: "Facebook" },
                 { icon: Twitter, href: "#", label: "Twitter" },
@@ -65,9 +64,9 @@ export function Footer() {
           </div>
           
           {/* Column 2 — Studio Tools */}
-          <div className="space-y-8">
-            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit">Studio Tools</h4>
-            <ul className="space-y-4 text-slate-500 font-bold text-sm">
+          <div className="space-y-6 md:space-y-8 text-center sm:text-left">
+            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mx-auto sm:mx-0">Studio Tools</h4>
+            <ul className="space-y-3 md:space-y-4 text-slate-500 font-bold text-sm">
               <li><Link href="/tools/jamaat-finder" className="hover:text-primary transition-colors">Jamaat Finder</Link></li>
               <li><Link href="/tools/zakat" className="hover:text-primary transition-colors">Zakat Assistant</Link></li>
               <li><Link href="/tools/greeting" className="hover:text-primary transition-colors">Greeting Designer</Link></li>
@@ -76,9 +75,9 @@ export function Footer() {
           </div>
 
           {/* Column 3 — Platform Features */}
-          <div className="space-y-8">
-            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit">Platform Features</h4>
-            <ul className="space-y-4 text-slate-500 font-bold text-sm">
+          <div className="space-y-6 md:space-y-8 text-center sm:text-left">
+            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mx-auto sm:mx-0">Platform Features</h4>
+            <ul className="space-y-3 md:space-y-4 text-slate-500 font-bold text-sm">
               <li><Link href="/tools/salami-calculator" className="hover:text-primary transition-colors">Salami Guide</Link></li>
               <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors">Moon Tracker</Link></li>
               <li><Link href="/tools/salami" className="hover:text-primary transition-colors">Salami Center</Link></li>
@@ -87,20 +86,18 @@ export function Footer() {
           </div>
 
           {/* Column 4 — Community */}
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8 text-center sm:text-left">
             <div>
-              <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mb-6">Community</h4>
-              <ul className="space-y-4 text-slate-500 font-bold text-sm mb-10">
+              <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mb-6 mx-auto sm:mx-0">Community</h4>
+              <ul className="space-y-3 md:space-y-4 text-slate-500 font-bold text-sm mb-8">
                 <li><Link href="/leaderboard" className="hover:text-primary transition-colors">National Leaderboard</Link></li>
-                <li><Link href="/leaderboard" className="hover:text-primary transition-colors">Hall of Fame</Link></li>
                 <li><Link href="/fun-zone" className="hover:text-primary transition-colors">Fun Zone Hub</Link></li>
                 <li><Link href="/dashboard" className="hover:text-primary transition-colors">Community Feed</Link></li>
               </ul>
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-200">
+            <div className="space-y-4 pt-4 border-t border-slate-200 max-w-xs mx-auto sm:mx-0">
               <p className="text-slate-900 font-black text-xs uppercase tracking-widest">Weekly Spark</p>
-              <p className="text-slate-500 text-xs font-medium">Get Eid updates and new features.</p>
               <div className="flex gap-2">
                 <Input 
                   placeholder="Email address" 
@@ -114,8 +111,8 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="pt-12 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-slate-400 font-bold text-xs tracking-tight">
+        <div className="pt-12 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8">
+          <p className="text-slate-400 font-bold text-xs tracking-tight text-center md:text-left">
             © 2026 EidSpark Bangladesh
           </p>
           <div className="flex items-center gap-4 text-emerald-600/40 font-black uppercase tracking-[0.2em] text-[9px]">

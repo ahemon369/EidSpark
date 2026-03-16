@@ -14,7 +14,7 @@ interface BreadcrumbItem {
 
 /**
  * Reusable Navigation block for feature pages.
- * Includes sticky breadcrumbs and a robust back button.
+ * Includes responsive breadcrumbs and a robust back button.
  */
 export function BackButton({ className }: { className?: string }) {
   const router = useRouter()
@@ -45,28 +45,28 @@ export function BackButton({ className }: { className?: string }) {
   })
 
   return (
-    <div className={cn("w-full max-w-7xl mx-auto px-6 mb-8 space-y-6 transition-all duration-300", className)}>
-      {/* Breadcrumb Navigation */}
-      <nav className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+    <div className={cn("w-full max-w-7xl mx-auto px-4 md:px-6 mb-6 md:mb-8 space-y-4 md:space-y-6 transition-all duration-300", className)}>
+      {/* Responsive Breadcrumb Navigation */}
+      <nav className="flex flex-wrap items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400 overflow-hidden">
         {breadcrumbs.map((crumb, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <div key={i} className="flex items-center gap-1.5 md:gap-2 shrink-0">
             {crumb.href ? (
               <Link 
                 href={crumb.href} 
-                className="hover:text-primary transition-colors flex items-center gap-1.5"
+                className="hover:text-primary transition-colors flex items-center gap-1 md:gap-1.5"
               >
-                {crumb.label === "Home" && <Home className="w-3 h-3" />}
+                {crumb.label === "Home" && <Home className="w-2.5 h-2.5 md:w-3 md:h-3" />}
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-slate-600 font-black">{crumb.label}</span>
+              <span className="text-slate-600 font-black truncate max-w-[100px] md:max-w-none">{crumb.label}</span>
             )}
-            {i < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3 opacity-50" />}
+            {i < breadcrumbs.length - 1 && <ChevronRight className="w-2.5 h-2.5 md:w-3 md:h-3 opacity-50" />}
           </div>
         ))}
       </nav>
 
-      {/* Modern Back Button */}
+      {/* Touch-Friendly Back Button */}
       <Button 
         variant="outline" 
         onClick={handleBack}
