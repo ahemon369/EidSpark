@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -80,7 +81,7 @@ export function Footer() {
             <ul className="space-y-3 md:space-y-4 text-slate-500 font-bold text-sm">
               <li><Link href="/tools/salami-calculator" className="hover:text-primary transition-colors">Salami Guide</Link></li>
               <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors">Moon Tracker</Link></li>
-              <li><Link href="/tools/salami" className="hover:text-primary transition-colors">Salami Center</Link></li>
+              <li><Link href="/tools/qr-salami" className="hover:text-primary transition-colors">Salami Center</Link></li>
               <li><Link href="/tools/countdown" className="hover:text-primary transition-colors">Live Countdown</Link></li>
             </ul>
           </div>

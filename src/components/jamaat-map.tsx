@@ -8,6 +8,7 @@ import { MapPin, Navigation, Clock, CheckCircle2, Globe, Landmark, Heart, Share2
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 

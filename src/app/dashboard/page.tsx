@@ -22,7 +22,8 @@ import {
   Loader2,
   ExternalLink,
   Share2,
-  User
+  User,
+  Copy
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"

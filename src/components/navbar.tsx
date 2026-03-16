@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, ChevronRight, Trophy, Sparkles, Star, User } from "lucide-react"
+import { Menu, X, ChevronRight, Trophy, Sparkles, Star, User, Calculator } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,7 @@ const navItems = [
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Fun Zone", href: "/fun-zone", icon: Sparkles },
   { name: "Jamaat Finder", href: "/tools/jamaat-finder" },
+  { name: "Zakat", href: "/tools/zakat", icon: Calculator },
 ]
 
 export function Navbar() {
@@ -168,7 +169,7 @@ export function Navbar() {
         </button>
         <div className="space-y-6 w-full max-w-xs text-center">
           {user && (
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/10 border-2 border-secondary/20 mb-8">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/10 border-2 border-secondary/20 mb-8 mx-auto">
               <Star className="w-6 h-6 text-secondary fill-secondary" />
               <span className="text-2xl font-black text-primary">{totalPoints} XP</span>
             </div>
@@ -178,7 +179,7 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
-          <div className="pt-8 space-y-4">
+          <div className="pt-8 space-y-4 px-4">
             {user ? (
               <>
                 <Button asChild className="w-full h-16 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>

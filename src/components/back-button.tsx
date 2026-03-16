@@ -12,6 +12,8 @@ interface BreadcrumbItem {
   href?: string
 }
 
+const VALID_BREADCRUMB_ROUTES = ["/", "/leaderboard", "/fun-zone", "/tools/jamaat-finder", "/tools/zakat", "/tools/greeting", "/tools/selfie", "/tools/salami-calculator", "/tools/qr-salami", "/tools/salami", "/tools/moon-sighting", "/tools/countdown", "/dashboard"]
+
 /**
  * Reusable Navigation block for feature pages.
  * Includes responsive breadcrumbs and a robust back button.
@@ -38,9 +40,11 @@ export function BackButton({ className }: { className?: string }) {
   pathSegments.forEach((segment, index) => {
     accumulatedPath += `/${segment}`
     const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+    const isLast = index === pathSegments.length - 1
+    
     breadcrumbs.push({
       label,
-      href: index === pathSegments.length - 1 ? undefined : accumulatedPath
+      href: (!isLast && VALID_BREADCRUMB_ROUTES.includes(accumulatedPath)) ? accumulatedPath : undefined
     })
   })
 
@@ -59,9 +63,9 @@ export function BackButton({ className }: { className?: string }) {
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-slate-600 font-black truncate max-w-[100px] md:max-w-none">{crumb.label}</span>
+              <span className={cn("truncate max-w-[100px] md:max-w-none", i === breadcrumbs.length - 1 ? "text-primary font-black" : "text-slate-600 font-black")}>{crumb.label}</span>
             )}
-            {i < breadcrumbs.length - 1 && <ChevronRight className="w-2.5 h-2.5 md:w-3 md:h-3 opacity-50" />}
+            {i < breadcrumbs.length - 1 && <ChevronRight className="w-2.5 h-2.5 md:w-3 md:h-3 opacity-50 text-slate-300" />}
           </div>
         ))}
       </nav>
