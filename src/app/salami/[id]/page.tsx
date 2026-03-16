@@ -20,7 +20,8 @@ import {
   Trophy,
   Users,
   Info,
-  Star
+  Star,
+  QrCode
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase"
 import { collection, query, where, limit, updateDoc, doc, increment } from "firebase/firestore"
@@ -29,8 +30,10 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import confetti from 'canvas-confetti'
 import Image from "next/image"
+import { QRCodeSVG } from "qrcode.react"
+import Link from "next/link"
 
-const amounts = [10, 20, 50, 100, 500, 1000]
+const amounts = [10, 20, 50, 100]
 
 export default function PublicSalamiProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -107,6 +110,8 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
     )
   }
 
+  const publicUrl = typeof window !== 'undefined' ? window.location.href : ""
+
   return (
     <div className="min-h-screen bg-background islamic-pattern pb-20 selection:bg-secondary selection:text-primary">
       <Navbar />
@@ -117,10 +122,18 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
         <Card className="border-none shadow-[0_64px_128px_-12px_rgba(6,95,70,0.15)] rounded-[4rem] overflow-hidden bg-white/90 backdrop-blur-xl border-4 border-white">
           <CardHeader className="emerald-gradient p-12 text-white text-center relative">
             <Sparkles className="absolute top-8 right-8 w-12 h-12 opacity-20 animate-twinkle" />
-            <div className="w-28 h-28 rounded-[2.5rem] bg-white/20 border-4 border-white/30 flex items-center justify-center mx-auto mb-8 shadow-2xl backdrop-blur-md">
-              <span className="text-5xl">🌙</span>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-28 h-28 rounded-[2.5rem] bg-white/20 border-4 border-white/30 flex items-center justify-center shadow-2xl backdrop-blur-md">
+                <span className="text-5xl">🌙</span>
+              </div>
+              
+              {/* Added QR Code to Profile Card as per instructions */}
+              <div className="bg-white p-3 rounded-2xl shadow-xl">
+                <QRCodeSVG value={publicUrl} size={100} level="H" />
+              </div>
             </div>
-            <CardTitle className="text-5xl font-black tracking-tighter leading-none mb-4">{profile.displayName}</CardTitle>
+            
+            <CardTitle className="text-5xl font-black tracking-tighter leading-none mb-4 mt-6">{profile.displayName}</CardTitle>
             <p className="text-white/80 text-xl font-medium leading-relaxed italic px-4">"{profile.message}"</p>
           </CardHeader>
 
@@ -237,6 +250,7 @@ export default function PublicSalamiProfile({ params }: { params: Promise<{ id: 
           </CardContent>
         </Card>
 
+        {/* Global Progress Bar for Virality */}
         <div className="mt-16 text-center space-y-8">
           <div className="bg-primary/5 p-10 rounded-[3rem] border-2 border-primary/5 flex flex-col items-center gap-6">
             <Trophy className="w-12 h-12 text-secondary fill-secondary" />

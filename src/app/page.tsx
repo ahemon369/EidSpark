@@ -74,7 +74,7 @@ const tools = [
     tag: "Viral Tool"
   },
   {
-    title: "Salami Registry",
+    title: "Salami Guide",
     description: "The official funny guide to Eid Salami rates for 2026. Don't be stingy!",
     icon: Laugh,
     href: "/tools/salami-calculator",
@@ -83,7 +83,7 @@ const tools = [
     tag: "Fun Zone"
   },
   {
-    title: "QR Salami System",
+    title: "Salami Tracker",
     description: "Manage your Eid Eidi collection and share unique personal digital QR pages.",
     icon: Wallet,
     href: "/tools/qr-salami",
@@ -174,7 +174,7 @@ export default function Home() {
                   </h1>
                   
                   <p className="text-xl text-slate-400 max-w-xl leading-relaxed font-medium">
-                    Modern smart tools built for the Muslim community. From trilingual AI greetings to real-time crowd-powered prayer maps.
+                    Modern smart tools built for the Muslim community. Find Eid Jamaat, calculate Zakat, create greetings, and celebrate together.
                   </p>
                 </div>
                 
@@ -389,8 +389,8 @@ export default function Home() {
               
               {[
                 { step: "01", title: "Find Nearby Jamaat", desc: "Use the live map to discover community-verified prayer times.", icon: MapPin },
-                { step: "02", title: "Use Smart Tools", desc: "Calculate Zakat, create AI cards, and track your Salami.", icon: Sparkles },
-                { step: "03", title: "Share the Joy", desc: "Broadcast your festive moments with the national community.", icon: Heart }
+                { step: "02", title: "Use Smart Eid Tools", desc: "Calculate Zakat, create AI cards, and track your Salami.", icon: Sparkles },
+                { step: "03", title: "Share Eid Joy With Friends", desc: "Broadcast your festive moments with the national community.", icon: Heart }
               ].map((item, i) => (
                 <div key={i} className="relative z-10 text-center space-y-8 bg-slate-950 p-12 rounded-[3rem] border border-white/5 shadow-2xl group hover:border-emerald-500/20 transition-all">
                   <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto text-emerald-500 group-hover:scale-110 transition-transform">
