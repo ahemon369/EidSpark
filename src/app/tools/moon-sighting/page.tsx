@@ -1,10 +1,10 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,25 +12,14 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { 
   Moon, 
-  Sparkles, 
   Navigation, 
-  Send, 
-  Clock, 
   Loader2, 
-  Info, 
-  Globe,
   Trash2,
-  CheckCircle2,
-  XCircle,
-  EyeOff,
-  ShieldCheck,
-  Star
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, query, orderBy, limit, deleteDoc, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
 import { awardPoints } from "@/lib/gamification-utils"
 import { BackButton } from "@/components/back-button"
 
@@ -50,25 +39,18 @@ export default function MoonSightingTrackerPage() {
   const { user } = useUser(); const db = useFirestore(); const { toast } = useToast()
   const [locationName, setLocationName] = useState(""); const [lat, setLat] = useState<number | "">(""); const [lng, setLng] = useState<number | "">("")
   const [seen, setSeen] = useState(true); const [notes, setNotes] = useState(""); const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); const [stars, setStars] = useState<StarItem[]>([])
+  const [stars, setStars] = useState<StarItem[]>([])
 
   useEffect(() => {
     setStars([...Array(100)].map(() => ({ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`, size: `${Math.random() * 2 + 1}px`, delay: `${Math.random() * 5}s` })))
   }, [])
 
   const sightingsRef = useMemoFirebase(() => db ? query(collection(db, "moonSightings"), orderBy("timestamp", "desc"), limit(50)) : null, [db])
-  const { data: sightings, isLoading: loadingSightings } = useCollection(sightingsRef)
+  const { data: sightings } = useCollection(sightingsRef)
   const adminRoleRef = useMemoFirebase(() => (db && user) ? doc(db, "roles_admin", user.uid) : null, [db, user])
   const { data: adminDoc } = useDoc(adminRoleRef); const isAdmin = !!adminDoc
 
   const todaySeenCount = sightings?.filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString()).length || 0
-
-  const detectLocation = () => {
-    if (navigator.geolocation) {
-      toast({ title: "Detecting Location..." })
-      navigator.geolocation.getCurrentPosition((pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); toast({ title: "Location Detected" }) })
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,19 +65,29 @@ export default function MoonSightingTrackerPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!db || !user) return; setIsDeleting(id)
-    try { await deleteDoc(doc(db, "moonSightings", id)); toast({ title: "Report Removed" }) } catch (error) {} finally { setIsDeleting(null) }
+    if (!db || !user) return;
+    try { await deleteDoc(doc(db, "moonSightings", id)); toast({ title: "Report Removed" }) } catch (error) {}
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white selection:bg-secondary selection:text-primary relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#020617] text-white selection:bg-secondary selection:text-primary relative overflow-hidden flex flex-col transition-all duration-300">
       <Navbar />
       <div className="fixed inset-0 pointer-events-none opacity-20">{stars.map((star, i) => <div key={i} className="absolute bg-white rounded-full animate-twinkle" style={{ top: star.top, left: star.left, width: star.size, height: star.size, animationDelay: star.delay }} />)}</div>
 
-      <div className="pt-[80px] flex flex-col flex-grow">
+      <div className="pt-[100px] flex flex-col flex-grow">
         <BackButton />
-        <main className="max-w-[1800px] mx-auto px-4 py-8 relative z-10 flex-grow">
-          <div className="flex justify-center mb-12"><div className="bg-white/5 border border-white/10 backdrop-blur-xl px-10 py-4 rounded-full shadow-2xl flex items-center gap-4"><span className="text-3xl">🌙</span><div className="text-left"><p className="text-2xl font-black"><span className="text-secondary">{todaySeenCount}</span> Moon Sightings Reported</p></div></div></div>
+        <main className="max-w-[1800px] mx-auto px-6 py-8 relative z-10 flex-grow">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
+            <div className="space-y-2">
+              <h1 className="text-4xl lg:text-6xl font-black tracking-tight leading-none">Moon Tracker</h1>
+              <p className="text-slate-400 font-medium">Crowd-sourced moon sighting reports across Bangladesh.</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 backdrop-blur-xl px-10 py-4 rounded-full shadow-2xl flex items-center gap-4">
+              <span className="text-3xl">🌙</span>
+              <div className="text-left"><p className="text-2xl font-black"><span className="text-secondary">{todaySeenCount}</span> Sightings Today</p></div>
+            </div>
+          </div>
+
           <div className="grid lg:grid-cols-12 gap-10">
             <div className="lg:col-span-3 space-y-8">
               <Card className="bg-white/5 border-white/10 backdrop-blur-2xl rounded-[3rem] shadow-2xl overflow-hidden border-2">
@@ -117,17 +109,23 @@ export default function MoonSightingTrackerPage() {
               </Card>
             </div>
             <div className="lg:col-span-6 h-[600px] lg:h-[850px]"><MoonMap sightings={sightings || []} /></div>
-            <div className="lg:col-span-3 h-[850px] overflow-y-auto custom-scrollbar bg-white/5 rounded-[3rem] p-6 space-y-4">
-              <h3 className="text-xl font-black mb-4">Live Feed</h3>
-              {sightings?.map(s => <div key={s.id} className="p-4 bg-white/5 rounded-2xl">
-                <p className="font-black text-sm">{s.locationName}</p>
-                <p className="text-[10px] text-slate-500 uppercase">{s.userName} • {s.seen ? 'SPOTTED' : 'NOT SEEN'}</p>
-              </div>)}
+            <div className="lg:col-span-3 h-[850px] overflow-y-auto custom-scrollbar bg-white/5 rounded-[3rem] p-6 space-y-4 border border-white/5">
+              <h3 className="text-xl font-black mb-4 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> Live Feed</h3>
+              <div className="space-y-4">
+                {sightings?.map(s => (
+                  <div key={s.id} className="p-5 bg-white/5 rounded-2xl group transition-all hover:bg-white/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="font-black text-sm">{s.locationName}</p>
+                      {isAdmin && <button onClick={() => handleDelete(s.id)} className="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>}
+                    </div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{s.userName} • {s.seen ? 'SPOTTED' : 'NOT SEEN'}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </main>
       </div>
-      <Footer />
     </div>
   )
 }

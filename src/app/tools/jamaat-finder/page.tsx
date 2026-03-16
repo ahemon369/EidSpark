@@ -1,33 +1,20 @@
+
 "use client"
 
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
-  MapPin, 
   Search, 
-  Plus, 
-  CheckCircle2, 
   Loader2, 
-  Navigation,
-  Globe,
-  LocateFixed,
-  Sparkles,
-  Clock,
-  Landmark,
-  Filter,
-  ChevronUp,
-  Map as MapIcon,
-  Heart,
-  Navigation2,
-  ThumbsUp,
-  AlertCircle,
-  Star,
-  Share2,
-  ChevronDown
+  LocateFixed, 
+  Navigation2, 
+  ChevronUp, 
+  ChevronDown,
+  Share2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
@@ -35,7 +22,6 @@ import { collection, doc, query, where, addDoc, getDocs, updateDoc, increment } 
 import { AddMosqueModal } from "@/components/add-mosque-modal"
 import { AdminJamaatPanel } from "@/components/admin-jamaat-panel"
 import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { awardPoints } from "@/lib/gamification-utils"
@@ -72,16 +58,12 @@ export default function JamaatFinderPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [isDetecting, setIsDetecting] = useState(false)
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false)
-  
-  const [filterVerified, setFilterVerified] = useState(false)
-  const [filterGrounds, setFilterGrounds] = useState(false)
-  const [distanceRadius, setDistanceRadius] = useState<number | null>(null)
 
   const mosquesRef = useMemoFirebase(() => {
     if (!db) return null
     return collection(db, "mosques")
   }, [db])
-  const { data: allMosques, isLoading: loadingMosques } = useCollection(mosquesRef)
+  const { data: allMosques } = useCollection(mosquesRef)
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -109,48 +91,20 @@ export default function JamaatFinderPage() {
     if (userLocation) { mosques.sort((a, b) => (a.distance || 0) - (b.distance || 0)) }
     return mosques.filter(m => {
       const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.district.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesVerified = !filterVerified || m.isApprovedByAdmin
-      const matchesGround = !filterGrounds || /ground|maidan|stadium|field|eidgah/i.test(m.name)
-      const matchesDistance = !distanceRadius || !m.distance || m.distance <= distanceRadius
-      return matchesSearch && matchesVerified && matchesGround && matchesDistance
+      return matchesSearch
     })
-  }, [allMosques, searchQuery, userLocation, filterVerified, filterGrounds, distanceRadius])
+  }, [allMosques, searchQuery, userLocation])
 
   const nearestMosque = useMemo(() => {
     if (!userLocation || filteredMosques.length === 0) return null
     return filteredMosques[0]
   }, [userLocation, filteredMosques])
 
-  const handleSaveMosque = async (mosque: any) => {
-    if (!user || !db) { toast({ title: "Login Required" }); return }
-    try {
-      const q = query(collection(db, "users", user.uid, "savedMosques"), where("mosqueId", "==", mosque.id))
-      const snap = await getDocs(q)
-      if (!snap.empty) { toast({ title: "Already Saved" }); return }
-      await addDoc(collection(db, "users", user.uid, "savedMosques"), { mosqueId: mosque.id, name: mosque.name, address: mosque.area || mosque.district, lat: mosque.latitude, lon: mosque.longitude, savedAt: new Date().toISOString() })
-      await updateDoc(doc(db, "mosques", mosque.id), { savesCount: increment(1) })
-      toast({ title: "Saved to Favorites" })
-    } catch (e) {}
-  }
-
-  const handleConfirmJamaat = async (id: string) => {
-    if (!user || !db) { toast({ title: "Login Required" }); return }
-    try {
-      await updateDoc(doc(db, "mosques", id), { confirmations: increment(1) })
-      awardPoints(db, user.uid, 'AddJamaat'); toast({ title: "Jamaat Confirmed!" })
-    } catch (e) {}
-  }
-
-  const handleShare = (mosque: any) => {
-    const text = `Join the Eid Jamaat at ${mosque.name} (${mosque.eid_prayer_time}) in ${mosque.district}! Check it on the crowd-powered map: ${window.location.origin}/tools/jamaat-finder?id=${mosque.id}`
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-  }
-
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden selection:bg-secondary selection:text-primary">
+    <div className="h-screen flex flex-col bg-background overflow-hidden selection:bg-secondary selection:text-primary transition-all duration-300">
       <Navbar />
       
-      <div className="pt-[80px] flex flex-col h-full overflow-hidden">
+      <div className="pt-[100px] flex flex-col h-full overflow-hidden">
         <BackButton />
         
         <main className="flex-grow flex flex-col lg:flex-row relative">
@@ -194,7 +148,6 @@ export default function JamaatFinderPage() {
                               <span className="text-sm font-black text-primary">{mosque.eid_prayer_time || "Pending"}</span>
                               <Button variant="default" className="h-11 rounded-xl font-black text-xs emerald-gradient px-6" onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${mosque.latitude},${mosque.longitude}`, "_blank") }}>Directions</Button>
                             </div>
-                            <Button variant="ghost" className="w-full text-[9px] font-black uppercase text-muted-foreground" onClick={(e) => { e.stopPropagation(); handleShare(mosque); }}><Share2 className="w-3 h-3 mr-2" /> Share Jamaat Location</Button>
                           </CardContent>
                         </Card>
                       ))}

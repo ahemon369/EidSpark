@@ -1,8 +1,9 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, ChevronRight, Moon, Sun, Sparkles, Trophy, Star } from "lucide-react"
+import { Menu, X, ChevronRight, Trophy, Sparkles, Star } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -67,28 +68,28 @@ export function Navbar() {
 
   return (
     <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-500 h-[80px] flex items-center",
+      "fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-[70px] flex items-center",
       scrolled 
-        ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm" 
-        : "bg-transparent border-b border-transparent"
+        ? "bg-white/95 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.05)]" 
+        : "bg-white border-b border-transparent"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center h-full">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-3 group z-50">
-            <div className="relative h-10 w-10 transition-transform group-hover:scale-110">
+            <div className="relative h-8 w-8 transition-transform group-hover:scale-110">
                {logo?.imageUrl && (
                  <Image 
                   src={logo.imageUrl} 
                   alt="EidSpark Logo" 
-                  width={40} 
-                  height={40} 
+                  width={32} 
+                  height={32} 
                   className="object-contain"
                   priority
                  />
                )}
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-900">
+            <span className="text-xl font-black tracking-tight text-slate-900">
               EidSpark
             </span>
           </Link>
@@ -146,7 +147,7 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-12 shadow-xl shadow-emerald-200 hover:scale-105 transition-all">
+              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-11 shadow-xl shadow-emerald-200 hover:scale-105 transition-all">
                 <Link href="/login">Get Started <ChevronRight className="w-4 h-4 ml-1" /></Link>
               </Button>
             )}
@@ -166,7 +167,7 @@ export function Navbar() {
 
       {/* Mobile Nav */}
       <div className={cn(
-        "fixed inset-0 bg-white/98 backdrop-blur-2xl lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
+        "fixed inset-0 bg-white lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
         <div className="space-y-6 w-full max-w-xs text-center">

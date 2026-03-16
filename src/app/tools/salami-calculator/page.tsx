@@ -1,14 +1,12 @@
+
 "use client"
 
 import { useState } from "react"
 import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, Moon, Star, Gift, Calculator, Laugh, Info, Share2, Facebook, MessageCircle, Copy, Coins, TrendingUp, Zap, Heart, CheckCircle2, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Card } from "@/components/ui/card"
+import { Calculator, Loader2, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore } from "@/firebase"
 import { awardPoints } from "@/lib/gamification-utils"
@@ -16,15 +14,15 @@ import confetti from 'canvas-confetti'
 import { BackButton } from "@/components/back-button"
 
 const salamiList = [
-  { id: 1, category: "Very Close Junior", amount: 25, icon: "💎", color: "bg-emerald-500" },
-  { id: 2, category: "Normal Junior", amount: 15, icon: "🤝", color: "bg-amber-500" },
-  { id: 3, category: "Smart Junior", amount: 10, icon: "🧠", color: "bg-amber-500" },
-  { id: 4, category: "Polite Junior", amount: 7, icon: "🙏", color: "bg-orange-500" },
-  { id: 5, category: "Junior who only says Salam", amount: 5, icon: "🗣️", color: "bg-orange-500" },
-  { id: 6, category: "Junior who sends Eid message online", amount: 3, icon: "📱", color: "bg-slate-400" },
-  { id: 7, category: "Junior who asks for Salami directly", amount: 2, icon: "💸", color: "bg-slate-400" },
-  { id: 8, category: "Brother who says “Vaiya Salami den”", amount: 50, icon: "👑", color: "bg-emerald-500" },
-  { id: 9, category: "If someone writes your name with Mehendi", amount: 100, icon: "🌿", color: "bg-emerald-500" },
+  { id: 1, category: "Very Close Junior", amount: 25, icon: "💎" },
+  { id: 2, category: "Normal Junior", amount: 15, icon: "🤝" },
+  { id: 3, category: "Smart Junior", amount: 10, icon: "🧠" },
+  { id: 4, category: "Polite Junior", amount: 7, icon: "🙏" },
+  { id: 5, category: "Junior who only says Salam", amount: 5, icon: "🗣️" },
+  { id: 6, category: "Junior who sends Eid message online", amount: 3, icon: "📱" },
+  { id: 7, category: "Junior who asks for Salami directly", amount: 2, icon: "💸" },
+  { id: 8, category: "Brother who says “Vaiya Salami den”", amount: 50, icon: "👑" },
+  { id: 9, category: "If someone writes your name with Mehendi", amount: 100, icon: "🌿" },
 ]
 
 export default function SalamiCalculatorPage() {
@@ -40,16 +38,16 @@ export default function SalamiCalculatorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-20 flex flex-col">
+    <div className="min-h-screen bg-background islamic-pattern pb-20 flex flex-col transition-all duration-300">
       <Navbar />
       
-      <div className="pt-[80px] flex flex-col flex-grow">
+      <div className="pt-[100px] flex flex-col flex-grow">
         <BackButton />
         
-        <main className="max-w-7xl mx-auto px-4 py-8 flex-grow">
-          <header className="text-center mb-24 space-y-6">
-            <h1 className="text-6xl lg:text-[110px] font-black text-primary tracking-tighter leading-[0.85]">Salami <br /> <span className="text-secondary drop-shadow-sm">Registry</span></h1>
-            <p className="text-2xl text-muted-foreground font-medium max-w-2xl mx-auto">The unofficial guides to Eid Salami.</p>
+        <main className="max-w-7xl mx-auto px-6 py-8 flex-grow">
+          <header className="text-left mb-16 space-y-4">
+            <h1 className="text-4xl lg:text-[100px] font-black text-slate-900 tracking-tighter leading-[0.85]">Salami <br /> <span className="text-secondary drop-shadow-sm">Registry</span></h1>
+            <p className="text-2xl text-slate-500 font-medium max-w-2xl">The 2026 viral guide to fair Eid Salami pricing.</p>
           </header>
 
           <div className="grid lg:grid-cols-12 gap-12">
@@ -57,7 +55,7 @@ export default function SalamiCalculatorPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 {salamiList.map(item => (
                   <Card key={item.id} className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 flex items-center justify-between group hover:-translate-y-2 transition-all cursor-pointer" onClick={() => setSelectedId(item.id.toString())}>
-                    <div className="flex items-center gap-5"><div className="text-3xl">{item.icon}</div><h4 className="font-black text-lg">{item.category}</h4></div>
+                    <div className="flex items-center gap-5"><div className="text-3xl">{item.icon}</div><h4 className="font-black text-lg text-slate-800">{item.category}</h4></div>
                     <p className="text-3xl font-black text-primary">৳{item.amount}</p>
                   </Card>
                 ))}
@@ -66,18 +64,22 @@ export default function SalamiCalculatorPage() {
 
             <aside className="lg:col-span-5">
               <Card className="border-none shadow-2xl rounded-[3.5rem] bg-white p-12 space-y-10 sticky top-24">
-                <Select value={selectedId} onValueChange={setSelectedId}>
-                  <SelectTrigger className="h-20 rounded-[2rem] font-black px-8 text-xl shadow-inner"><SelectValue placeholder="Relative status..." /></SelectTrigger>
-                  <SelectContent className="rounded-[2rem] p-2">{salamiList.map(i => <SelectItem key={i.id} value={i.id.toString()} className="font-black rounded-[1.5rem] m-1 text-lg py-4">{i.icon} {i.category}</SelectItem>)}</SelectContent>
-                </Select>
-                <Button onClick={handleCalculate} disabled={!selectedId || isCalculating} className="w-full h-24 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-2xl">{isCalculating ? <Loader2 className="animate-spin" /> : "Get Result"}</Button>
-                {result && !isCalculating && <div className="animate-in zoom-in text-center p-10 bg-secondary/10 rounded-[3rem]"><p className="text-6xl font-black text-primary">৳{result.amount}</p><p className="text-xs uppercase font-black tracking-widest mt-2">Suggested Gift</p></div>}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] ml-2">Quick Evaluation</p>
+                  <Select value={selectedId} onValueChange={setSelectedId}>
+                    <SelectTrigger className="h-20 rounded-[2rem] font-black px-8 text-xl shadow-inner border-slate-100 bg-slate-50"><SelectValue placeholder="Relative status..." /></SelectTrigger>
+                    <SelectContent className="rounded-[2rem] p-2">{salamiList.map(i => <SelectItem key={i.id} value={i.id.toString()} className="font-black rounded-[1.5rem] m-1 text-lg py-4">{i.icon} {i.category}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCalculate} disabled={!selectedId || isCalculating} className="w-full h-24 rounded-[2.5rem] gold-gradient text-primary font-black text-3xl shadow-2xl transition-transform hover:scale-105">
+                  {isCalculating ? <Loader2 className="animate-spin w-10 h-10" /> : <><Calculator className="w-8 h-8 mr-4" /> Get Result</>}
+                </Button>
+                {result && !isCalculating && <div className="animate-in zoom-in text-center p-10 bg-secondary/10 rounded-[3rem] border-2 border-secondary/20"><p className="text-6xl font-black text-primary">৳{result.amount}</p><p className="text-xs uppercase font-black tracking-widest mt-2 text-primary/60">Suggested Gift Value</p></div>}
               </Card>
             </aside>
           </div>
         </main>
       </div>
-      <Footer />
     </div>
   )
 }

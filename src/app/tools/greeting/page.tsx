@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
@@ -67,14 +68,7 @@ const templates = [
   { id: 'gold', name: 'Golden Pattern', bg: 'bg-amber-50', gradient: ['#fffbeb', '#fef3c7'], textColor: '#451a03', secondaryColor: '#92400e' },
 ]
 
-const fonts = [
-  { name: 'Hind Siliguri', value: 'Hind Siliguri' },
-  { name: 'Inter', value: 'Inter' },
-  { name: 'Poppins', value: 'Poppins' },
-  { name: 'Playfair Display', value: 'Playfair Display' },
-]
-
-export default function CanvaGreetingGenerator() {
+export default function GreetingStudioPage() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
@@ -100,14 +94,8 @@ export default function CanvaGreetingGenerator() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const selectedElement = elements.find(el => el.id === selectedId)
-
   const updateElement = (id: string, updates: Partial<CardElement>) => {
     setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el))
-  }
-
-  const updateStyle = (id: string, styleUpdates: Partial<CardElement['style']>) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, style: { ...el.style, ...styleUpdates } } : el))
   }
 
   const addElement = (type: ElementType, content: string) => {
@@ -124,11 +112,6 @@ export default function CanvaGreetingGenerator() {
     }
     setElements(prev => [...prev, newEl])
     setSelectedId(newEl.id)
-  }
-
-  const deleteElement = (id: string) => {
-    setElements(prev => prev.filter(el => el.id !== id))
-    setSelectedId(null)
   }
 
   const handleAiGenerate = async () => {
@@ -235,13 +218,6 @@ export default function CanvaGreetingGenerator() {
     const link = document.createElement('a'); link.download = `EidSpark-Card-${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click()
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader(); reader.onload = (event) => { addElement('image', event.target?.result as string) }; reader.readAsDataURL(file)
-    }
-  }
-
   const handleSaveToGallery = async () => {
     if (!db || !user) { toast({ title: "Sign in required" }); return }
     setIsSaving(true)
@@ -253,25 +229,21 @@ export default function CanvaGreetingGenerator() {
     } catch (error) {} finally { setIsSaving(false) }
   }
 
-  const handleReset = () => {
-    setElements([
-      { id: 'title', type: 'text', x: 540, y: 200, width: 800, height: 120, rotation: 0, content: 'Eid Mubarak', style: { fontSize: 80, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' } },
-      { id: 'message', type: 'text', x: 540, y: 500, width: 800, height: 400, rotation: 0, content: 'Wishing you a blessed and joyful Eid celebration full of peace and happiness.', style: { fontSize: 40, color: '#ffffff', fontFamily: 'Hind Siliguri', textAlign: 'center' } },
-      { id: 'recipient', type: 'text', x: 540, y: 850, width: 800, height: 100, rotation: 0, content: 'Dear Friend', style: { fontSize: 50, color: '#fbbf24', fontFamily: 'Hind Siliguri', textAlign: 'center' } }
-    ])
-    setSelectedId(null)
-  }
-
   return (
-    <div className="min-h-screen bg-background islamic-pattern pb-20 flex flex-col">
+    <div className="min-h-screen bg-background islamic-pattern pb-20 flex flex-col transition-all duration-300">
       <Navbar />
       
-      <div className="pt-[80px] flex flex-col flex-grow">
+      <div className="pt-[100px] flex flex-col flex-grow">
         <BackButton />
         
-        <main className="max-w-[1600px] mx-auto px-4 py-8 grid lg:grid-cols-12 gap-8 flex-grow">
+        <main className="max-w-[1600px] mx-auto px-6 py-8 grid lg:grid-cols-12 gap-8 flex-grow">
           {/* Toolbar */}
           <aside className="lg:col-span-3 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-2 mb-8">
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Greeting Studio</h1>
+              <p className="text-sm text-slate-500 font-medium">Design professional AI-powered Eid cards.</p>
+            </div>
+
             <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl">
               <CardHeader className="p-6 border-b">
                 <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
@@ -297,8 +269,6 @@ export default function CanvaGreetingGenerator() {
                   </TabsContent>
                   <TabsContent value="layers" className="space-y-4">
                     <Button variant="outline" onClick={() => addElement('text', 'New Text')} className="w-full h-12 rounded-xl text-xs font-bold">Add Text</Button>
-                    <label htmlFor="file-upload" className="w-full flex items-center justify-center border-2 border-dashed rounded-xl h-12 cursor-pointer hover:bg-primary/5 text-xs font-bold text-primary">Upload Image</label>
-                    <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                   </TabsContent>
                   <TabsContent value="theme" className="space-y-4">
                     {templates.map(t => (
@@ -315,7 +285,7 @@ export default function CanvaGreetingGenerator() {
 
           {/* Canvas */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/50 rounded-[3rem] p-8 relative">
-            <div ref={containerRef} className="relative shadow-2xl w-full max-w-[600px] aspect-square bg-white overflow-hidden" onMouseDown={() => setSelectedId(null)}>
+            <div ref={containerRef} className="relative shadow-2xl w-full max-w-[600px] aspect-square bg-white overflow-hidden rounded-2xl" onMouseDown={() => setSelectedId(null)}>
               <div className={cn("absolute inset-0 transition-all duration-500", template.bg)}>
                 <div className="absolute inset-0 opacity-20 islamic-pattern"></div>
               </div>
@@ -324,23 +294,20 @@ export default function CanvaGreetingGenerator() {
                   {el.type === 'text' ? (
                     <div style={{ color: el.style.color, fontSize: `${(el.style.fontSize! / 1080) * 100}cqw`, fontFamily: el.style.fontFamily, textAlign: el.style.textAlign, fontWeight: 'bold', lineHeight: 1.2 }}>{el.content}</div>
                   ) : (
-                    <img src={el.content} className="w-full h-auto" draggable={false} />
+                    <img src={el.content} className="w-full h-auto" draggable={false} alt="Sticker" />
                   )}
                 </div>
               ))}
               <canvas ref={canvasRef} className="hidden" />
-            </div>
-            <div className="mt-8 flex gap-4">
-               <Button variant="ghost" onClick={handleReset} className="rounded-xl font-bold text-muted-foreground">Reset Card</Button>
             </div>
           </div>
 
           {/* Sidebar Right */}
           <aside className="lg:col-span-3 space-y-6">
             <Card className="border-none shadow-xl rounded-[2rem] bg-white/80 backdrop-blur-xl h-full p-8 space-y-8">
-              <Button onClick={handleDownload} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-lg shadow-xl">Download PNG</Button>
+              <Button onClick={handleDownload} className="w-full h-16 rounded-2xl gold-gradient text-primary font-black text-lg shadow-xl hover:scale-105 transition-transform">Download PNG</Button>
               <Button onClick={handleSaveToGallery} disabled={isSaving} variant="outline" className="w-full h-16 rounded-2xl border-4 border-white glass-card text-primary font-black text-lg">
-                {isSaving ? <Loader2 className="animate-spin" /> : "Save to Gallery"}
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save to Gallery"}
               </Button>
             </Card>
           </aside>
