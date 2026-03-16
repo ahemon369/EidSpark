@@ -80,7 +80,7 @@ export function Footer() {
             <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit">Platform Features</h4>
             <ul className="space-y-4 text-slate-500 font-bold text-sm">
               <li><Link href="/tools/salami-calculator" className="hover:text-primary transition-colors">Salami Guide</Link></li>
-              <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors">Moon Sight Tracker</Link></li>
+              <li><Link href="/tools/moon-sighting" className="hover:text-primary transition-colors">Moon Tracker</Link></li>
               <li><Link href="/tools/salami" className="hover:text-primary transition-colors">Salami Center</Link></li>
               <li><Link href="/tools/countdown" className="hover:text-primary transition-colors">Live Countdown</Link></li>
             </ul>
@@ -91,9 +91,9 @@ export function Footer() {
             <div>
               <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px] pb-2 border-b border-slate-200 w-fit mb-6">Community</h4>
               <ul className="space-y-4 text-slate-500 font-bold text-sm mb-10">
-                <li><Link href="/leaderboard" className="hover:text-primary transition-colors">Leaderboard</Link></li>
+                <li><Link href="/leaderboard" className="hover:text-primary transition-colors">National Leaderboard</Link></li>
                 <li><Link href="/leaderboard" className="hover:text-primary transition-colors">Hall of Fame</Link></li>
-                <li><Link href="/fun-zone" className="hover:text-primary transition-colors">Fun Hub</Link></li>
+                <li><Link href="/fun-zone" className="hover:text-primary transition-colors">Fun Zone Hub</Link></li>
                 <li><Link href="/dashboard" className="hover:text-primary transition-colors">Community Feed</Link></li>
               </ul>
             </div>

@@ -56,62 +56,62 @@ import { awardPoints } from "@/lib/gamification-utils"
 import confetti from 'canvas-confetti'
 
 const excuses = [
-  "এই বছর টাকার crisis, সালামি next Eid এ double দিবো",
-  "আজকে ATM বন্ধ ছিল, কালকে নিও",
-  "বেতন এখনো পাইনি, একটু wait করো",
+  "এই বছর আসলে টাকার crisis, সালামি পরের ঈদে double দিবো!",
+  "আজকে তো ATM বন্ধ ছিল, কালকে এসে নিয়ে যেও।",
+  "অফিসের বেতনটা এখনো পাইনি, একটু wait করো ভাইয়া।",
   "বড় ভাইদের তো সালামি দিতে হয় না, নিতে হয়!",
-  "টাকা সব আম্মুর কাছে, ওনার কাছ থেকে নিয়ে নাও",
-  "সালামি দিয়ে কি করবা? টাকা জমিয়ে বড় হও আগে",
-  "খুচরা টাকা নাই রে ভাই, পরে দেখা করো",
-  "আমি তো এখনো ছোট, আমারেই তো কেউ সালামি দেয় নাই"
+  "টাকা সব আম্মুর কাছে জমা আছে, ওনার কাছ থেকে চেয়ে নাও।",
+  "সালামি দিয়ে কী করবা? টাকা জমিয়ে ভবিষ্যতে বড় হও আগে।",
+  "খুচরা টাকা একেবারেই নেই রে ভাই, পরে দেখা করো।",
+  "আমি তো এখনো ছোট মানুষ, আমাকেই তো কেউ সালামি দেয়নি!"
 ]
 
 const viralEmojis = ["😂", "😅", "🤭", "🤣", "😎", "😜", "🤫"]
 
 const quizQuestions = [
   {
-    q: "Eid এ তুমি প্রথমে কি করো?",
+    q: "ঈদে তুমি প্রথমেই কী করো?",
     options: [
       { text: "নতুন পাঞ্জাবি পরে নামাজে যাই", type: "Masjid Lover" },
       { text: "সবার আগে সেমাই খাই", type: "Food Warrior" },
-      { text: "কার কার থেকে সালামি নিবো লিস্ট করি", type: "Salami Hunter" },
-      { text: "সবার নতুন জামার সাথে নিজেরটা মিলাই", type: "Shopping Master" }
+      { text: "কার কার থেকে সালামি নেবো সেই লিস্ট করি", type: "Salami Hunter" },
+      { text: "সবার নতুন জামার সাথে নিজেরটা মেলাই", type: "Shopping Master" }
     ]
   },
   {
-    q: "সালামি পেলে তোমার রিঅ্যাকশন কি?",
+    q: "সালামি পেলে তোমার রিঅ্যাকশন কী হয়?",
     options: [
       { text: "সাথে সাথে গুনে ফেলি", type: "Salami Hunter" },
-      { text: "আম্মুর কাছে জমা দিয়ে দেই", type: "Masjid Lover" },
-      { text: "বন্ধুদের নিয়ে খেতে বের হই", type: "Food Warrior" },
-      { text: "পরের শপিং এর প্ল্যান করি", type: "Shopping Master" }
+      { text: "আম্মুর কাছে নিরাপদে জমা দিয়ে দেই", type: "Masjid Lover" },
+      { text: "বন্ধুদের নিয়ে বাইরে খেতে বের হই", type: "Food Warrior" },
+      { text: "পরের শপিং এর জন্য প্ল্যান করি", type: "Shopping Master" }
     ]
   },
   {
-    q: "Eid এর শপিং কবে করো?",
+    q: "ঈদের শপিং সাধারণত কবে করো?",
     options: [
       { text: "চাঁদ রাতে তাড়াহুড়ো করে", type: "Salami Hunter" },
-      { text: "এক মাস আগে শান্তিমতো", type: "Shopping Master" },
-      { text: "কিনি না, উপহার পাই", type: "Masjid Lover" },
-      { text: "পুরো শপিং মল ঘুরে কয়েকবার", type: "Shopping Master" }
+      { text: "এক মাস আগেই শান্তিমতো করে ফেলি", type: "Shopping Master" },
+      { text: "কিনি না, উপহার হিসেবে যা পাই তাই পরি", type: "Masjid Lover" },
+      { text: "পুরো শপিং মল কয়েকবার ঘুরে বাছাই করি", type: "Shopping Master" }
     ]
   },
   {
-    q: "ঈদে সেমাই খাওয়ার পর কি করো?",
+    q: "ঈদের সকালে সেমাই খাওয়ার পর কী করো?",
     options: [
-      { text: "সাথে সাথে ঘুম দেই", type: "Food Warrior" },
-      { text: "প্রতিবেশীর বাসায় ঘুরতে যাই", type: "Masjid Lover" },
-      { text: "বড়দের পা ছুয়ে সালামি খুঁজি", type: "Salami Hunter" },
-      { text: "১০০টা সেলফি তুলি", type: "Shopping Master" }
+      { text: "সাথে সাথে লম্বা একটা ঘুম দেই", type: "Food Warrior" },
+      { text: "প্রতিবেশীর বাসায় ঘুরতে বের হই", type: "Masjid Lover" },
+      { text: "বড়দের পা ছুঁয়ে সালামি খুঁজি", type: "Salami Hunter" },
+      { text: "একশটা সুন্দর সেলফি তুলি", type: "Shopping Master" }
     ]
   },
   {
-    q: "তোমার সেরা ঈদ গিফট কি হতে পারে?",
+    q: "তোমার কাছে সেরা ঈদ উপহার কোনটি?",
     options: [
-      { text: "এক গাদা সালামি (কড়কড়ে নোট)", type: "Salami Hunter" },
+      { text: "এক গাদা কড়কড়ে সালামির নোট", type: "Salami Hunter" },
       { text: "সবার ভালোবাসা ও দোয়া", type: "Masjid Lover" },
-      { text: "এক হাড়ি কাচ্চি বিরিয়ানি", type: "Food Warrior" },
-      { text: "ব্র্যান্ডেড ঘড়ি বা পাঞ্জাবি", type: "Shopping Master" }
+      { text: "এক হাড়ি গরম কাচ্চি বিরিয়ানি", type: "Food Warrior" },
+      { text: "ব্র্যান্ডেড ঘড়ি বা দামী পাঞ্জাবি", type: "Shopping Master" }
     ]
   }
 ]
@@ -245,9 +245,9 @@ export default function FunZone() {
       const winner = Object.keys(counts).reduce((a, b) => (counts[a] || 0) > (counts[b] || 0) ? a : b)
       
       const results: Record<string, any> = {
-        "Salami Hunter": { emoji: "💰", desc: "তুমি সালামি ছাড়া আর কিছুই বুঝো না! তোমার কাছে ঈদ মানেই পকেট গরম করা।" },
-        "Masjid Lover": { emoji: "🕌", desc: "মাশাআল্লাহ! তুমি খুব ধার্মিক। ঈদ মানেই তোমার কাছে আল্লাহর শুকরিয়া আদায় করা।" },
-        "Food Warrior": { emoji: "🥘", desc: "তুমি আস্ত একটা ভোজনরসিক! ঈদে সবার আগে তুমি ডাইনিং টেবিলে বসো।" },
+        "Salami Hunter": { emoji: "💰", desc: "তুমি সালামি ছাড়া আর কিছুই বোঝো না! তোমার কাছে ঈদ মানেই পকেট গরম করা।" },
+        "Masjid Lover": { emoji: "🕌", desc: "মাশাআল্লাহ! তুমি খুবই দ্বীনদার। ঈদ মানেই তোমার কাছে আল্লাহর শুকরিয়া আদায় করা।" },
+        "Food Warrior": { emoji: "🥘", desc: "তুমি আস্ত একটা ভোজনরসিক! ঈদে সবার আগে তোমাকে ডাইনিং টেবিলেই পাওয়া যায়।" },
         "Shopping Master": { emoji: "🛍️", desc: "নতুন জামা আর সাজগোজই তোমার প্রধান কাজ। তোমার ঈদ মানেই নিজেকে প্রেজেন্ট করা।" }
       }
       setQuizResult({ title: winner, ...results[winner] })
@@ -270,7 +270,7 @@ export default function FunZone() {
         receivedDate: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
       })
-      toast({ title: "Salami Added! ৳" })
+      toast({ title: "Salami Added Successfully!" })
       setAmount(""); setFrom("")
       awardPoints(db, user.uid, 'SalamiCalc')
     } catch (e) {} finally { setIsAddingSalami(false) }
@@ -360,7 +360,6 @@ export default function FunZone() {
                     <CardContent className="p-12 text-center space-y-12">
                       <div className="relative">
                         <div className="text-8xl mb-6 animate-bounce">{currentEmoji}</div>
-                        {/* Chat-style speech bubble with CSS triangle */}
                         <div className="relative">
                           <div className="bg-primary/5 p-12 rounded-[2.5rem] border-4 border-dashed border-primary/10 relative group hover:bg-primary/[0.07] transition-all">
                             <p className="text-4xl font-black text-primary leading-tight italic">"{currentExcuse}"</p>
@@ -372,7 +371,6 @@ export default function FunZone() {
                               <Bookmark className="w-6 h-6" />
                             </button>
                           </div>
-                          {/* Bubble Arrow */}
                           <div className="absolute left-1/2 -bottom-4 -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[20px] border-t-primary/5"></div>
                         </div>
                       </div>
@@ -387,10 +385,10 @@ export default function FunZone() {
                       
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button onClick={generateExcuse} className="h-20 px-12 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all active:scale-95 animate-glow">
-                          Generate Magic
+                          Generate Excuse
                         </Button>
-                        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(`${currentExcuse} ${currentEmoji}`); toast({ title: "Copied!" }) }} className="h-20 px-12 rounded-[2rem] border-4 border-slate-100 font-black text-2xl hover:bg-slate-50">
-                          <Copy className="w-6 h-6 mr-2" /> Copy
+                        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(`${currentExcuse} ${currentEmoji}`); toast({ title: "Copied to clipboard!" }) }} className="h-20 px-12 rounded-[2rem] border-4 border-slate-100 font-black text-2xl hover:bg-slate-50">
+                          <Copy className="w-6 h-6 mr-2" /> Copy Text
                         </Button>
                       </div>
 
@@ -418,9 +416,9 @@ export default function FunZone() {
                   </CardHeader>
                   <CardContent className="p-0">
                     {!user ? (
-                      <div className="p-16 text-center text-muted-foreground italic font-medium">Log in to build your personal excuse library.</div>
+                      <div className="p-16 text-center text-muted-foreground italic font-medium">Please sign in to build your personal excuse library.</div>
                     ) : !mySavedExcuses || mySavedExcuses.length === 0 ? (
-                      <div className="p-16 text-center text-muted-foreground italic font-medium">Your library is empty. Tap the bookmark icon to save!</div>
+                      <div className="p-16 text-center text-muted-foreground italic font-medium">Your library is empty. Tap the bookmark icon to save your favorites!</div>
                     ) : (
                       <div className="divide-y divide-primary/5">
                         {mySavedExcuses.map(ex => (
@@ -444,7 +442,7 @@ export default function FunZone() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <TrendingUp className="w-6 h-6 text-secondary" />
-                        <h3 className="text-2xl font-black text-primary tracking-tight">Top Trending</h3>
+                        <h3 className="text-2xl font-black text-primary tracking-tight">Trending Now</h3>
                       </div>
                       <Zap className="w-5 h-5 text-secondary animate-pulse fill-secondary" />
                     </div>
@@ -460,7 +458,7 @@ export default function FunZone() {
                           }}
                         >
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">#{i + 1} Viral Trend</span>
+                            <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">#{i + 1} Trending</span>
                             <div className="flex items-center gap-1.5 bg-primary/5 px-2 py-0.5 rounded-full">
                               <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
                               <span className="text-[10px] font-bold text-primary">{(150 - i * 15).toLocaleString()}</span>
@@ -484,7 +482,7 @@ export default function FunZone() {
                   <div className="emerald-gradient p-12 text-white text-center relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10 pointer-events-none islamic-pattern"></div>
                     <div className="w-16 h-16 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-secondary backdrop-blur-md border border-white/10"><Users className="w-8 h-8" /></div>
-                    <CardTitle className="text-4xl font-black tracking-tight">Personality Test</CardTitle>
+                    <CardTitle className="text-4xl font-black tracking-tight">Personality Quiz</CardTitle>
                     <p className="text-xs font-black uppercase tracking-[0.3em] text-white/60 mt-3">Question {quizStep + 1} of {quizQuestions.length}</p>
                   </div>
                   <CardContent className="p-12 flex-grow flex flex-col justify-center gap-10">
@@ -520,7 +518,7 @@ export default function FunZone() {
                     <p className="text-2xl text-slate-700 font-medium italic leading-relaxed">"{quizResult.desc}"</p>
                   </div>
                   <div className="pt-10 flex flex-col gap-4 max-w-md mx-auto">
-                    <Button className="h-20 rounded-[2rem] emerald-gradient text-white font-black text-2xl shadow-2xl hover:scale-105 transition-all" onClick={() => shareSocial('wa', `I just took the Eid Personality Test and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
+                    <Button className="h-20 rounded-[2rem] emerald-gradient text-white font-black text-2xl shadow-2xl hover:scale-105 transition-all" onClick={() => shareSocial('wa', `I just took the Eid Personality Quiz and I'm a ${quizResult.title}! ${quizResult.emoji}`)}>
                       Share Result
                     </Button>
                     <Button variant="ghost" onClick={() => { setQuizStep(0); setQuizAnswers([]); setQuizResult(null); }} className="font-black text-muted-foreground uppercase tracking-widest text-xs">
@@ -539,24 +537,24 @@ export default function FunZone() {
                 <div className="emerald-gradient p-12 text-white text-center relative">
                   <div className="absolute inset-0 opacity-10 pointer-events-none islamic-pattern"></div>
                   <Wallet className="w-16 h-16 mx-auto mb-6 text-secondary" />
-                  <p className="text-white/60 font-black uppercase tracking-[0.3em] text-[10px] mb-2">Grand Total Salami</p>
+                  <p className="text-white/60 font-black uppercase tracking-[0.3em] text-[10px] mb-2">Grand Total Collected</p>
                   <p className="text-7xl font-black tracking-tighter">৳{totalSalamiValue.toLocaleString()}</p>
                 </div>
                 <CardContent className="p-10 space-y-8">
                   {!user ? (
-                    <Button className="w-full h-16 rounded-[1.5rem] emerald-gradient font-black text-lg" asChild><a href="/login">Login to Start Tracking</a></Button>
+                    <Button className="w-full h-16 rounded-[1.5rem] emerald-gradient font-black text-lg" asChild><a href="/login">Sign In to Start Tracking</a></Button>
                   ) : (
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Amount (৳)</Label>
-                        <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="500" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-xl font-bold" />
+                        <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 500" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-xl font-bold" />
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">From Person</Label>
-                        <Input value={from} onChange={e => setFrom(e.target.value)} placeholder="Choto Mama" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-lg" />
+                        <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Giver's Name</Label>
+                        <Input value={from} onChange={e => setFrom(e.target.value)} placeholder="e.g. Uncle" className="h-16 rounded-2xl bg-slate-50 border-none px-6 text-lg" />
                       </div>
                       <Button onClick={addSalami} disabled={isAddingSalami || !amount} className="w-full h-20 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all">
-                        {isAddingSalami ? <Loader2 className="animate-spin" /> : <><Plus className="w-6 h-6 mr-3" /> Log Record</>}
+                        {isAddingSalami ? <Loader2 className="animate-spin" /> : <><Plus className="w-6 h-6 mr-3" /> Add to History</>}
                       </Button>
                     </div>
                   )}
@@ -590,7 +588,7 @@ export default function FunZone() {
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center opacity-30 text-center space-y-6">
                       <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center"><ChartBar className="w-12 h-12" /></div>
-                      <p className="font-black uppercase tracking-[0.3em] text-sm">No analytics available yet</p>
+                      <p className="font-black uppercase tracking-[0.3em] text-sm">No collection data available yet</p>
                     </div>
                   )}
                 </div>
@@ -632,7 +630,7 @@ export default function FunZone() {
                 </div>
                 <CardContent className="p-10 space-y-8">
                   {!user ? (
-                    <Button className="w-full h-20 rounded-[2rem] emerald-gradient font-black text-2xl shadow-xl" asChild><a href="/login">Join the Stage</a></Button>
+                    <Button className="w-full h-20 rounded-[2rem] emerald-gradient font-black text-2xl shadow-xl" asChild><a href="/login">Join the Contest</a></Button>
                   ) : (
                     <div className="space-y-6">
                       <div className="space-y-3">
@@ -644,7 +642,7 @@ export default function FunZone() {
                         <Input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Eid vibes! ✨" className="h-16 rounded-2xl bg-slate-50 border-none px-6" />
                       </div>
                       <Button onClick={uploadSelfie} disabled={isUploading || !selfieUrl} className="w-full h-20 rounded-[2rem] gold-gradient text-primary font-black text-2xl shadow-2xl hover:scale-105 transition-all">
-                        {isUploading ? <Loader2 className="animate-spin" /> : "Submit To Contest"}
+                        {isUploading ? <Loader2 className="animate-spin" /> : "Submit Entry"}
                       </Button>
                     </div>
                   )}
@@ -657,7 +655,7 @@ export default function FunZone() {
                     <h3 className="text-3xl font-black text-primary flex items-center gap-3"><Trophy className="w-8 h-8 text-secondary fill-secondary" /> National Board</h3>
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Top 10 Performances</p>
                   </div>
-                  <div className="bg-primary/10 px-5 py-2 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] backdrop-blur-md">Viral Trends</div>
+                  <div className="bg-primary/10 px-5 py-2 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] backdrop-blur-md">Live Pulse</div>
                 </div>
                 
                 <div className="grid sm:grid-cols-2 gap-8">
@@ -690,7 +688,7 @@ export default function FunZone() {
                     </Card>
                   )) : (
                     <div className="col-span-full py-32 text-center bg-white/50 rounded-[4rem] border-4 border-dashed border-primary/10 opacity-40">
-                      <p className="font-black uppercase tracking-[0.4em] text-primary">Be the pioneer. Upload now.</p>
+                      <p className="font-black uppercase tracking-[0.4em] text-primary">Be the pioneer. Submit your selfie now.</p>
                     </div>
                   )}
                 </div>

@@ -57,11 +57,11 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     if (!auth) return
     try {
       await signOut(auth)
-      toast({ title: "Signed Out", description: "Come back soon!" })
+      toast({ title: "Signed Out Successfully", description: "See you again next Eid!" })
       router.push("/")
     } catch (error) {}
   }
@@ -142,8 +142,10 @@ export function Navbar() {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="rounded-xl font-bold"><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive font-bold rounded-xl focus:text-destructive">Log out</DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-xl font-bold"><Link href="/dashboard">My Dashboard</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-xl font-bold"><Link href="/dashboard/settings">Account Settings</Link></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive font-bold rounded-xl focus:text-destructive">Sign Out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -200,7 +202,7 @@ export function Navbar() {
           <div className="pt-8">
             {user ? (
               <Button asChild className="w-full h-14 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>
-                <Link href="/dashboard">Go to Dashboard</Link>
+                <Link href="/dashboard">View Dashboard</Link>
               </Button>
             ) : (
               <Button asChild className="w-full h-14 rounded-2xl font-black text-lg emerald-gradient shadow-xl" onClick={() => setIsOpen(false)}>

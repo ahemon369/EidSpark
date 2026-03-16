@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { User, Shield, Bell, Moon, Camera, Save, Loader2, Lock, CheckCircle2 } from "lucide-react"
+import { User, Shield, Bell, Moon, Camera, Save, Loader2, Lock, CheckCircle2 } from "lucide-center"
 import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
@@ -67,18 +67,16 @@ export default function ProfileSettings() {
     e.preventDefault()
     if (!user || !auth || !db) return
     if (!displayName.trim()) {
-      toast({ variant: "destructive", title: "Name is required" })
+      toast({ variant: "destructive", title: "Name Required", description: "Please enter your full name." })
       return
     }
 
     setIsSaving(true)
     
-    // 1. Update Firebase Auth Profile
     updateProfile(auth.currentUser!, {
       displayName: displayName,
       photoURL: avatarPreview || user.photoURL
     }).then(() => {
-      // 2. Update Firestore Document
       const userRef = doc(db, "users", user.uid)
       updateDoc(userRef, {
         username: displayName,
@@ -91,9 +89,9 @@ export default function ProfileSettings() {
         }))
       })
 
-      toast({ title: "Profile Updated", description: "Your details have been saved successfully." })
+      toast({ title: "Profile Updated Successfully", description: "Your account details have been saved." })
     }).catch((error) => {
-      toast({ variant: "destructive", title: "Update Failed", description: error.message || "Could not update profile." })
+      toast({ variant: "destructive", title: "Update Failed", description: error.message || "An error occurred while saving your profile." })
     }).finally(() => {
       setIsSaving(false)
     })
@@ -104,7 +102,7 @@ export default function ProfileSettings() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      toast({ variant: "destructive", title: "Invalid file type", description: "Please upload an image (JPG/PNG)." })
+      toast({ variant: "destructive", title: "Unsupported File", description: "Please upload an image file (JPG or PNG)." })
       return
     }
 
@@ -114,7 +112,7 @@ export default function ProfileSettings() {
       const base64 = event.target?.result as string
       setAvatarPreview(base64)
       setIsUploading(false)
-      toast({ title: "Photo Previewed", description: "Click 'Save Changes' to apply permanently." })
+      toast({ title: "Photo Previewed", description: "Click 'Save Changes' to permanently update your photo." })
     }
     reader.readAsDataURL(file)
   }
@@ -137,7 +135,7 @@ export default function ProfileSettings() {
     updateDoc(userRef, {
       notificationsEnabled: val
     }).catch(async () => {
-      // Background fail is silent or emitted
+      // Background fail
     })
   }
 
@@ -146,31 +144,29 @@ export default function ProfileSettings() {
     if (!auth || !auth.currentUser || !user?.email) return
 
     if (passwordForm.new !== passwordForm.confirm) {
-      toast({ variant: "destructive", title: "Mismatch", description: "New passwords do not match." })
+      toast({ variant: "destructive", title: "Passwords Mismatch", description: "The new password and confirmation do not match." })
       return
     }
 
     if (passwordForm.new.length < 6) {
-      toast({ variant: "destructive", title: "Too short", description: "Password must be at least 6 characters." })
+      toast({ variant: "destructive", title: "Password Too Short", description: "Your new password must be at least 6 characters." })
       return
     }
 
     setIsChangingPassword(true)
     try {
-      // Re-authenticate first (standard Firebase security requirement for password changes)
       const credential = EmailAuthProvider.credential(user.email, passwordForm.current)
       await reauthenticateWithCredential(auth.currentUser, credential)
       
-      // Update password
       await updatePassword(auth.currentUser, passwordForm.new)
       
-      toast({ title: "Password Updated", description: "Your security has been refreshed." })
+      toast({ title: "Password Updated", description: "Your security settings have been refreshed." })
       setPasswordModalOpen(false)
       setPasswordForm({ current: "", new: "", confirm: "" })
     } catch (error: any) {
-      let msg = "Failed to update password. Check your current password."
-      if (error.code === 'auth/wrong-password') msg = "The current password you entered is incorrect."
-      toast({ variant: "destructive", title: "Error", description: msg })
+      let msg = "Failed to update password. Please check your credentials."
+      if (error.code === 'auth/wrong-password') msg = "The current password entered is incorrect."
+      toast({ variant: "destructive", title: "Security Error", description: msg })
     } finally {
       setIsChangingPassword(false)
     }
@@ -179,8 +175,8 @@ export default function ProfileSettings() {
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom duration-700">
       <div className="space-y-1">
-        <h2 className="text-3xl font-black text-slate-800">Settings</h2>
-        <p className="text-muted-foreground font-medium">Manage your account and app preferences.</p>
+        <h2 className="text-3xl font-black text-slate-800">Account Settings</h2>
+        <p className="text-muted-foreground font-medium">Manage your personal profile and application preferences.</p>
       </div>
 
       <div className="grid gap-8">
@@ -193,7 +189,7 @@ export default function ProfileSettings() {
               </div>
               <div>
                 <CardTitle className="text-xl font-black">Profile Information</CardTitle>
-                <CardDescription>Personal details and public profile.</CardDescription>
+                <CardDescription>Update your public display name and avatar.</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -237,7 +233,7 @@ export default function ProfileSettings() {
                       <Input value={user?.email || ""} readOnly className="h-12 rounded-xl bg-slate-50 opacity-60 cursor-not-allowed" />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground italic font-medium">Your profile name is visible to other users in the community.</p>
+                  <p className="text-xs text-muted-foreground italic font-medium">Your profile name is visible to other community members.</p>
                 </div>
               </div>
               <Button type="submit" disabled={isSaving} className="emerald-gradient text-white h-14 rounded-2xl font-black px-10 shadow-xl shadow-primary/20">
@@ -258,7 +254,7 @@ export default function ProfileSettings() {
                 </div>
                 <div>
                   <h4 className="font-black text-lg">Display Mode</h4>
-                  <p className="text-sm text-muted-foreground font-medium">Toggle between light and dark.</p>
+                  <p className="text-sm text-muted-foreground font-medium">Switch between light and dark themes.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -276,7 +272,7 @@ export default function ProfileSettings() {
                 </div>
                 <div>
                   <h4 className="font-black text-lg">Notifications</h4>
-                  <p className="text-sm text-muted-foreground font-medium">Manage app alerts.</p>
+                  <p className="text-sm text-muted-foreground font-medium">Enable or disable platform alerts.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -296,7 +292,7 @@ export default function ProfileSettings() {
               </div>
               <div>
                 <h4 className="font-black text-lg">Security & Privacy</h4>
-                <p className="text-sm text-muted-foreground font-medium">Protect your account and data.</p>
+                <p className="text-sm text-muted-foreground font-medium">Protect your credentials and data privacy.</p>
               </div>
             </div>
             
@@ -310,7 +306,7 @@ export default function ProfileSettings() {
                 <form onSubmit={handleChangePassword}>
                   <DialogHeader className="space-y-3 mb-6">
                     <DialogTitle className="text-2xl font-black">Update Password</DialogTitle>
-                    <DialogDescription>Enter your current password to authorize this change.</DialogDescription>
+                    <DialogDescription>Enter your current password to authorize security changes.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -351,7 +347,7 @@ export default function ProfileSettings() {
                       className="w-full h-12 rounded-xl font-black emerald-gradient text-white"
                     >
                       {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                      Confirm Update
+                      Update Password
                     </Button>
                   </DialogFooter>
                 </form>
