@@ -18,7 +18,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
     }
 
     match /users/{userId}/savedExcuses/{id} {
@@ -46,6 +46,10 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
+    match /users/{userId}/dailyChallengeProgress/{id} {
+      allow get, list, create, update: if isOwner(userId);
+    }
+
     match /mosques/{mosqueId} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -62,6 +66,13 @@ service cloud.firestore {
     match /salamiCards/{id} {
       allow get: if true;
       allow create: if isSignedIn();
+    }
+
+    match /salamiProfiles/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId) || isAdmin() || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalSalami', 'donorsCount']));
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /moonSightings/{id} {

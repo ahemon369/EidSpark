@@ -18,69 +18,24 @@
       },
       "required": ["id", "username", "totalPoints", "levelId", "earnedBadgeIds", "createdAt"]
     },
-    "Mosque": {
+    "SalamiProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Mosque",
+      "title": "SalamiProfile",
       "type": "object",
-      "description": "Stores information about a mosque or Eid ground, powered by community contributions.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "district": { "type": "string" },
-        "area": { "type": "string" },
-        "latitude": { "type": "number" },
-        "longitude": { "type": "number" },
-        "eid_prayer_time": { "type": "string" },
-        "isApprovedByAdmin": { "type": "boolean" },
-        "submittedByUserId": { "type": "string" },
-        "savesCount": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "name", "district", "latitude", "longitude", "isApprovedByAdmin"]
-    },
-    "SavedExcuse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SavedExcuse",
-      "type": "object",
-      "description": "A funny Eid Salami excuse saved by the user.",
-      "properties": {
-        "id": { "type": "string" },
-        "text": { "type": "string" },
-        "savedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "text", "savedAt"]
-    },
-    "EidSelfie": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "EidSelfie",
-      "type": "object",
-      "description": "A selfie submitted to the Eid contest.",
+      "description": "A user's personal QR Salami page configuration.",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "imageUrl": { "type": "string", "format": "uri" },
-        "caption": { "type": "string" },
-        "likesCount": { "type": "number" },
-        "uploadedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "imageUrl", "uploadedAt"]
-    },
-    "SalamiCard": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SalamiCard",
-      "type": "object",
-      "description": "A digital Eidi envelope shared between users.",
-      "properties": {
-        "id": { "type": "string" },
-        "senderName": { "type": "string" },
-        "recipientName": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bkashNumber": { "type": "string" },
+        "nagadNumber": { "type": "string" },
         "message": { "type": "string" },
-        "amount": { "type": "number" },
-        "paymentLink": { "type": "string" },
+        "totalSalami": { "type": "number" },
+        "donorsCount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "senderName", "recipientName", "createdAt"]
+      "required": ["id", "userId", "username", "bkashNumber"]
     }
   },
   "auth": {
@@ -97,43 +52,11 @@
         }
       },
       {
-        "path": "/users/{userId}/savedExcuses/{id}",
+        "path": "/salamiProfiles/{profileId}",
         "definition": {
-          "entityName": "SavedExcuse",
-          "schema": { "$ref": "#/backend/entities/SavedExcuse" },
-          "description": "Personalized saved excuses."
-        }
-      },
-      {
-        "path": "/mosques/{mosqueId}",
-        "definition": {
-          "entityName": "Mosque",
-          "schema": { "$ref": "#/backend/entities/Mosque" },
-          "description": "Crowd-powered mosque data."
-        }
-      },
-      {
-        "path": "/eidSelfies/{id}",
-        "definition": {
-          "entityName": "EidSelfie",
-          "schema": { "$ref": "#/backend/entities/EidSelfie" },
-          "description": "Contest submissions."
-        }
-      },
-      {
-        "path": "/salamiCards/{id}",
-        "definition": {
-          "entityName": "SalamiCard",
-          "schema": { "$ref": "#/backend/entities/SalamiCard" },
-          "description": "Shared Eidi envelopes."
-        }
-      },
-      {
-        "path": "/roles_admin/{adminUid}",
-        "definition": {
-          "entityName": "AdminRole",
-          "schema": { "type": "object", "properties": { "role": { "type": "string" } } },
-          "description": "Admin access control documents."
+          "entityName": "SalamiProfile",
+          "schema": { "$ref": "#/backend/entities/SalamiProfile" },
+          "description": "Stores personal Salami QR profiles."
         }
       }
     ]
