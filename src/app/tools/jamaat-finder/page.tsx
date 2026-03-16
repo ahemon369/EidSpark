@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
@@ -30,7 +29,8 @@ import {
   ShieldAlert,
   ThumbsUp,
   AlertCircle,
-  Star
+  Star,
+  Share2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
@@ -279,7 +279,7 @@ export default function JamaatFinderPage() {
                   className="rounded-full text-[9px] font-black uppercase h-8 px-4 border-2"
                   onClick={() => setDistanceRadius(distanceRadius ? null : 5000)}
                 >
-                  &lt; 5km
+                  {"< 5km"}
                 </Button>
               </div>
 
