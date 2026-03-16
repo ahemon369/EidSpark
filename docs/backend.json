@@ -52,11 +52,102 @@
         }
       },
       {
+        "path": "/users/{userId}/savedExcuses/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's saved viral excuses."
+        }
+      },
+      {
+        "path": "/users/{userId}/savedMosques/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's favorite prayer locations."
+        }
+      },
+      {
+        "path": "/users/{userId}/salamiEntries/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's personal salami collection log."
+        }
+      },
+      {
+        "path": "/users/{userId}/eidGreetings/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's AI-generated greeting cards."
+        }
+      },
+      {
+        "path": "/users/{userId}/zakatCalculations/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's zakat calculation history."
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's in-app activity notifications."
+        }
+      },
+      {
+        "path": "/users/{userId}/dailyChallengeProgress/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's progress on daily Eid challenges."
+        }
+      },
+      {
+        "path": "/users/{userId}/selfiePosters/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "User's AI-themed festive selfies."
+        }
+      },
+      {
         "path": "/salamiProfiles/{profileId}",
         "definition": {
           "entityName": "SalamiProfile",
           "schema": { "$ref": "#/backend/entities/SalamiProfile" },
           "description": "Stores personal Salami QR profiles."
+        }
+      },
+      {
+        "path": "/mosques/{mosqueId}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "Global registry of mosques and prayer grounds."
+        }
+      },
+      {
+        "path": "/mosques/{mosqueId}/jamaatTimes/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "Community-reported Eid prayer times for a mosque."
+        }
+      },
+      {
+        "path": "/eidSelfies/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "Public entries for the national Eid selfie contest."
+        }
+      },
+      {
+        "path": "/salamiCards/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "Digital eidi envelopes sent between users."
+        }
+      },
+      {
+        "path": "/moonSightings/{id}",
+        "definition": {
+          "schema": { "type": "object" },
+          "description": "Crowd-sourced moon sighting reports across Bangladesh."
         }
       }
     ]

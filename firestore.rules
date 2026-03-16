@@ -15,47 +15,40 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
+    // User-specific data
     match /users/{userId} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
+
+      // Nested subcollections for user data
+      match /savedExcuses/{id} { allow read, write: if isOwner(userId); }
+      match /savedMosques/{id} { allow read, write: if isOwner(userId); }
+      match /salamiEntries/{id} { allow read, write: if isOwner(userId); }
+      match /eidGreetings/{id} { allow read, write: if isOwner(userId); }
+      match /zakatCalculations/{id} { allow read, write: if isOwner(userId); }
+      match /dailyChallengeProgress/{id} { allow read, write: if isOwner(userId); }
+      match /selfiePosters/{id} { allow read, write: if isOwner(userId); }
+      
+      match /notifications/{id} { 
+        allow get, list, update, delete: if isOwner(userId);
+        allow create: if isSignedIn(); 
+      }
     }
 
-    match /users/{userId}/savedExcuses/{id} {
-      allow get, list, create, delete: if isOwner(userId);
-    }
-
-    match /users/{userId}/savedMosques/{id} {
-      allow get, list, create, delete: if isOwner(userId);
-    }
-
-    match /users/{userId}/salamiEntries/{id} {
-      allow get, list, create, delete: if isOwner(userId);
-    }
-
-    match /users/{userId}/eidGreetings/{id} {
-      allow get, list, create, delete: if isOwner(userId);
-    }
-
-    match /users/{userId}/zakatCalculations/{id} {
-      allow get, list, create, delete: if isOwner(userId);
-    }
-
-    match /users/{userId}/notifications/{id} {
-      allow get, list, update, delete: if isOwner(userId);
-      allow create: if isSignedIn();
-    }
-
-    match /users/{userId}/dailyChallengeProgress/{id} {
-      allow get, list, create, update: if isOwner(userId);
-    }
-
+    // Global Mosque Registry
     match /mosques/{mosqueId} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.submittedByUserId == request.auth.uid);
+      
+      match /jamaatTimes/{id} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
     }
 
+    // Community Contest
     match /eidSelfies/{id} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -63,11 +56,13 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
+    // Digital Eidi Envelopes
     match /salamiCards/{id} {
       allow get: if true;
       allow create: if isSignedIn();
     }
 
+    // Salami QR Profiles
     match /salamiProfiles/{id} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -75,12 +70,14 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
+    // Moon Sighting Registry
     match /moonSightings/{id} {
       allow read: if true;
       allow create: if isSignedIn();
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
+    // Admin Roles
     match /roles_admin/{userId} {
       allow get: if isOwner(userId);
     }
