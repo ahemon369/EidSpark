@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
@@ -86,6 +87,7 @@ export default function SelfiePosterStudio() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCaptioning, setIsCaptioning] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [lastAiRequestTime, setLastAiRequestTime] = useState<number>(0)
   
   const [showCamera, setShowCamera] = useState(false)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
@@ -174,7 +176,20 @@ export default function SelfiePosterStudio() {
       toast({ title: "No Image Found", description: "Take a photo first.", variant: "destructive" });
       return;
     }
+
+    const now = Date.now();
+    if (now - lastAiRequestTime < 5000) {
+      toast({ 
+        variant: "destructive",
+        title: "Please wait", 
+        description: "AI generation temporarily busy. Please try again in a moment."
+      });
+      return;
+    }
+
     setIsGenerating(true)
+    setLastAiRequestTime(now)
+    
     try {
       const result = await generateSelfieBackground({
         photoDataUri: originalImage,
