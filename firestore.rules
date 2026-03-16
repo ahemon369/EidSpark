@@ -3,16 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * EIDSPARK REWARDS SECURITY RULES
-     *
-     * CORE PHILOSOPHY:
-     * This ruleset implements a strict User-Ownership model for personal data and a 
-     * Database-Backed Access Control (DBAC) model for administrative configurations.
-     */
-
-    // --- GLOBAL HELPER FUNCTIONS ---
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -21,120 +11,67 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // --- COLLECTION RULES ---
-
-    /** @path /users/{userId} */
     match /users/{userId} {
       allow get, list: if isSignedIn();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /** User subcollections */
-    match /users/{userId}/dailyChallengeProgress/{progressId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
 
     match /users/{userId}/savedExcuses/{id} {
       allow get, list, create, delete: if isOwner(userId);
     }
 
-    match /users/{userId}/salamiEntries/{id} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.trackerUserId == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    match /users/{userId}/eidGreetings/{id} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.creatorUserId == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    match /users/{userId}/zakatCalculations/{id} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    match /users/{userId}/mosqueContributions/{id} {
-      allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.contributorUserId == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    match /users/{userId}/notifications/{id} {
-      allow get, list, update, delete: if isOwner(userId);
-      allow create: if isSignedIn(); // Allow system to create notifications
-    }
-
     match /users/{userId}/savedMosques/{id} {
       allow get, list, create, delete: if isOwner(userId);
     }
 
-    match /users/{userId}/selfiePosters/{id} {
+    match /users/{userId}/salamiEntries/{id} {
       allow get, list, create, delete: if isOwner(userId);
     }
 
-    /** Global collections */
-    match /levels/{levelId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+    match /users/{userId}/eidGreetings/{id} {
+      allow get, list, create, delete: if isOwner(userId);
     }
 
-    match /badges/{badgeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+    match /users/{userId}/zakatCalculations/{id} {
+      allow get, list, create, delete: if isOwner(userId);
     }
 
-    match /dailyChallenges/{challengeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+    match /users/{userId}/notifications/{id} {
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isSignedIn();
     }
 
     match /mosques/{mosqueId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin() || isSignedIn();
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.submittedByUserId == request.auth.uid);
     }
 
     match /eidSelfies/{id} {
-      allow get, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn(); 
+      allow update: if isSignedIn();
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /salamiCards/{id} {
       allow get: if true;
       allow create: if isSignedIn();
-      allow list, update, delete: if false;
     }
 
     match /moonSightings/{id} {
-      allow get, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /roles_admin/{userId} {
       allow get: if isOwner(userId);
-      allow list, create, update, delete: if false;
     }
   }
 }
