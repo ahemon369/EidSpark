@@ -7,7 +7,7 @@ import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles,
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useUser, useAuth, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { collection, query, where, doc } from "firebase/firestore"
+import { doc } from "firebase/firestore"
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -37,14 +37,14 @@ export function Navbar() {
   const [isDark, setIsDark] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { user, isUserLoading: loading } = useUser()
+  const { user, loading } = useUser()
   const auth = useAuth()
   const db = useFirestore()
   const { toast } = useToast()
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
-  // Fetch points real-time using direct doc ref
+  // Fetch points real-time
   const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, "users", user.uid)
@@ -82,7 +82,7 @@ export function Navbar() {
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-500 h-[80px] flex items-center",
       scrolled 
-        ? "bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b shadow-xl shadow-primary/5" 
+        ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b shadow-lg shadow-black/5" 
         : "bg-transparent border-b border-transparent"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -101,7 +101,7 @@ export function Navbar() {
                  />
                )}
             </div>
-            <span className="text-2xl font-black tracking-tight text-primary dark:text-secondary">
+            <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               EidSpark
             </span>
           </Link>
@@ -116,7 +116,7 @@ export function Navbar() {
                   "px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2",
                   pathname === item.href
                     ? "text-primary dark:text-secondary bg-primary/5 dark:bg-secondary/10"
-                    : "text-muted-foreground hover:text-primary dark:hover:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
+                    : "text-slate-600 hover:text-primary dark:hover:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
                 )}
               >
                 {item.icon && <item.icon className="w-3.5 h-3.5" />}
@@ -128,7 +128,7 @@ export function Navbar() {
           {/* Actions */}
           <div className="hidden lg:flex items-center gap-4 z-50">
             {user && !loading && (
-              <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 shadow-sm animate-in fade-in">
+              <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 shadow-sm">
                 <Star className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
                 <span className="text-xs font-black text-primary tracking-tighter">
                   {totalPoints} <span className="text-[10px] text-muted-foreground font-bold uppercase ml-0.5">Points</span>
@@ -140,7 +140,7 @@ export function Navbar() {
               variant="ghost" 
               size="icon" 
               onClick={toggleDarkMode}
-              className="rounded-full text-primary dark:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
+              className="rounded-full text-slate-600 dark:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
@@ -168,7 +168,7 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-12 shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-12 shadow-lg shadow-emerald-200 hover:scale-105 transition-all">
                 <Link href="/login">Get Started <ChevronRight className="w-4 h-4 ml-1" /></Link>
               </Button>
             )}
@@ -191,7 +191,7 @@ export function Navbar() {
 
       {/* Mobile Nav */}
       <div className={cn(
-        "fixed inset-0 bg-background/98 dark:bg-slate-950/98 backdrop-blur-2xl lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
+        "fixed inset-0 bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
         <div className="space-y-6 w-full max-w-xs text-center">
@@ -208,7 +208,7 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className={cn(
                 "block py-3 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-3",
-                pathname === item.href ? "text-primary dark:text-secondary bg-primary/5" : "text-muted-foreground hover:text-primary"
+                pathname === item.href ? "text-primary dark:text-secondary bg-primary/5" : "text-slate-600 hover:text-primary"
               )}
             >
               {item.icon && <item.icon className="w-6 h-6" />}
