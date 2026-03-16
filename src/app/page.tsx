@@ -4,14 +4,13 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { 
   Calculator, 
   Send, 
   Wallet, 
   MapPin, 
   ArrowRight, 
-  Star, 
   Sparkles, 
   ChevronRight, 
   Camera, 
@@ -19,16 +18,13 @@ import {
   MessageCircle, 
   Map as MapIcon, 
   Users, 
-  Globe, 
   CheckCircle2, 
   Laugh, 
-  Smartphone, 
-  Check, 
-  TrendingUp, 
-  Clock, 
   Heart, 
   Calendar, 
-  Zap 
+  Zap,
+  Clock,
+  TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -126,7 +122,7 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-grow pt-[80px]">
-        {/* Light SaaS Hero Section */}
+        {/* Modern SaaS Hero */}
         <section className="relative overflow-hidden pt-20 pb-32 lg:pt-40 lg:pb-52">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-50 via-white to-white"></div>
@@ -137,7 +133,7 @@ export default function Home() {
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="absolute top-20 right-[15%] hidden lg:block"
             >
-              <Moon className="w-32 h-32 text-emerald-600/5 fill-emerald-600/5 drop-shadow-[0_0_50px_rgba(6,95,70,0.05)]" />
+              <Moon className="w-32 h-32 text-emerald-600/10 fill-emerald-600/5 drop-shadow-[0_0_50px_rgba(6,95,70,0.1)]" />
             </motion.div>
             <motion.div 
               animate={{ y: [0, 15, 0], scale: [1, 1.1, 1] }} 
@@ -168,12 +164,12 @@ export default function Home() {
                   </h1>
                   
                   <p className="text-xl text-slate-600 max-w-xl leading-relaxed font-medium">
-                    Modern smart tools built for the Muslim community. Find Eid Jamaat, calculate Zakat, design Greetings together.
+                    Modern smart tools built for the Muslim community. Find Eid Jamaat, calculate Zakat, create greetings, and celebrate together.
                   </p>
                 </div>
                 
                 <div className="flex flex-wrap gap-6 pt-4">
-                  <Button size="lg" className="h-16 px-10 rounded-2xl bg-primary text-white hover:bg-emerald-700 font-black text-lg shadow-2xl shadow-emerald-200 group" asChild>
+                  <Button size="lg" className="h-16 px-10 rounded-2xl bg-primary text-white hover:bg-emerald-700 font-black text-lg shadow-2xl shadow-emerald-200 hover:shadow-emerald-400 transition-all duration-300 group" asChild>
                     <Link href="/tools/greeting">
                       Explore Studio <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
@@ -205,7 +201,11 @@ export default function Home() {
                 transition={{ duration: 1, delay: 0.2 }}
                 className="relative hidden lg:block"
               >
-                <div className="relative z-10 w-[450px] aspect-[9/16] mx-auto rounded-[3.5rem] border-[12px] border-slate-900 bg-white shadow-[0_64px_128px_-12px_rgba(0,0,0,0.15)] overflow-hidden group">
+                <motion.div 
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative z-10 w-[450px] aspect-[9/16] mx-auto rounded-[3.5rem] border-[12px] border-slate-900 bg-white shadow-[0_64px_128px_-12px_rgba(0,0,0,0.15)] overflow-hidden group"
+                >
                   <div className="absolute inset-0 bg-slate-50 flex flex-col">
                     <div className="h-16 bg-white flex items-center justify-center border-b">
                       <div className="w-20 h-1.5 bg-slate-200 rounded-full"></div>
@@ -233,7 +233,7 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
                 
                 <div className="absolute -top-20 -right-20 w-96 h-96 bg-emerald-100/50 rounded-full blur-[120px] -z-10 animate-pulse"></div>
                 <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-amber-100/50 rounded-full blur-[120px] -z-10 animate-pulse delay-700"></div>
@@ -273,7 +273,7 @@ export default function Home() {
                   { label: "Minutes", val: timeLeft.minutes }
                 ].map(item => (
                   <div key={item.label} className="space-y-3">
-                    <div className="text-6xl lg:text-8xl font-black text-primary tracking-tighter">
+                    <div className="text-6xl lg:text-8xl font-black text-primary tracking-tighter tabular-nums">
                       {item.val.toString().padStart(2, '0')}
                     </div>
                     <div className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">{item.label}</div>

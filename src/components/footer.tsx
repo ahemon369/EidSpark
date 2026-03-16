@@ -3,7 +3,8 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Mail, ShieldCheck, Heart, Facebook, Twitter, Send } from "lucide-react"
+import { motion } from "framer-motion"
+import { Github, Mail, ShieldCheck, Facebook, Twitter, Send, Moon } from "lucide-react"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,15 @@ export function Footer() {
 
   return (
     <footer className="bg-[#f8fafc] border-t border-slate-200/60 py-24 transition-colors duration-500 relative overflow-hidden">
+      {/* Subtle Crescent Background Illustration */}
+      <motion.div 
+        animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -bottom-20 -right-20 opacity-[0.03] pointer-events-none"
+      >
+        <Moon className="w-96 h-96 text-primary fill-primary" />
+      </motion.div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
           
