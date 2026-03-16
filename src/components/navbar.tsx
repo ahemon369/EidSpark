@@ -1,9 +1,8 @@
-
 "use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, LogIn, LogOut, User, ChevronRight, Moon, Sun, Laugh, Sparkles, Trophy, Star } from "lucide-react"
+import { Menu, X, ChevronRight, Moon, Sun, Sparkles, Trophy, Star } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -34,7 +33,6 @@ const navItems = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [isDark, setIsDark] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { user, loading } = useUser()
@@ -44,7 +42,6 @@ export function Navbar() {
   
   const logo = PlaceHolderImages.find(img => img.id === "app-logo")
 
-  // Fetch points real-time
   const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, "users", user.uid)
@@ -59,16 +56,6 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const toggleDarkMode = () => {
-    const newDark = !isDark
-    setIsDark(newDark)
-    if (newDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-
   const handleLogout = async () => {
     if (!auth) return
     try {
@@ -82,7 +69,7 @@ export function Navbar() {
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-500 h-[80px] flex items-center",
       scrolled 
-        ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b shadow-lg shadow-black/5" 
+        ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm" 
         : "bg-transparent border-b border-transparent"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -101,7 +88,7 @@ export function Navbar() {
                  />
                )}
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <span className="text-2xl font-black tracking-tight text-slate-900">
               EidSpark
             </span>
           </Link>
@@ -115,8 +102,8 @@ export function Navbar() {
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2",
                   pathname === item.href
-                    ? "text-primary dark:text-secondary bg-primary/5 dark:bg-secondary/10"
-                    : "text-slate-600 hover:text-primary dark:hover:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
+                    ? "text-primary bg-primary/5"
+                    : "text-slate-600 hover:text-primary hover:bg-slate-50"
                 )}
               >
                 {item.icon && <item.icon className="w-3.5 h-3.5" />}
@@ -128,22 +115,13 @@ export function Navbar() {
           {/* Actions */}
           <div className="hidden lg:flex items-center gap-4 z-50">
             {user && !loading && (
-              <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 shadow-sm">
                 <Star className="w-4 h-4 text-secondary fill-secondary animate-pulse" />
                 <span className="text-xs font-black text-primary tracking-tighter">
                   {totalPoints} <span className="text-[10px] text-muted-foreground font-bold uppercase ml-0.5">Points</span>
                 </span>
               </div>
             )}
-
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleDarkMode}
-              className="rounded-full text-slate-600 dark:text-secondary hover:bg-primary/5 dark:hover:bg-secondary/5"
-            >
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
 
             {loading ? (
               <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
@@ -158,7 +136,7 @@ export function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 p-2 rounded-2xl mt-2" align="end">
-                  <DropdownMenuLabel className="font-bold p-4">
+                  <DropdownMenuLabel className="font-bold p-4 text-slate-900">
                     <p className="text-sm font-black text-primary">{user.displayName}</p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </DropdownMenuLabel>
@@ -168,7 +146,7 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-12 shadow-lg shadow-emerald-200 hover:scale-105 transition-all">
+              <Button asChild className="emerald-gradient text-white rounded-full font-black px-8 h-12 shadow-xl shadow-emerald-200 hover:scale-105 transition-all">
                 <Link href="/login">Get Started <ChevronRight className="w-4 h-4 ml-1" /></Link>
               </Button>
             )}
@@ -176,9 +154,6 @@ export function Navbar() {
 
           {/* Mobile Toggle */}
           <div className="lg:hidden flex items-center gap-2 z-50">
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 rounded-xl text-primary bg-primary/5"
@@ -191,7 +166,7 @@ export function Navbar() {
 
       {/* Mobile Nav */}
       <div className={cn(
-        "fixed inset-0 bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
+        "fixed inset-0 bg-white/98 backdrop-blur-2xl lg:hidden transition-all duration-500 ease-in-out z-40 flex flex-col items-center justify-center",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
       )}>
         <div className="space-y-6 w-full max-w-xs text-center">
@@ -208,7 +183,7 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className={cn(
                 "block py-3 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-3",
-                pathname === item.href ? "text-primary dark:text-secondary bg-primary/5" : "text-slate-600 hover:text-primary"
+                pathname === item.href ? "text-primary bg-primary/5" : "text-slate-600 hover:text-primary"
               )}
             >
               {item.icon && <item.icon className="w-6 h-6" />}
